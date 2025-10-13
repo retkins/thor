@@ -1,0 +1,37 @@
+#include <stdlib.h>
+
+double drand(double min, double max) {
+    return min + (max-min) * rand() / RAND_MAX;
+}
+
+double *vrand(size_t n, double min, double max) {
+    double *values = calloc(n, sizeof(double));
+    for (size_t i=0; i<n; i++) {
+        values[i] = drand(min, max);
+    }
+    return values; 
+}
+
+// Get the maximum value in an array
+double max(const double *restrict array, size_t n) {
+    double current_max = array[0]; 
+
+    for (size_t i=1; i<n; i++) {
+        if (array[i] > current_max) {
+            current_max = array[i];
+        }
+    }
+    return current_max;
+}
+
+// Get the minimum value in an array
+double min(const double *restrict array, size_t n) {
+    double current_min = array[0]; 
+
+    for (size_t i=1; i<n; i++) {
+        if (array[i] < current_min) {
+            current_min = array[i];
+        }
+    }
+    return current_min;
+}
