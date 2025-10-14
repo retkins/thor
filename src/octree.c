@@ -4,6 +4,7 @@
 #include <math.h>
 #include "octree.h"
 #include "utils.h"
+#include "biotsavart.h"
 
 // Define structures to represent the octree
 
@@ -29,8 +30,9 @@ Point **points_from_elements(
     const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
     size_t n
 ) {
-    Point **points = calloc(n, sizeof(Point));
+    Point **points = calloc(n, sizeof(Point*));
     for (size_t i=0; i<n; i++) {
+        points[i] = calloc(1, sizeof(Point));
         points[i]->x = centx[i];
         points[i]->y = centy[i];
         points[i]->z = centz[i];
@@ -78,6 +80,9 @@ typedef struct Node {
 
 // check if the node is a leaf 
 bool has_children(Node *node) {
+    if (node == NULL) {
+        return false;
+    }
     for (size_t i=0; i<8; i++) {
         if (node->children[i] != NULL) {
             return true;
@@ -235,7 +240,6 @@ int add_points(Node *root, Point **points, size_t npts, size_t start_point, size
                     // Octrant exists, may need to convert it from a leaf
                     // recursive call again 
                     add_points(root->children[octrant], points, npts, i, i+1);
-                    // printf("test\n");
                 }
             }
         }
@@ -251,26 +255,21 @@ int calculate_moments(Node *root) {
     if (has_children(root)) {
         for (size_t i=0; i<8; i++) {
             if (root->children[i] != NULL) {
-                // printf("i %li\n", i);
-                if (true) { //has_children(root->children[i])) { 
-                    int success = calculate_moments(root->children[i]); 
-                    // Now that we've calculated the moments of the child nodes, add them here
-                    root->vJx += root->children[i]->vJx;
-                    root->vJy += root->children[i]->vJy;
-                    root->vJz += root->children[i]->vJz;
-                    // printf("Calculated moments.\n");
-                }
+                int success = calculate_moments(root->children[i]); 
+                // Now that we've calculated the moments of the child nodes, add them here
+                root->vJx += root->children[i]->vJx;
+                root->vJy += root->children[i]->vJy;
+                root->vJz += root->children[i]->vJz;
+                
             }
         }
     }
     else {
-        // printf("Doesnt have children\n");
         // Now we're at the lowest level of the tree
         if ( root->point != NULL) {
             root->vJx += root->point->vol*root->point->Jx;
             root->vJy += root->point->vol*root->point->Jy;
             root->vJz += root->point->vol*root->point->Jz;
-            // printf("at base of tree\n");
         }
     }
     return 0;
@@ -280,15 +279,6 @@ int print_tree_sum(Node *root) {
     printf("tree sum:  (vJx, vJy, vJz) = (%f, %f, %f)\n", root->vJx, root->vJy, root->vJz);
     return 0;
 }
-
-// test data 
-// const size_t npts = 3;
-// const double coords[3*npts] = { 
-//     0.5, 0.5, 0.0, 
-//     0.4, 0.5, 0.0, 
-//     -0.6, -0.2, 0.0
-// };
-
 
 // for testing
 Point **points_from_array(double* coords, size_t npts) {
@@ -317,4 +307,52 @@ void print_points_sum(Point **points, size_t npts) {
         vJz += points[i]->vol*points[i]->Jz;
     }
     printf("array sum: (vJx, vJy, vJz) = (%f, %f, %f)\n", vJx, vJy, vJz);
+}
+
+
+int bfield_node_contribution(Node *node, double x, double y, double z, double *Bx, double *By, double *Bz, size_t i, double phi) {
+    double cx = x - node->cx;
+    double cy = y - node->cy; 
+    double cz = z - node->cz; 
+    double rmag = sqrt(cx*cx + cy*cy + cz*cz);
+
+    double sd = (2*node->halfwidth)/rmag;        // s/d
+    int success = 0;
+    if ((sd > phi) && has_children(node) ) {
+        for (size_t j=0; j<8; j++) {
+            if (node->children[j] != NULL) {
+                success += bfield_node_contribution(node->children[j], x, y, z, Bx, By, Bz, i, phi);
+            }
+        }
+    }
+    else {
+        double centx, centy, centz;
+        if (node->point == NULL) {
+            centx = node->cx; centy = node->cy; centz = node->cz;
+        }
+        else {
+            centx = node->point->x; centy = node->point->y; centz = node->point->z;
+        }
+
+        // Biot Savart kernel
+        double rx = x - centx;
+        double ry = y - centy; 
+        double rz = z - centz; 
+        rmag = rx*rx + ry*ry + rz*rz;
+        rmag = sqrt(rmag); 
+        rmag = rmag*rmag*rmag;
+        rmag = 1/rmag;
+
+        // Calculate cross-product 
+        double jxrpx = node->vJy*rz - node->vJz*ry; 
+        double jxrpy = node->vJz*rx - node->vJx*rz; 
+        double jxrpz = node->vJx*ry - node->vJy*rx;
+
+        // Compute contribution to field 
+        Bx[i] += MU04PI * jxrpx * rmag;
+        By[i] += MU04PI * jxrpy * rmag;
+        Bz[i] += MU04PI * jxrpz * rmag;
+    }
+
+    return success;
 }

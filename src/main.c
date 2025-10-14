@@ -10,7 +10,7 @@
 
 
 // TODO: none of the memory is freed, relying on the OS once the program exits..
-int main() {
+int main_old() {
 
     // For testing, assume a root node at origin with half width 1m
     Node *root = make_root(0, 0, 0, 1.0);
@@ -40,38 +40,6 @@ int main() {
     print_points_sum(points, npts);
     print_tree_sum(root);
 
-    // Magnetic flux density calculations
-    size_t m = 1;
-    double *x = calloc(m, sizeof(double));
-    double *y = calloc(m, sizeof(double));
-    double *z = calloc(m, sizeof(double));
-    double *Bx = calloc(m, sizeof(double));
-    double *By = calloc(m, sizeof(double));
-    double *Bz = calloc(m, sizeof(double));
-    for (size_t i=0; i<m; i++) {
-        // magic numbers for now 
-        x[i] = 1.0; 
-        y[i] = 1.0; 
-        z[i] = 1.0;
-    }
-
-    double *vol = calloc(npts, sizeof(double));
-    double *centx = calloc(npts, sizeof(double));
-    double *centy = calloc(npts, sizeof(double));
-    double *centz = calloc(npts, sizeof(double));
-    double *Jx = calloc(npts, sizeof(double));
-    double *Jy = calloc(npts, sizeof(double));
-    double *Jz = calloc(npts, sizeof(double));
-    for (size_t i=0; i<npts; i++) {
-        // magic numbers for now 
-        vol[i] = 1e-4; 
-        centx[i] = points[i]
-        centy[i] = 1e6; 
-        centz[i] = 1e6; 
-    }
-
-    success = bfield_naive()
-
     if (success == 0) {
         printf("Program completely successfully.\n");
     }
@@ -83,3 +51,81 @@ int main() {
 }
 
 // <0.5s to build the octree for 1M points on an M1 Pro (2021)... not bad?
+
+
+int main() {
+    // Magnetic flux density calculations
+
+    size_t n = 100000; 
+    size_t m = 10000; 
+    double phi = 5e-3;
+    printf("Sources x obs points: (%li, %li)\n", n, m);
+    printf("phi = %f\n", phi);
+
+    double *x = calloc(m, sizeof(double));
+    double *y = calloc(m, sizeof(double));
+    double *z = calloc(m, sizeof(double));
+    double *Bx = calloc(m, sizeof(double));
+    double *By = calloc(m, sizeof(double));
+    double *Bz = calloc(m, sizeof(double));
+    double *_Bx = calloc(m, sizeof(double));
+    double *_By = calloc(m, sizeof(double));
+    double *_Bz = calloc(m, sizeof(double));
+    for (size_t i=0; i<m; i++) {
+        // magic numbers for now 
+        x[i] = 1.0; // drand(-1,1); 
+        y[i] = 0.0; // drand(-1,1); 
+        z[i] = 0.25; // drand(-1,1);
+    }
+
+    double *vol = calloc(n, sizeof(double));
+    double *centx = calloc(n, sizeof(double));
+    double *centy = calloc(n, sizeof(double));
+    double *centz = calloc(n, sizeof(double));
+    double *Jx = calloc(n, sizeof(double));
+    double *Jy = calloc(n, sizeof(double));
+    double *Jz = calloc(n, sizeof(double));
+
+    double theta = 0; 
+    double dtheta = 2*PI/n;
+    double radius = 1.0;
+    double side_length = 1e-2;
+    double area = side_length*side_length;
+    double volume = area*2*PI*radius/n;
+    double current = 1e6;
+    double current_density = current/area;
+    for (size_t i=0; i<n; i++) {
+        // magic numbers for now 
+        vol[i] = volume; 
+        centx[i] = radius*cos(theta);
+        centy[i] = radius*sin(theta); 
+        centz[i] = 0.0;
+        Jx[i] = -current_density*sin(theta);
+        Jy[i] = current_density*cos(theta);
+        Jz[i] = 0.0;
+        theta += dtheta;
+    }
+
+    clock_t start_time = clock();
+    int success = bfield_naive(centx, centy, centz, vol, Jx, Jy, Jz, n, x, y, z, m, Bx, By, Bz, 1);
+    clock_t end_time = clock(); 
+    double naive_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    printf("Elapsed time for naive (N^2):       %f s\n", naive_time);
+    start_time = clock();
+    success = bfield_self_naive_octree(centx, centy, centz, vol, Jx, Jy, Jz, n, x, y, z, m, _Bx, _By, _Bz, 1, phi);
+    end_time = clock(); 
+    double octree_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    printf("Elapsed time for octree (N log(N)): %f s\n", octree_time);
+    printf("Speedup = %.3fx\n", naive_time/octree_time);
+    printf("first point: \n"); 
+    printf("naive:  (Bx, By, Bz) = (%f, %f, %f)\n", Bx[0], By[0], Bz[0]);
+    printf("octree: (Bx, By, Bz) = (%f, %f, %f)\n", _Bx[0], _By[0], _Bz[0]);
+    double dBx = Bx[0] - _Bx[0]; 
+    double dBy = By[0] - _By[0]; 
+    double dBz = Bz[0] - _Bz[0];
+    double error = sqrt(dBx*dBx + dBy*dBy + dBz*dBz)*100; // % 
+    printf("error = %.3f %%\n", error);
+
+    return 0;
+
+}

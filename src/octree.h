@@ -11,8 +11,13 @@ typedef struct Point Point;
 
 // Convenience function to create a new source point
 Point *new_point(double x, double y, double z, double vol, double Jx, double Jy, double Jz);
-
 double span_from_coords(const double *restrict x, const double *restrict y, const double *restrict z, size_t n);
+Point **points_from_elements(
+    const double *restrict centx, const double *restrict centy, const double *restrict centz, 
+    const double *restrict vol, 
+    const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
+    size_t n
+);
 
 // north/south/east/west/up/down
 typedef enum Octrant { NEU, NWU, SWU, SEU, NED, NWD, SWD, SED } Octrant; 
@@ -31,4 +36,6 @@ int print_tree_sum(Node *root);
 void print_points_sum(Point **points, size_t npts);
 
 Point **points_from_array(double* coords, size_t npts);
+
+int bfield_node_contribution(Node *node, double x, double y, double z, double *Bx, double *By, double *Bz, size_t i, double phi);
 #endif 

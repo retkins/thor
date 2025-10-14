@@ -35,8 +35,12 @@ int bfield_self_naive(
 int bfield_self_naive_octree(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
-    size_t n,
-    double *restrict Bx, double *restrict By, double *restrict Bz
+    size_t n, // sources
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    size_t m, // obs pts
+    double *restrict Bx, double *restrict By, double *restrict Bz, 
+    int nthreads, 
+    double phi
 );
 
 #endif
