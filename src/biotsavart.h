@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdlib.h>
 
 
 #ifndef BIOTSAVART_H 
@@ -41,6 +42,16 @@ int bfield_self_naive_octree(
     double *restrict Bx, double *restrict By, double *restrict Bz, 
     int nthreads, 
     double phi
+);
+
+int bfield_wire(
+    const double *restrict centx, const double *restrict centy, const double *restrict centz, 
+    const double *restrict vol, 
+    const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
+    size_t n_sources, 
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    double *restrict Bx, double *restrict By, double *restrict Bz, 
+    size_t n_targets
 );
 
 #endif
