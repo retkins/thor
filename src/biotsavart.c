@@ -5,6 +5,7 @@
 #include "biotsavart.h"
 #include "octree.h"
 #include "utils.h"
+#include <math.h>
 
 // Naive integration of the Biot Savart law for point sources 
 // B = mu0/4pi * vol * J x r' / |r'|^3
@@ -145,3 +146,74 @@ int bfield_self_naive_octree(
     printf("Bfield calc:    %.2f%%\n", 100*bfield_calc_time/total_time);
     return success;
 }
+
+
+// Naive O(N^2) integration of the Biot Savart Law for finite-length filaments
+// 
+// Reference:
+// https://freestatelabs.github.io/Wired.jl/dev/theory/
+int bfield_wire(
+    const double *restrict centx, const double *restrict centy, const double *restrict centz, 
+    const double *restrict vol, 
+    const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
+    size_t n_sources, 
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    double *restrict Bx, double *restrict By, double *restrict Bz, 
+    size_t n_targets
+) {
+    for (size_t i=0; i<n_sources; i++) {
+        // Compute the start and end points 
+        double Jmag = sqrt(Jx[i]*Jx[i] + Jy[i]*Jy[i] + Jz[i]*Jz[i]); 
+        double uJx=0; double uJy=0; double uJz=0;
+        if (Jmag > 1e-8 ) {
+            uJx = Jx[i]/Jmag; uJy = Jy[i]/Jmag; uJz = Jz[i]/Jmag;
+        }
+        // Assume element shape is a cube: vol = 8*R^3, or vol = length^3
+        double length = cbrt(vol[i]);
+        double R = length/2.0; 
+        double ax0 = centx[i] - R*uJx; 
+        double ax1 = ax0 + length*uJx;
+        double ay0 = centy[i] - R*uJy; 
+        double ay1 = ay0 + length*uJy;
+        double az0 = centz[i] - R*uJz; 
+        double az1 = az0 + length*uJz;
+        double ax = ax1 - ax0; double ay = ay1 - ay0; double az = az1 - az0; 
+        // Compute total current 
+        double area = length*length; 
+        double I_mu0_4pi = (area*Jmag) * MU04PI;
+        
+
+        // Loop over all targets
+        for (size_t j=0; j<n_targets; j++) {
+
+            // Vectors 
+            double bx = ax0 - x[j]; 
+            double by = ay0 - y[j]; 
+            double bz = az0 - z[j]; 
+            double cx = ax1 - x[j]; 
+            double cy = ay1 - y[j]; 
+            double cz = az1 - z[j]; 
+
+            // Dot products and magnitudes 
+            double a_dot_c = ax*cx + ay*cy + az*cz; 
+            double a_dot_b = ax*bx + ay*by + az*bz;
+            double c_mag = sqrt(cx*cx + cy*cy + cz*cz); 
+            double b_mag = sqrt(bx*bx + by*by + bz*bz);
+
+            // Cross products 
+            double c_cross_a_x = cy*az - cz*ay; 
+            double c_cross_a_y = cz*ax - cx*az; 
+            double c_cross_a_z = cx*ay - cy*ax; 
+            double c_cross_a_mag2 = c_cross_a_x*c_cross_a_x + c_cross_a_y*c_cross_a_y + c_cross_a_z*c_cross_a_z;
+
+            // Contributions to field
+            double coeff = I_mu0_4pi * ((a_dot_c/c_mag) - (a_dot_b/b_mag)) / c_cross_a_mag2;
+            Bx[j] += coeff*c_cross_a_x;
+            By[j] += coeff*c_cross_a_y; 
+            Bz[j] += coeff*c_cross_a_z;
+        }
+    }
+
+    return 0;
+}
+ 
