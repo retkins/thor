@@ -340,8 +340,9 @@ int bfield_node_contribution(Node *node, double x, double y, double z, double *B
         double rz = z - centz; 
         rmag = rx*rx + ry*ry + rz*rz;
         rmag = sqrt(rmag); 
-        rmag = rmag*rmag*rmag;
-        rmag = 1/rmag;
+        double rmag3 = rmag*rmag*rmag;
+        double inv_rmag3 = 1/rmag3;
+        // inv_rmag3 *= 1.04*cos(node->halfwidth/rmag);
 
         // Calculate cross-product 
         double jxrpx = node->vJy*rz - node->vJz*ry; 
@@ -349,9 +350,9 @@ int bfield_node_contribution(Node *node, double x, double y, double z, double *B
         double jxrpz = node->vJx*ry - node->vJy*rx;
 
         // Compute contribution to field 
-        Bx[i] += MU04PI * jxrpx * rmag;
-        By[i] += MU04PI * jxrpy * rmag;
-        Bz[i] += MU04PI * jxrpz * rmag;
+        Bx[i] += MU04PI * jxrpx * inv_rmag3;
+        By[i] += MU04PI * jxrpy * inv_rmag3;
+        Bz[i] += MU04PI * jxrpz * inv_rmag3;
     }
 
     return success;
