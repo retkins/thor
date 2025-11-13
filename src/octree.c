@@ -8,7 +8,11 @@
 
 // Define structures to represent the octree
 
+const double ONE_OVER_FOUR_THIRDS_PI = 1 / (4.0 * PI / 3.0 );
+const double ONE_THIRD = 1.0/3.0;
+
 // an end point (leaf), which is a biot savart source element
+// 7 * 8 bytes = 56 bytes per object
 typedef struct Point {
     double x, y, z; 
     double vol; 
@@ -326,22 +330,30 @@ int bfield_node_contribution(Node *node, double x, double y, double z, double *B
         }
     }
     else {
-        double centx, centy, centz;
+        double centx, centy, centz, vol;
         if (node->point == NULL) {
             centx = node->cx; centy = node->cy; centz = node->cz;
+            vol = powf((2.0*node->halfwidth), 3);
         }
         else {
             centx = node->point->x; centy = node->point->y; centz = node->point->z;
+            vol = node->point->vol;
         }
+
+        // volume = 4/3 * pi * R^3
+        double R = powf(ONE_OVER_FOUR_THIRDS_PI * vol, ONE_THIRD);
+        double R3 = R*R*R;
 
         // Biot Savart kernel
         double rx = x - centx;
         double ry = y - centy; 
         double rz = z - centz; 
-        rmag = rx*rx + ry*ry + rz*rz;
-        rmag = sqrt(rmag); 
+        rmag = sqrt(rx*rx + ry*ry + rz*rz);
+        
         double rmag3 = rmag*rmag*rmag;
-        double inv_rmag3 = 1/rmag3;
+        double inv_rmag3;
+        if (rmag > R) {inv_rmag3 = 1/rmag3;} 
+        else {inv_rmag3 = powf(rmag / R, 3);}
         // inv_rmag3 *= 1.04*cos(node->halfwidth/rmag);
 
         // Calculate cross-product 

@@ -15,4 +15,7 @@ double min(const double *restrict array, size_t n);
 // Get the maximum value in an array
 double max(const double *restrict array, size_t n);
 
+// Test for calling from julia
+double test(double x);
+
 #endif

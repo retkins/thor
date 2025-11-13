@@ -7,9 +7,24 @@
 #include "utils.h"
 #include <math.h>
 
-// Naive integration of the Biot Savart law for point sources 
+// Compute the magnetic flux density caused by a current-carrying ring 
+// at points along the central axis
+int bfield_loop_axis(
+    const double *restrict z, size_t n, 
+    const double I, const double R, 
+    double *restrict Bz
+) {
+    double R2 = R*R;
+    for (size_t i=0; i<n; i++) {
+        Bz[i] = MU0 * I * R2 / (2 * pow(z[i]*z[i] + R2, 1.5));
+    }
+
+    return 0;
+}
+
+// Direct integration of the Biot Savart law for point sources 
 // B = mu0/4pi * vol * J x r' / |r'|^3
-int bfield_naive(
+int bfield_direct(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
     size_t n, // sources
@@ -19,9 +34,16 @@ int bfield_naive(
     int nthreads
 ) {
 
+    const double ONE_OVER_FOUR_THIRDS_PI = 1 / (4.0 * PI / 3.0 );
+    const double ONE_THIRD = 1.0/3.0;
+
     // Outer loop over sources
     // #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1) reduction(+:Bx[:m], By[:m], Bz[:m])
     for (size_t i=0; i<n; i++) {
+
+        // volume = 4/3 * pi * R^3
+        double R = powf(ONE_OVER_FOUR_THIRDS_PI * vol[i], ONE_THIRD);
+        double R3 = R*R*R;
 
         // Inner loop over obs pts 
         for (size_t j=0; j<m; j++) {
@@ -29,10 +51,11 @@ int bfield_naive(
             double rx = x[j] - centx[i];
             double ry = y[j] - centy[i]; 
             double rz = z[j] - centz[i]; 
-            double rmag = rx*rx + ry*ry + rz*rz;
-            rmag = sqrt(rmag); 
-            rmag = rmag*rmag*rmag;
-            rmag = 1/rmag;
+            double rmag = sqrt(rx*rx + ry*ry + rz*rz);
+            double rmag3 = rmag*rmag*rmag;
+            double inv_rmag3;
+            if (rmag > R) { inv_rmag3 = 1 / rmag3; }
+            else { inv_rmag3 = powf(rmag / R, 3.0); }
 
             // Calculate cross-product 
             double jxrpx = Jy[i]*rz - Jz[i]*ry; 
@@ -40,9 +63,9 @@ int bfield_naive(
             double jxrpz = Jx[i]*ry - Jy[i]*rx;
 
             // Compute contribution to field 
-            Bx[j] += MU04PI * vol[i] * jxrpx * rmag;
-            By[j] += MU04PI * vol[i] * jxrpy * rmag;
-            Bz[j] += MU04PI * vol[i] * jxrpz * rmag;
+            Bx[j] += MU04PI * vol[i] * jxrpx * inv_rmag3;
+            By[j] += MU04PI * vol[i] * jxrpy * inv_rmag3;
+            Bz[j] += MU04PI * vol[i] * jxrpz * inv_rmag3;
         }
     }
 
@@ -95,7 +118,7 @@ int bfield_self_naive(
 
 // Naive integration of the Biot Savart law for point sources and self_fields using octree method
 // B = mu0/4pi * vol * J x r' / |r'|^3
-int bfield_self_naive_octree(
+int bfield_octree(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
     size_t n, // sources
@@ -139,11 +162,12 @@ int bfield_self_naive_octree(
 
     total_time = point_creation_time + tree_build_time + moment_calc_time + bfield_calc_time;
 
+    printf("Octree bfield calculation completed using phi = %.3f\n", phi);
     printf("Octree bfield calculation total time: %f s\n", total_time); 
-    printf("Point creation: %.2f%%\n", 100*point_creation_time/total_time);
-    printf("Tree build:     %.2f%%\n", 100*tree_build_time/total_time);
-    printf("Moment calc:    %.2f%%\n", 100*moment_calc_time/total_time);
-    printf("Bfield calc:    %.2f%%\n", 100*bfield_calc_time/total_time);
+    printf("Point creation: %.3f s (%.2f%%)\n", point_creation_time, 100*point_creation_time/total_time);
+    printf("Tree build:     %.3f s (%.2f%%)\n", tree_build_time, 100*tree_build_time/total_time);
+    printf("Moment calc:    %.3f s (%.2f%%)\n", moment_calc_time, 100*moment_calc_time/total_time);
+    printf("Bfield calc:    %.3f s (%.2f%%)\n", bfield_calc_time, 100*bfield_calc_time/total_time);
     return success;
 }
 
@@ -217,3 +241,14 @@ int bfield_wire(
     return 0;
 }
  
+
+// Calculate the magnetic flux density at a point (x,y,z) due to an octant that 
+// is approximated as a far-field finite-length wire source
+// 
+// We assume that the `span` is the full width of the octant
+int bfield_wire_farfield(
+    double x, double y, double z, 
+    double span, double vJx, double vJy, double vJz, double cx, double cy, double cz
+) {
+
+}

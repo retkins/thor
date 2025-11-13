@@ -10,9 +10,15 @@ static const double PI = 3.141592654;
 static const double MU0 = 4*PI*1e-7; 
 static const double MU04PI = 1e-7;
 
+int bfield_loop_axis(
+    const double *restrict z, size_t n, 
+    const double I, const double R, 
+    double *restrict Bz
+);
+
 // Naive integration of the Biot Savart law for point sources on arbitrary obs pts
 // B = mu0/4pi * vol * J x r' / |r'|^3
-int bfield_naive(
+int bfield_direct(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
     size_t n, // sources
@@ -33,7 +39,7 @@ int bfield_self_naive(
 
 // Naive integration of the Biot Savart law for point sources and self_fields using octree method
 // B = mu0/4pi * vol * J x r' / |r'|^3
-int bfield_self_naive_octree(
+int bfield_octree(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
     size_t n, // sources

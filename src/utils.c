@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 double drand(double min, double max) {
     return min + (max-min) * rand() / RAND_MAX;
@@ -34,4 +35,10 @@ double min(const double *restrict array, size_t n) {
         }
     }
     return current_min;
+}
+
+
+double test(double x) {
+    printf("Hello from C!\n");
+    return 2*x;
 }

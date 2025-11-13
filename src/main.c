@@ -56,9 +56,9 @@ int main_old() {
 int main() {
     // Magnetic flux density calculations
 
-    size_t n = 100000; 
+    size_t n = 10000; 
     size_t m = 10000; 
-    double phi = 5e-3;
+    double phi = 0.1;
     printf("Sources x obs points: (%li, %li)\n", n, m);
     printf("phi = %f\n", phi);
 
@@ -107,12 +107,12 @@ int main() {
     }
 
     clock_t start_time = clock();
-    int success = bfield_naive(centx, centy, centz, vol, Jx, Jy, Jz, n, x, y, z, m, Bx, By, Bz, 1);
+    int success = bfield_direct(centx, centy, centz, vol, Jx, Jy, Jz, n, x, y, z, m, Bx, By, Bz, 1);
     clock_t end_time = clock(); 
     double naive_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
     printf("Elapsed time for naive (N^2):       %f s\n", naive_time);
     start_time = clock();
-    success = bfield_self_naive_octree(centx, centy, centz, vol, Jx, Jy, Jz, n, x, y, z, m, _Bx, _By, _Bz, 1, phi);
+    success = bfield_octree(centx, centy, centz, vol, Jx, Jy, Jz, n, x, y, z, m, _Bx, _By, _Bz, 1, phi);
     end_time = clock(); 
     double octree_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
     printf("Elapsed time for octree (N log(N)): %f s\n", octree_time);
@@ -120,11 +120,22 @@ int main() {
     printf("first point: \n"); 
     printf("naive:  (Bx, By, Bz) = (%f, %f, %f)\n", Bx[0], By[0], Bz[0]);
     printf("octree: (Bx, By, Bz) = (%f, %f, %f)\n", _Bx[0], _By[0], _Bz[0]);
-    double dBx = Bx[0] - _Bx[0]; 
-    double dBy = By[0] - _By[0]; 
-    double dBz = Bz[0] - _Bz[0];
-    double error = sqrt(dBx*dBx + dBy*dBy + dBz*dBz)*100; // % 
-    printf("error = %.3f %%\n", error);
+    double dBx = 0.0;
+    double dBy = 0.0;
+    double dBz = 0.0;
+    for (size_t i=0; i<m; i++) { 
+        dBx += pow(Bx[i] - _Bx[i],2); 
+        dBy += pow(By[i] - _By[i], 2); 
+        dBz += pow(Bz[i] - _Bz[i],2);
+    }
+    dBx = sqrt(dBx/(double)n); 
+    dBy = sqrt(dBy/(double)n); 
+    dBz = sqrt(dBz/(double)n); 
+
+    
+    printf("x error = %.3f %%\n", dBx*100);
+    printf("y error = %.3f %%\n", dBy*100);
+    printf("z error = %.3f %%\n", dBz*100);
 
     return 0;
 
