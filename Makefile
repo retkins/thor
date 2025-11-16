@@ -1,5 +1,5 @@
 
-CC := gcc-15
+CC := gcc
 CFLAGS := -O3 -march=native 
 CFILES := src/*.c
 BUILD_DIR := build

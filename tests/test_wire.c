@@ -1,4 +1,8 @@
-// Test that the wire calculation is accurate
+/*  Test that the wire calculation is accurate
+
+    Not currently working...
+*/
+
 
 #include "../src/biotsavart.h"
 #include <stdio.h>

@@ -125,11 +125,11 @@ function test_phi_values(phimin=1e-3, phimax=1e-1, phistep=1e-3)
     # Problem parameters
     N = 10000
     M = 100
-    R = 2.0
-    I = 3e6
+    R = 1.0
+    I = 1e6
     ax = Z
-    linemin = -10*R
-    linemax = 10*R
+    linemin = -1.0*R
+    linemax = 1.0*R
 
     phivals = [x for x in phimin:phistep:phimax]
     nphi = length(phivals)
@@ -142,6 +142,8 @@ function test_phi_values(phimin=1e-3, phimax=1e-1, phistep=1e-3)
     for i in 1:nphi
         B_octree = bfield(source_pts, vol, current_density, target_pts, octree; phi=phivals[i])
 
+        @printf "Bexact @ min z = %.3f T\n" B_exact[1]
+        @printf "Bz @ min z     = %.3f T\n" B_octree[1,3]
         # Check the field in the z-direction (other components are zero)
         octree_err = abs.(B_octree[:,3] .- B_exact) ./ B_exact
         mean_err[i] = mean(octree_err)

@@ -8,4 +8,4 @@ wire:
 
 loop:
 	gcc $(CFLAGS) test_loop.c $(CFILES) -o test_loop.o -lm
-	./test_loop.o 10000 10000 1
+	./test_loop.o 1000 1000 1 0.1

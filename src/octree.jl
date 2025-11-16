@@ -1,15 +1,15 @@
 """ Octree code in Julia for faster iteration
+    
+    Doesn't work yet...
 """
 
 using LinearAlgebra, Printf
 
+""" Biot Savart source point in 3D space
+"""
 struct Point 
-    x::Float64
-    y::Float64 
-    z::Float64 
-    vJx::Float64
-    vJy::Float64 
-    vJz::Float64 
+    x::Float64; y::Float64; z::Float64 
+    vJx::Float64; vJy::Float64; vJz::Float64 
     
     function Point(x::Real, y::Real, z::Real, vol::Real, Jx::Real, Jy::Real, Jz::Real)
         new(float(x), float(y), float(z), float(vol*Jx), float(vol*Jy), float(vol*Jz))
@@ -17,7 +17,7 @@ struct Point
 end
 
 
-struct Node 
+mutable struct Node 
     span::Float64                                   # full width of a side
     x::Float64; y::Float64; z::Float64
     point::Int64
@@ -43,7 +43,12 @@ struct Octree
     nodes::Vector{Node}
 end
 
-# figure out where the point should go in the node 
+"""
+    find_octant(point::Point, node::Node)
+
+Find the location in the Node where the Point should go 
+Returns: integer value in the range [1,8] 
+"""
 function find_octant(point::Point, node::Node)
     # convenience definitions 
     x = point.x; y = point.y; z = point.z 
@@ -69,7 +74,16 @@ function find_octant(point::Point, node::Node)
 
 end
 
-# figure out how big the space is; TODO: should each octant be a cube?
+"""
+    calculate_span(points::Vector{Point})
+
+Determine how big the volume is and where the centroid is 
+Returns: (span, centroid), where
+    span is the enclosing cube's side length 
+    centroid is a 3-length vector of (xc, yc, zc)
+
+TODO: should each octant be a cube? 
+"""
 function calculate_span(points::Vector{Point})
     xmax = 0.0; xmin = 0.0; ymax = 0.0; ymin = 0.0; zmax = 0.0; zmin = 0.0 
     x = point.x; y = point.y; z = point.z 
@@ -99,9 +113,21 @@ function calculate_span(points::Vector{Point})
     return span, [center, center, center]
 end
 
-# Build the octree
+
+# Add a leaf to the tree (node with a point source and no children)
+function new_leaf!()
+end
+
+# 
+
+"""
+    build_octree(points::Vector{Point})
+
+Build the octree from a collection of point sources
+"""
 function build_octree(points::Vector{Point})
 
+    # Initial allocations for the nodes; assume nnodes=npts for now and reallocate later
     npts = length(points) 
     nnodes = npts
     nodes = initialize_nodes(nnodes)       # may need to be resized
@@ -113,25 +139,63 @@ function build_octree(points::Vector{Point})
     current_child_pointer = 2
     nodes[j_node] = Node(span, centroid[1], centroid[2], centroid[3], parent)
     node = nodes[j_nodes]
+
+    # Now we start at the root of the tree and descend to find a place for each source point
     for i in 1:npts 
+        parent = 0 
+        j_node = 1 
+        point = points[i]
 
         while false
+            node = nodes[j_node]
 
             # in which octant should the point go?
-            octant = find_octant(points[i], node)
+            octant = find_octant(point, node)
+            j_child = node.children[octant]
 
-            # Check if there's a Node there 
-            if nodes.children[octant] == 0 
-                # No node, make one and add the point to it (leaf)
-                nodes.children[octant] = current_child_pointer
+            if j_child == 0 
+                # There's no Node there currently, make a leaf Node
+
+                # Establish a link between the current parent node and 
+                # the leaf (child) node where the source point will be placed 
+                node.children[octant] = current_child_pointer
+                current_child_pointer += 1
+                nodes[j_child].parent = j_node 
+
+                # Now we've established the link, enter the new leaf node 
+                # and update its values
+                parent_node = node
+                node = nodes[j_child]
+                node.span = parent_node.span/2.0 
+
+
+                
+                nodes.ch
 
                 # Update child pointer
-                current_child_pointer += 1
+                
 
+                # We've placed the point, so now we can exit the loop
                 break
             
-            # There's a node there with a point (no children)
-            if nodes[j_octant]. == 0 
+            else
+                # There's a node there already, but we need to do something different
+                # if its a branch or a leaf 
+
+                if nodes[j_child].point != 0 
+                    # It's a leaf node, make it a branch and descend
+                    # Now we need to:
+                    #   1. turn a leaf into a branch
+                    #   2. place the old leaf source point into a new leaf 
+                    #   3. place the new leaf source point into a new leaf
+                
+                else 
+                    # It's another branch node, descend further into the tree 
+                    j_node = j_child 
+                end
+
+                
+            end
 
 
 

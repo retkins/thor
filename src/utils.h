@@ -18,4 +18,6 @@ double max(const double *restrict array, size_t n);
 // Test for calling from julia
 double test(double x);
 
+double rms_error(double *restrict y, double *restrict x, size_t n);
+
 #endif

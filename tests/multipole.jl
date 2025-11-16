@@ -93,7 +93,7 @@ current_density[:,3] = 1e8 .* (rand(n) .+ 1.0)
 
 # target points at distance 
 m = 100
-theta = [x for x in LinRange(0.001,1.0, m)]
+theta = [x for x in LinRange(0.001,0.1, m)]
 # theta = s / r; s = 1.0 
 target_pts = zeros(m,3)
 target_pts[:,1] .= 1 ./theta
@@ -129,14 +129,14 @@ for i in 1:m
     pnorm_errz[i] = norm(perrz[i])
     pnorm_err[i] = norm([pnorm_erry[i], pnorm_errz[i]])
 end
-@printf "Error at theta = %.3f is \n" theta[1] 
-@printf "\tx: %.3f %%\n" norm_errx[1]*100.0
-@printf "\ty: %.3f %%\n" norm_erry[1]*100.0
-@printf "\tz: %.3f %%\n" norm_errz[1]*100.0
-@printf "Error at theta = %.3f is \n" theta[end] 
-@printf "\tx: %.3f %%\n" norm_errx[end]*100.0
-@printf "\ty: %.3f %%\n" norm_erry[end]*100.0
-@printf "\tz: %.3f %%\n" norm_errz[end]*100.0
+@printf "Multipole error at theta = %.3f is \n" theta[1] 
+# @printf "\tx: %.3f %%\n" mnorm_errx[1]*100.0
+@printf "\ty: %.3f %%\n" mnorm_erry[1]*100.0
+@printf "\tz: %.3f %%\n" mnorm_errz[1]*100.0
+@printf "Multipole error at theta = %.3f is \n" theta[end] 
+# @printf "\tx: %.3f %%\n" mnorm_errx[end]*100.0
+@printf "\ty: %.3f %%\n" mnorm_erry[end]*100.0
+@printf "\tz: %.3f %%\n" mnorm_errz[end]*100.0
 # plot(theta, Bmultipole[:,3], label="multipole")
 # plot!(theta, Bdirect[:,3], label="direct")
 
