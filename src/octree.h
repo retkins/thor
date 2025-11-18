@@ -12,7 +12,7 @@ typedef struct Point Point;
 // Convenience function to create a new source point
 Point *new_point(double x, double y, double z, double vol, double Jx, double Jy, double Jz);
 double span_from_coords(const double *restrict x, const double *restrict y, const double *restrict z, size_t n);
-Point **points_from_elements(
+Point *points_from_elements(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, 
     const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
@@ -23,19 +23,28 @@ Point **points_from_elements(
 typedef enum Octrant { NEU, NWU, SWU, SEU, NED, NWD, SWD, SED } Octrant; 
 
 typedef struct Node Node;
+typedef struct NodeAllocation {
+    Node *nodes; 
+    int capacity;
+    int current_node;
+} NodeAllocation;
+
+NodeAllocation *allocate_nodes(int n);
 
 // add Points to the tree
-int add_points(Node *root, Point **points, size_t npts, size_t start_point, size_t end_point);
+int add_points(NodeAllocation *nodes, Node *root, Point *points, size_t npts, size_t start_point, size_t end_point);
 
 //// calculate the current density-moment for each node in the tree
 int calculate_moments(Node *root);
 
-Node *make_root(double cx, double cy, double cz, double span);
-Node *root_from_coords(const double *restrict x, const double *restrict y, const double *restrict z, size_t n);
+Node *make_root(NodeAllocation *nodes, double cx, double cy, double cz, double span);
+Node *root_from_coords(NodeAllocation *nodes, const double *restrict x, const double *restrict y, const double *restrict z, size_t n);
 int print_tree_sum(Node *root);
 void print_points_sum(Point **points, size_t npts);
 
 Point **points_from_array(double* coords, size_t npts);
 
 int bfield_node_contribution(Node *node, double x, double y, double z, double *Bx, double *By, double *Bz, size_t i, double phi);
+
+int free_tree(NodeAllocation *nodes);
 #endif 

@@ -135,14 +135,18 @@ int bfield_octree(
     // create the octree
     // make the points first
     start = clock();
-    Point **points = points_from_elements(centx, centy, centz, vol, Jx, Jy, Jz, n);
-    Node *root = root_from_coords(centx, centy, centz, n);
+    Point *points = points_from_elements(centx, centy, centz, vol, Jx, Jy, Jz, n);
+    NodeAllocation *nodes = allocate_nodes(3*n);
+    Node *root = root_from_coords(nodes, centx, centy, centz, n);
+    // set_root(nodes, root);
+
+    
     end = clock(); 
     point_creation_time = (double)(end-start)/CLOCKS_PER_SEC;
 
     // build the tree 
     start = clock();
-    int success = add_points(root, points, n, 0, n);
+    int success = add_points(nodes, root, points, n, 0, n);
     end = clock(); 
     tree_build_time = (double)(end-start)/CLOCKS_PER_SEC;
 
@@ -168,6 +172,10 @@ int bfield_octree(
     printf("Tree build:     %.3f s (%.2f%%)\n", tree_build_time, 100*tree_build_time/total_time);
     printf("Moment calc:    %.3f s (%.2f%%)\n", moment_calc_time, 100*moment_calc_time/total_time);
     printf("Bfield calc:    %.3f s (%.2f%%)\n", bfield_calc_time, 100*bfield_calc_time/total_time);
+    
+    free_tree(nodes);
+    // free(root);
+    free(points);
     return success;
 }
 

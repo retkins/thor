@@ -38,7 +38,7 @@ The general form of the Biot-Savart Law is as follows:
 Given an observation point in 3D space $r$, compute the effect of a solid conductor made of differential volume elements $dV$, each with current density $J$: 
 $$ \vec{B}(r) = \frac{\mu_0}{4\pi} \int \int \int_V \frac{\vec{J} \times \vec{r'}}{{|\vec{r'}|}^3} dV$$
 
-where $\mu_0 = 4 \pi \cdot 10^{-7} H/m$ is the magnetic permeability constant for free space, $\vec{B}$ is the magnetic flux density in units of $T$, and $\vec{J}$ and $\vec{r}$ have units of $A/m^2$ and $m$. 
+where $\mu_0 = 4 \pi \cdot 10^{-7} H/m$ is the magnetic permeability constant for free space, \\(\vec{B}\\( is the magnetic flux density in units of $T$, and $\vec{J}$ and $\vec{r}$ have units of $A/m^2$ and $m$. 
 
 Due to the complexity of the volume integral, only a few closed-form solutions are known for specific source geometries. 
 
