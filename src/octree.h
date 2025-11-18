@@ -6,12 +6,35 @@
 #ifndef OCTREE_H 
 #define OCTREE_H 
 
-// an end point (leaf), which is a biot savart source element
+// An end point (leaf), which is a Biot Savart source element
 typedef struct Point Point;
 
-// Convenience function to create a new source point
-Point *new_point(double x, double y, double z, double vol, double Jx, double Jy, double Jz);
-double span_from_coords(const double *restrict x, const double *restrict y, const double *restrict z, size_t n);
+// A node in the octree
+// Represents a recursive series of smaller nodes within it
+typedef struct Node Node;
+
+// Define the locations of each octant in a Node
+// north/south/east/west/up/down
+typedef enum Octant { NEU, NWU, SWU, SEU, NED, NWD, SWD, SED } Octant; 
+
+// "Arena-style" allocation for Nodes (really, just a fancy array)
+// TODO: make this opaque, for some reason biotsavart.c doesn't like it when the 
+// fields are defined within the .c file
+typedef struct NodeAllocation {
+    Node *nodes; 
+    int capacity;
+    int current_node;
+} NodeAllocation;
+
+// Determine the span of the root node from the source point coordinates
+// the span is the total size (i.e. side length) of the root node, a cube
+// TODO: should this be private inside the .c file?
+double span_from_coords(
+    const double *restrict x, const double *restrict y, const double *restrict z,
+    size_t n
+);
+
+// Allocate an array of Point objects that contain the source element data
 Point *points_from_elements(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
     const double *restrict vol, 
@@ -19,32 +42,43 @@ Point *points_from_elements(
     size_t n
 );
 
-// north/south/east/west/up/down
-typedef enum Octrant { NEU, NWU, SWU, SEU, NED, NWD, SWD, SED } Octrant; 
-
-typedef struct Node Node;
-typedef struct NodeAllocation {
-    Node *nodes; 
-    int capacity;
-    int current_node;
-} NodeAllocation;
-
+// Allocate memory for `n` nodes
 NodeAllocation *allocate_nodes(int n);
 
-// add Points to the tree
-int add_points(NodeAllocation *nodes, Node *root, Point *points, size_t npts, size_t start_point, size_t end_point);
+// Free the octree
+int deallocate_nodes(NodeAllocation *allocation);
 
-//// calculate the current density-moment for each node in the tree
+// Add source points to the tree by recursively performing a top-down traversal
+int add_points(
+    NodeAllocation *nodes, Node *root, Point *points, 
+    size_t npts, size_t start_point, size_t end_point
+);
+
+// Calculate the current density-moment for each node in the tree (upwards pass)
+// The quantity of each child node is added to the parent
+// Current-density moment is defined as the vector quantity (vol*J)
 int calculate_moments(Node *root);
 
-Node *make_root(NodeAllocation *nodes, double cx, double cy, double cz, double span);
-Node *root_from_coords(NodeAllocation *nodes, const double *restrict x, const double *restrict y, const double *restrict z, size_t n);
+// Make the root node in the tree from the coordinates of all of the source points
+Node *root_from_coords(
+    NodeAllocation *nodes, 
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    size_t n
+);
+
+// Print the sum of the current density moments for the entire tree
+// (generally for debug purposes only)
 int print_tree_sum(Node *root);
-void print_points_sum(Point **points, size_t npts);
 
-Point **points_from_array(double* coords, size_t npts);
+// Compute the magnetic flux density contribution of a node at a target point 
+// (x,y,z), which is stored at location `i` in the output B arrays
+// `phi` is the angle-opening criteria, which should be <= 0.1 for most applications
+// 
+// This function is meant to be called recursively, starting at the root node of the tree
+int bfield_node_contribution(
+    Node *node, double x, double y, double z, 
+    double *Bx, double *By, double *Bz, 
+    size_t i, double phi
+);
 
-int bfield_node_contribution(Node *node, double x, double y, double z, double *Bx, double *By, double *Bz, size_t i, double phi);
-
-int free_tree(NodeAllocation *nodes);
 #endif 

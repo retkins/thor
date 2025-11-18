@@ -6,25 +6,54 @@
 #include "utils.h"
 #include "biotsavart.h"
 
-// Define structures to represent the octree
 
+// Constants for later calculations
 const double ONE_OVER_FOUR_THIRDS_PI = 1 / (4.0 * PI / 3.0 );
 const double ONE_THIRD = 1.0/3.0;
 
-// an end point (leaf), which is a biot savart source element
-// 7 * 8 bytes = 56 bytes per object
+
+// --- 
+// Data structures
+// ---
+
+
+// Biot Savart source point (from a finite element)
+// 6 * 8 bytes = 48 bytes per object; unfortunately this will use an entire cache line
 typedef struct Point {
-    double x, y, z; 
-    double vJx, vJy, vJz;
+    double x, y, z;             // [m] centroid location vector
+    double vJx, vJy, vJz;       // [A-m] current density 'moment', i.e. vol*J
 } Point;
 
+
+// A node, which either can be a leaf or contain eight subnodes 
+//
+// if a node/point is on the boundary of a subdivision, then it is placed on the 
+// positive side, i.e. cx+halfwidth > x >= cx
+// Subdivisions are handled in counterclockwise order, + to -, 
+// i.e. children[0] is +X,+Y,+Z children[1] is -X,+Y,+Z, children[4] is +X,+Y,-Z, etc.
+typedef struct Node {
+    double cx, cy, cz;              // centroid in 3D space
+    double halfwidth;               // extent; volume of node = (2*halfwidth)^2
+    struct Node *children[8];       // null if leaf (no children)
+    Point *point;                   // null if node (no point)
+    double vJx, vJy, vJz;           // volume*J "moment" 
+} Node; 
+
+
+// --- 
+// Tree construction functions
+// ---
+
+
 // Convenience function to create a new source point
+// (generally unused)
 Point *new_point(double x, double y, double z, double vol, double Jx, double Jy, double Jz) {
     Point *point = malloc(sizeof(Point)); 
     point->x = x; point->y = y; point->z = z;  
     point->vJx = vol*Jx; point->vJy = vol*Jy; point->vJz = vol*Jz; 
     return point;
 }
+
 
 Point *points_from_elements(
     const double *restrict centx, const double *restrict centy, const double *restrict centz, 
@@ -34,7 +63,6 @@ Point *points_from_elements(
 ) {
     Point *points = calloc(n, sizeof(Point));
     for (size_t i=0; i<n; i++) {
-        // points[i] = calloc(1, sizeof(Point));
         points[i].x = centx[i];
         points[i].y = centy[i];
         points[i].z = centz[i];
@@ -45,7 +73,13 @@ Point *points_from_elements(
     return points;
 }
 
-double span_from_coords(const double *restrict x, const double *restrict y, const double *restrict z, size_t n) {
+
+double span_from_coords(
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    size_t n
+) {
+    // returns the side length of the largest enclosing cube for all source pts
+
     double xmin = min(x, n); double xmax = max(x, n); 
     double ymin = min(y, n); double ymax = max(y, n); 
     double zmin = min(z, n); double zmax = max(z, n); 
@@ -63,23 +97,10 @@ double span_from_coords(const double *restrict x, const double *restrict y, cons
     return span;
 }
 
-// north/south/east/west/up/down
-//typedef enum Octrant { NEU, NWU, SWU, SEU, NED, NWD, SWD, SED } Octrant; 
 
-// a node, which either can be a leaf or contain eight subnodes 
-// if a node/point is on the boundary of a subdivision, then it is placed on the 
-// positive side, i.e. cx+halfwidth > x >= cx
-// Subdivisions are handled in counterclockwise order, + to -, 
-// i.e. children[0] is +X,+Y,+Z children[1] is -X,+Y,+Z, children[4] is +X,+Y,-Z, etc.
-typedef struct Node {
-    double cx, cy, cz;              // centroid in 3D space
-    double halfwidth;               // extent; volume of node = (2*halfwidth)^2
-    struct Node *children[8];       // null if leaf (no children)
-    Point *point;                   // null if node (no point)
-    double vJx, vJy, vJz;           // volume*J "moment" 
-} Node; 
-
-// check if the node is a leaf 
+// Check if the node is a leaf or a branch
+// Leaf -> has no children (FALSE)
+// Branch -> has children (TRUE)
 bool has_children(Node *node) {
     if (node == NULL) {
         return false;
@@ -92,8 +113,10 @@ bool has_children(Node *node) {
     return false;
 }
 
+
+// Make the root node given a centroid and span
+// Use the first node in the allocation
 Node *make_root(NodeAllocation *nodes, double cx, double cy, double cz, double span) {
-    // Node *root = calloc(1, sizeof(Node));
     Node *root = &nodes->nodes[0];
     root->cx = cx; root->cy = cy; root->cz = cz; root->halfwidth = span; 
     for (size_t i=0; i<8; i++) {
@@ -103,12 +126,17 @@ Node *make_root(NodeAllocation *nodes, double cx, double cy, double cz, double s
     return root;
 }
 
-Node *root_from_coords(NodeAllocation *nodes, const double *restrict x, const double *restrict y, const double *restrict z, size_t n) {
+
+Node *root_from_coords(
+    NodeAllocation *nodes, 
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    size_t n
+) {
     double xmin = min(x, n); double xmax = max(x, n); 
     double ymin = min(y, n); double ymax = max(y, n); 
     double zmin = min(z, n); double zmax = max(z, n); 
 
-    // TODO: make bounding box non-cube
+    // TODO: make bounding box non-cube (?)
     double xrange = xmax - xmin; 
     double yrange = ymax - ymin; 
     double zrange = zmax - zmin; 
@@ -124,6 +152,7 @@ Node *root_from_coords(NodeAllocation *nodes, const double *restrict x, const do
     Node *root = make_root(nodes, cx, cy, cz, span);
     return root;
 }
+
 
 NodeAllocation *allocate_nodes(int n) {
     Node *nodes = calloc(n, sizeof(Node));
@@ -141,6 +170,9 @@ int deallocate_nodes(NodeAllocation *allocation) {
     return 0;
 }
 
+
+// Increase the size of the node allocation by copying the old allocation and 
+// getting a new block of memory
 NodeAllocation *reallocate_nodes(NodeAllocation *old_allocation, int new_size) {
     Node *new_nodes = calloc(new_size, sizeof(Node)); 
 
@@ -168,17 +200,14 @@ NodeAllocation *reallocate_nodes(NodeAllocation *old_allocation, int new_size) {
 }
 
 
-
-// adds a fresh node to the root node at the specified octrant
-int add_node(NodeAllocation *nodes, Node *root, Octrant octrant) {
-    // Node *node = calloc(1, sizeof(Node)); 
+// adds a fresh node to the root node at the specified octant
+int add_node(NodeAllocation *nodes, Node *root, Octant octant) {
     Node *node;
     nodes->current_node++;
     if (nodes->current_node >= nodes->capacity-1) {
         nodes = reallocate_nodes(nodes, nodes->capacity*2);
     }
     node = &nodes->nodes[nodes->current_node];
-    // printf("Reallocating..\n");
 
     node->halfwidth = root->halfwidth/2.0; 
     double cx, cy, cz;
@@ -187,7 +216,7 @@ int add_node(NodeAllocation *nodes, Node *root, Octrant octrant) {
     double rcz = root->cz;
     double rhw2 = root->halfwidth/2;
 
-    switch (octrant) {
+    switch (octant) {
         case NEU: 
             cx = rcx + rhw2; cy = rcy + rhw2; cz = rcz + rhw2; break;
         case NWU: 
@@ -208,16 +237,16 @@ int add_node(NodeAllocation *nodes, Node *root, Octrant octrant) {
             printf("error in add_node()!\n"); break;
     }
 
-    node->cx = cx; node->cy = cy; node->cz = cz; node->point=NULL; 
-    for (size_t i=0; i<8; i++) {
-        node->children[i] = NULL;
-    }
-    root->children[octrant] = node;
+    node->cx = cx; node->cy = cy; node->cz = cz; 
+    // child nodes and points already have null pointers from calloc() 
+    root->children[octant] = node;
+
     return 0; 
 }
 
+
 // where is the point in the node region?
-Octrant find_octrant(Point point, Node *node) {
+Octant find_octant(Point point, Node *node) {
     double x = point.x; double y = point.y; double z = point.z;
     double cx = node->cx; double cy = node->cy; double cz = node->cz;
     // note this does not do a bounds check to see if the point is within the Node region
@@ -232,13 +261,14 @@ Octrant find_octrant(Point point, Node *node) {
     else { return -1; } // error
 }
 
+
 // is the point within the node's domain?
 bool check_in_domain(Point point, Node *node) {
     double dx = fabs(node->cx - point.x);
     double dy = fabs(node->cy - point.y);
     double dz = fabs(node->cz - point.z);
 
-    // TODO: this will create an error if there's a node on the boundary
+    // TODO: this will create an error if there's a node on the boundary (?)
     if ( (dx <= node->halfwidth) && (dy <= node->halfwidth) && (dz <= node->halfwidth) ) {
         return true;
     }
@@ -247,16 +277,17 @@ bool check_in_domain(Point point, Node *node) {
     }
 }
 
-// add Points to the tree
-int add_points(NodeAllocation *nodes, Node *root, Point *points, size_t npts, size_t start_point, size_t end_point) {
 
-    // remember this is a recursive function...
+int add_points(
+    NodeAllocation *nodes, Node *root, Point *points, 
+    size_t npts, size_t start_point, size_t end_point
+) {
+
     for (size_t i=start_point; i<end_point; i++) {
-        // printf("i = %i\n", i);
-        Point point = points[i];
+        Point *point = &points[i];
 
         // check that this is a valid point for this domain
-        if (!check_in_domain(point, root) ) {
+        if (!check_in_domain(*point, root) ) {
             // It's outside the boundary, we skip it
             // note that due to recursion we may do many domain checks here; 
             //  room to optimize
@@ -267,35 +298,36 @@ int add_points(NodeAllocation *nodes, Node *root, Point *points, size_t npts, si
 
             if (!has_children(root) && root->point == NULL) {
                 // the root has no children and no point; make it a leaf
-                root->point = &points[i];
+                root->point = point; 
             
             }
             else if (!has_children(root) && root->point != NULL) {
                 // there are no children but there is an existing point
-                // both the existing and new point need to go into octrants
+                // both the existing and new point need to go into octants
 
                 // deal with existing point first 
-                Octrant octrant = find_octrant(*root->point, root);
-                int success = add_node(nodes, root, octrant);
-                root->children[octrant]->point = root->point;
+                Octant octant = find_octant(*root->point, root);
+                int success = add_node(nodes, root, octant);
+                root->children[octant]->point = root->point;
                 root->point = NULL;
 
                 // recursively call this function to deal with the new point
-                add_points(nodes, root, points, npts, i, i+1); // should only execute once
+                // should only execute once
+                add_points(nodes, root, points, npts, i, i+1); 
             }
             else {
-                // bin the new point into an octrant
-                Octrant octrant = find_octrant(point, root);
+                // bin the new point into an octant
+                Octant octant = find_octant(*point, root);
 
-                if ( root->children[octrant] == NULL ) {
-                    // octrant node has not already been defined, make one
-                    int success = add_node(nodes, root, octrant);
-                    root->children[octrant]->point = &points[i];
+                if ( root->children[octant] == NULL ) {
+                    // octant node has not already been defined, make one
+                    int success = add_node(nodes, root, octant);
+                    root->children[octant]->point = point; 
                 }
                 else {
-                    // Octrant exists, may need to convert it from a leaf
+                    // Octant exists, may need to convert it from a leaf
                     // recursive call again 
-                    add_points(nodes, root->children[octrant], points, npts, i, i+1);
+                    add_points(nodes, root->children[octant], points, npts, i, i+1);
                 }
             }
         }
@@ -304,7 +336,12 @@ int add_points(NodeAllocation *nodes, Node *root, Point *points, size_t npts, si
     return 0;
 }
 
-// calculate the current density-moment for each node in the tree
+
+// --- 
+// Magnetic fields calculations
+// --- 
+
+
 int calculate_moments(Node *root) {
 
     // first need to recursively sum the moments for each of the children
@@ -315,8 +352,7 @@ int calculate_moments(Node *root) {
                 // Now that we've calculated the moments of the child nodes, add them here
                 root->vJx += root->children[i]->vJx;
                 root->vJy += root->children[i]->vJy;
-                root->vJz += root->children[i]->vJz;
-                
+                root->vJz += root->children[i]->vJz;  
             }
         }
     }
@@ -331,48 +367,25 @@ int calculate_moments(Node *root) {
     return 0;
 }
 
+
 int print_tree_sum(Node *root) {
     printf("tree sum:  (vJx, vJy, vJz) = (%f, %f, %f)\n", root->vJx, root->vJy, root->vJz);
     return 0;
 }
 
-// for testing
-Point **points_from_array(double* coords, size_t npts) {
-    Point **points = malloc(npts*sizeof(Point*));
-    size_t ncoords = (size_t)3*npts;
-    size_t j=0;
-    for (size_t i=0; i<npts; i++) {
-        points[i] = malloc(sizeof(Point));
-        points[i]->x = coords[j++]; 
-        points[i]->y = coords[j++];
-        points[i]->z = coords[j++];
-        points[i]->vJx = 1e2;    // drand(-1e8,1e8);
-        points[i]->vJy = 1e2;    // drand(-1e8,1e8);
-        points[i]->vJz = 1e2;    // drand(-1e8,1e8);
-    }
-
-    return points;
-}
-
-void print_points_sum(Point **points, size_t npts) {
-    double vJx = 0; double vJy = 0; double vJz = 0; 
-    for (size_t i=0; i<npts; i++) {
-        vJx += points[i]->vJx;
-        vJy += points[i]->vJy;
-        vJz += points[i]->vJz;
-    }
-    printf("array sum: (vJx, vJy, vJz) = (%f, %f, %f)\n", vJx, vJy, vJz);
-}
-
 
 // Compute the contribution of a node to the B-field at a point (x,y,z)
-int bfield_node_contribution(Node *node, double x, double y, double z, double *Bx, double *By, double *Bz, size_t i, double phi) {
+int bfield_node_contribution(
+    Node *node, double x, double y, double z, 
+    double *Bx, double *By, double *Bz, 
+    size_t i, double phi
+) {
     double rx = x - node->cx;
     double ry = y - node->cy; 
     double rz = z - node->cz; 
     double rmag = sqrt(rx*rx + ry*ry + rz*rz);
 
-    double sd = (2*node->halfwidth)/rmag;        // s/d
+    double sd = (2*node->halfwidth)/rmag;        // theta < s/d (acceptance)
     int success = 0;
     if ((sd > phi) && has_children(node) ) {
         for (size_t j=0; j<8; j++) {
@@ -382,18 +395,21 @@ int bfield_node_contribution(Node *node, double x, double y, double z, double *B
         }
     }
     else {
-
-        double R = node->halfwidth;
-
         // Biot Savart kernel
-
+        double R = node->halfwidth;
         double rmag3 = rmag*rmag*rmag;
         double inv_rmag3;
+
+        // If inside the source radius, correct based on volume of current
+        // density enclosed
         if (rmag > R) {inv_rmag3 = 1/rmag3;} 
         else {inv_rmag3 = powf(rmag / R, 3);}
+
+        // Experimental correction determined via numerical integration of a 
+        // cube element (not needed)
         // inv_rmag3 *= 1.04*cos(node->halfwidth/rmag);
 
-        // Calculate cross-product 
+        // Calculate cross-product (J x r')
         double jxrpx = node->vJy*rz - node->vJz*ry; 
         double jxrpy = node->vJz*rx - node->vJx*rz; 
         double jxrpz = node->vJx*ry - node->vJy*rx;
@@ -405,23 +421,4 @@ int bfield_node_contribution(Node *node, double x, double y, double z, double *B
     }
 
     return success;
-}
-
-int free_tree(NodeAllocation *nodes) {
-    // if (root != NULL) {
-    //     for (int i=0; i<8; i++) {
-    //         // Recurse further down the tree
-    //         if (root->children[i] != NULL) { 
-    //             free_tree(root->children[i]); 
-    //             root->children[i] = NULL;
-    //         }
-    //     }
-        
-    //     // We've reached a leaf node; free it
-    //     if (root->point != NULL) { free(root); }
-    //     // free(root);
-    // }
-    free(nodes->nodes);
-    free(nodes);
-    return 0;
 }
