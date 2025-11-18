@@ -6,11 +6,13 @@ wire:
 	gcc $(CFLAGS) test_wire.c ../src/biotsavart.c ../src/octree.c ../src/utils.c -o test_wire.o -lm
 	./test_wire.o
 
+# 
 loop:
 	gcc $(CFLAGS) test_loop.c $(CFILES) -o test_loop.o -lm
 	# Crossover point at n=1000
 	./test_loop.o 100000 100000 1 0.1
 
+# Use valgrind to check for memory leaks and cache misses
 perftest:
 	gcc -O3 -g -march=native -mno-avx512f \
 	../src/biotsavart.c ../src/octree.c ../src/utils.c \
