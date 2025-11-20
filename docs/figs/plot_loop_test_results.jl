@@ -21,7 +21,7 @@ for i in 2:5
 end
 
 p = plot(grid=:true, minorgrid=:true) 
-plot!(p, nvals, octree_vs_direct, scale=:log10)
+plot!(p, ninteractions, octree_vs_direct, scale=:log10)
 xlabel!(p, "Interactions (\$N \\times N\$)")
 ylabel!(p, "Speedup (Direct Time / Octree Time)")
 title!(p, "Octree vs. Direct Solution, Speedup (\$\\phi = 0.1\$)")
@@ -29,8 +29,8 @@ display(p)
 savefig(p,"loop_speedup.svg")
 
 p2 = plot(grid=:true, minorgrid=:true) 
-plot!(p2, nvals, octree_times, scale=:log10, label="Octree")
-plot!(p2, nvals, direct_times, scale=:log10, label="Direct")
+plot!(p2, ninteractions, octree_times, scale=:log10, label="Octree")
+plot!(p2, ninteractions, direct_times, scale=:log10, label="Direct")
 xlabel!(p2, "Interactions (\$N \\times N\$)")
 ylabel!(p2, "Execution Time [s]")
 title!(p2, "Octree vs. Direct Solution Times (\$\\phi = 0.1\$)")

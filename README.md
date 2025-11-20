@@ -2,10 +2,6 @@
 
 Approximate Biot-Savart Law integration to calculate magnetic fields in linear time using octrees and the Barnes Hut algorithm.
 
-[Docs](docs/thor.md)  
-[Tests and Benchmarks](docs/tests-and-benchmarks.md)  
-*Note: sourcehut doesn't render LaTeX in markdown docs, so I'm still working on hosting them elsewhere...*  
-
 ![Timing Results](docs/figs/loop_times.svg)
 
 ## Background

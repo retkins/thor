@@ -70,6 +70,7 @@ I don't really want to implement a stack, so we'll do a depth-frst left-right se
 3. If the distance criteria is met, compute interaction; else, descend
 4. Once computation of the interaction is complete, ascend one level and look to the next child
 5. Ascend from each level once the 8th child is searched; terminate when the pointer is to the root node
+
 ```c
 typedef struct Target {
     double x, y, z, Bx, By, Bz;
@@ -120,7 +121,7 @@ void traverse(Octree tree, Point p) {
 
         // Do we ascend? 
         if (child_offset == 8) { 
-            
+            // Move up
         }
 
         if ((node.position == 7)) {
