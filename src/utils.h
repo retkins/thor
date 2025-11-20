@@ -3,10 +3,10 @@
 #ifndef UTILS_H 
 #define UTILS_H
 
-// create a random double value in the range (min, max)
+// Create a random double value in the range (min, max)
 double drand(double min, double max);
 
-// create a random double array on the heap
+// Create a random double array on the heap
 double *vrand(size_t n, double min, double max);
 
 // Get the minimum value in an array
@@ -18,6 +18,10 @@ double max(const double *restrict array, size_t n);
 // Test for calling from julia
 double test(double x);
 
+// Return the root mean square error of `y` measured against `x`
+// Note: comparisons where x[i] are zero are ignored
+// 
+// RMSE = sqrt(1/N * sum_i( (yi - xi)/xi)^2 )
 double rms_error(double *restrict y, double *restrict x, size_t n);
 
 #endif

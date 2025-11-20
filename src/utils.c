@@ -2,9 +2,11 @@
 #include <stdio.h>
 #include <math.h>
 
+
 double drand(double min, double max) {
     return min + (max-min) * rand() / RAND_MAX;
 }
+
 
 double *vrand(size_t n, double min, double max) {
     double *values = calloc(n, sizeof(double));
@@ -14,7 +16,7 @@ double *vrand(size_t n, double min, double max) {
     return values; 
 }
 
-// Get the maximum value in an array
+
 double max(const double *restrict array, size_t n) {
     double current_max = array[0]; 
 
@@ -26,7 +28,7 @@ double max(const double *restrict array, size_t n) {
     return current_max;
 }
 
-// Get the minimum value in an array
+
 double min(const double *restrict array, size_t n) {
     double current_min = array[0]; 
 
@@ -45,8 +47,6 @@ double test(double x) {
 }
 
 
-// return the root mean square error of `y` measured against `x`
-// Note: comparisons where x[i] are zero are ignored
 double rms_error(double *restrict y, double *restrict x, size_t n) {
 
     double error = 0.0; 
