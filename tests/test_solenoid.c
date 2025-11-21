@@ -17,6 +17,10 @@
 const double I = 1e3;           // Total current in loop 
 const double R = 1.0/(2*PI);    // Radius of loop
 double z_span = 5.0;            // Length of line to calculate results on
+bool solenoid = true;
+double compression = 2.0;       // 'compress' target pts at center of solenoid
+// if the solenoid is requested, then the element size changes to 1 cm 
+// and 100 elements/turn
 
 
 // call this function like:
@@ -45,13 +49,18 @@ int main(int argc, char *argv[]) {
     // Create target points along the z-axis
     // --- 
 
-    // TODO: make this its own struct
     double *xt = calloc(n_targets, sizeof(double));
     double *yt = calloc(n_targets, sizeof(double));
     double *zt = calloc(n_targets, sizeof(double));
     double zstep = z_span / (double)(n_targets - 1);
     zt[0] = -z_span/2.0;        // center about the origin for current loop
-
+    if (solenoid) {
+        // Compress points to region where analytical calculation is accurate
+        zt[0] = 0.0;
+        double zc = z_span / 2.0; 
+        zt[0] = zc - z_span / (2.0 * compression);
+        zstep = (z_span / compression) / (double)(n_targets - 1);
+    }
     for (uint32_t i=1; i<n_targets; i++) {
         zt[i] = zt[i-1] + zstep;
     }
@@ -71,7 +80,14 @@ int main(int argc, char *argv[]) {
     // Create source points 
     // --- 
 
-    Loop *loop = new_loop(R, I, n_sources);
+    double *xs = calloc(n_sources, sizeof(double));
+    double *ys = calloc(n_sources, sizeof(double));
+    double *zs = calloc(n_sources, sizeof(double));
+    double *vol = calloc(n_sources, sizeof(double));
+    double *Jx = calloc(n_sources, sizeof(double));
+    double *Jy = calloc(n_sources, sizeof(double));
+    double *Jz = calloc(n_sources, sizeof(double));
+    // Need to do some extra work to place points in a spiral 
     double theta_step = 2*PI / (double)(n_sources - 1); 
     double step = theta_step*R;
     double side_length = R / 1000; 
@@ -81,15 +97,29 @@ int main(int argc, char *argv[]) {
     double J = I / area;
     double z = 0.0;
     double theta = 0; 
+    zstep = 0.0;
+
+    // Create a coil instead of a loop for testing octree times
+    if (solenoid)
+    {
+        int elements_per_turn = 100;
+        side_length = z_span / ((double)n_sources / (double)elements_per_turn);
+        area = side_length*side_length;
+        v = side_length*area;        
+        theta_step = 2.0*PI/(double)(elements_per_turn - 1);
+        zstep = z_span/(double)n_sources; 
+        J = I / area;
+    }
 
     for (size_t i = 0; i<n_sources; i++) {
-        loop->x[i] = R*cos(theta); 
-        loop->y[i] = R*sin(theta);
-        loop->z[i] = z;
-        loop->vol[i] = v;
-        loop->Jx[i] = -J*sin(theta); 
-        loop->Jy[i] = J*cos(theta);
+        xs[i] = R*cos(theta); 
+        ys[i] = R*sin(theta);
+        zs[i] = z;
+        vol[i] = v;
+        Jx[i] = -J*sin(theta); 
+        Jy[i] = J*cos(theta);
         theta += theta_step;
+        z += zstep;
     }
 
     // ---
@@ -97,14 +127,20 @@ int main(int argc, char *argv[]) {
     // ---
 
     // Analytical solution to test both direct and octree methods against
-    bfield_loop_axis(zt, n_targets, I, R, Bz_analytical); 
-
+    if (solenoid) {
+        // Should not change along the axis
+        double Bz_solenoid = MU0 * 100.0 * I; 
+        for (size_t i=0; i<n_targets; i++) {
+            Bz_analytical[i] = Bz_solenoid;
+        }
+    }
+    else { 
+        bfield_loop_axis(zt, n_targets, I, R, Bz_analytical); 
+    }
 
     // Octree calculation (timed internally but repeated here for calculation of speedup)
     time_t start = clock();
-    bfield_octree(
-        loop->x, loop->y, loop->z, loop->vol, loop->Jx, loop->Jy, loop->Jz, 
-        n_sources, xt, yt, zt, n_targets, 
+    bfield_octree(xs, ys, zs, vol, Jx, Jy, Jz, n_sources, xt, yt, zt, n_targets, 
         Bx_octree, By_octree, Bz_octree, 1, phi);
     time_t end = clock();
     double time_octree = (double)(end-start)/CLOCKS_PER_SEC;
@@ -114,8 +150,7 @@ int main(int argc, char *argv[]) {
     // Direct summation of all points
     start = clock();
     bfield_direct(
-        loop->x, loop->y, loop->z, loop->vol, loop->Jx, loop->Jy, loop->Jz, 
-        n_sources, xt, yt, zt, n_targets, 
+        xs, ys, zs, vol, Jx, Jy, Jz, n_sources, xt, yt, zt, n_targets, 
         Bx_direct, By_direct, Bz_direct, 1);
     end = clock(); 
     double time_direct = (double)(end-start)/CLOCKS_PER_SEC;
@@ -149,5 +184,5 @@ int main(int argc, char *argv[]) {
     free(Bz_analytical); 
     free(Bx_direct); free(By_direct); free(Bz_direct); 
     free(Bx_octree); free(By_octree); free(Bz_octree);
-    free_loop(loop);
+    free(xs); free(ys); free(zs); free(vol); free(Jx); free(Jy); free(Jz);
 }

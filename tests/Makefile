@@ -7,7 +7,7 @@
 # ---
 
 CFLAGS = -O3 -march=native 
-CFILES = ../src/biotsavart.c ../src/octree.c ../src/utils.c
+CFILES = ../src/*.c
 
 # ---
 # Make targets 
@@ -16,7 +16,13 @@ CFILES = ../src/biotsavart.c ../src/octree.c ../src/utils.c
 # Test current-carrying loop and/or solenoid
 loop:
 	gcc $(CFLAGS) test_loop.c $(CFILES) -o test_loop.o -lm
-	./test_loop.o 1000 1000 1 0.1
+	./test_loop.o 100000 100000 1 0.005
+
+# Test current-carrying loop and/or solenoid
+solenoid: 
+	gcc $(CFLAGS) test_solenoid.c $(CFILES) -o test_solenoid.o -lm
+	./test_solenoid.o 100000 100000 1 0.1
+
 
 # Use valgrind to check for memory leaks and cache misses
 perftest:

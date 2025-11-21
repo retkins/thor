@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <math.h>
-#include "octree.h"
-#include "utils.h"
-#include "biotsavart.h"
+#include "../include/internal/biotsavart.h"
+#include "../include/internal/octree.h"
+#include "../include/internal/utils.h"
 
 
 // Constants for later calculations

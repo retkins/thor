@@ -1,10 +1,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdint.h>
 
 
 double drand(double min, double max) {
     return min + (max-min) * rand() / RAND_MAX;
+}
+
+double *zeros(uint32_t n) {
+    double *array = calloc(n, sizeof(double));
+    if (!array) {
+        fprintf(stderr, "Error in `zeros()`: memory allocation of %i elements failed.\n", n);
+        return NULL;
+    }
+    else {
+        return array;
+    }
 }
 
 

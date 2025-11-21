@@ -3,9 +3,9 @@
 #include <math.h>
 // #include <omp.h>
 
-#include "biotsavart.h"
-#include "octree.h"
-#include "utils.h"
+#include "../include/internal/biotsavart.h"
+#include "../include/internal/octree.h"
+#include "../include/internal/utils.h"
 
 
 int bfield_loop_axis(
