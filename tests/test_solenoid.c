@@ -16,8 +16,7 @@
 // Constant parameters for the problem
 const double I = 1e3;           // Total current in loop 
 const double R = 1.0/(2*PI);    // Radius of loop
-double z_span = 5.0;            // Length of line to calculate results on
-bool solenoid = true;
+double zspan = 5.0;            // Length of line to calculate results on
 double compression = 2.0;       // 'compress' target pts at center of solenoid
 // if the solenoid is requested, then the element size changes to 1 cm 
 // and 100 elements/turn
@@ -46,35 +45,18 @@ int main(int argc, char *argv[]) {
     }
 
     // ---
-    // Create target points along the z-axis
+    // Create target points along the z-axis and allocate results arrays
     // --- 
 
-    double *xt = calloc(n_targets, sizeof(double));
-    double *yt = calloc(n_targets, sizeof(double));
-    double *zt = calloc(n_targets, sizeof(double));
-    double zstep = z_span / (double)(n_targets - 1);
-    zt[0] = -z_span/2.0;        // center about the origin for current loop
-    if (solenoid) {
-        // Compress points to region where analytical calculation is accurate
-        zt[0] = 0.0;
-        double zc = z_span / 2.0; 
-        zt[0] = zc - z_span / (2.0 * compression);
-        zstep = (z_span / compression) / (double)(n_targets - 1);
-    }
-    for (uint32_t i=1; i<n_targets; i++) {
-        zt[i] = zt[i-1] + zstep;
-    }
+    // Compress points to region where analytical calculation is accurate
+    double zcenter = zspan / 2.0; 
+    double line_start = zcenter - ( zspan / (2.0 * compression) );
+    double line_end = line_start + zspan / compression;
 
-    // ---
-    // Allocate results arrays
-    // ---
+    Line *line_direct = new_line(Z, line_start, line_end, n_targets);
+    Line *line_octree = new_line(Z, line_start, line_end, n_targets);
     double *Bz_analytical = calloc(n_targets, sizeof(double));
-    double *Bx_direct = calloc(n_targets, sizeof(double));
-    double *By_direct = calloc(n_targets, sizeof(double));
-    double *Bz_direct = calloc(n_targets, sizeof(double));
-    double *Bx_octree = calloc(n_targets, sizeof(double));
-    double *By_octree = calloc(n_targets, sizeof(double));
-    double *Bz_octree = calloc(n_targets, sizeof(double));
+
 
     // --- 
     // Create source points 
@@ -97,19 +79,16 @@ int main(int argc, char *argv[]) {
     double J = I / area;
     double z = 0.0;
     double theta = 0; 
-    zstep = 0.0;
+    double zstep = 0.0;
 
-    // Create a coil instead of a loop for testing octree times
-    if (solenoid)
-    {
-        int elements_per_turn = 100;
-        side_length = z_span / ((double)n_sources / (double)elements_per_turn);
-        area = side_length*side_length;
-        v = side_length*area;        
-        theta_step = 2.0*PI/(double)(elements_per_turn - 1);
-        zstep = z_span/(double)n_sources; 
-        J = I / area;
-    }
+    int elements_per_turn = 100;
+    side_length = zspan / ((double)n_sources / (double)elements_per_turn);
+    area = side_length*side_length;
+    v = side_length*area;        
+    theta_step = 2.0*PI/(double)(elements_per_turn - 1);
+    zstep = zspan/(double)n_sources; 
+    J = I / area;
+    
 
     for (size_t i = 0; i<n_sources; i++) {
         xs[i] = R*cos(theta); 
@@ -127,21 +106,18 @@ int main(int argc, char *argv[]) {
     // ---
 
     // Analytical solution to test both direct and octree methods against
-    if (solenoid) {
-        // Should not change along the axis
-        double Bz_solenoid = MU0 * 100.0 * I; 
-        for (size_t i=0; i<n_targets; i++) {
-            Bz_analytical[i] = Bz_solenoid;
-        }
-    }
-    else { 
-        bfield_loop_axis(zt, n_targets, I, R, Bz_analytical); 
+    // Should not change along the axis
+    double Bz_solenoid = bfield_ideal_solenoid(100.0, I); 
+    for (size_t i=0; i<n_targets; i++) {
+        Bz_analytical[i] = Bz_solenoid;
     }
 
     // Octree calculation (timed internally but repeated here for calculation of speedup)
     time_t start = clock();
-    bfield_octree(xs, ys, zs, vol, Jx, Jy, Jz, n_sources, xt, yt, zt, n_targets, 
-        Bx_octree, By_octree, Bz_octree, 1, phi);
+    bfield_octree(
+        xs, ys, zs, vol, Jx, Jy, Jz, n_sources, 
+        line_octree->x, line_octree->y, line_octree->z, n_targets, 
+        line_octree->Bx, line_octree->By, line_octree->Bz, 1, phi);
     time_t end = clock();
     double time_octree = (double)(end-start)/CLOCKS_PER_SEC;
     printf("\n");
@@ -150,8 +126,9 @@ int main(int argc, char *argv[]) {
     // Direct summation of all points
     start = clock();
     bfield_direct(
-        xs, ys, zs, vol, Jx, Jy, Jz, n_sources, xt, yt, zt, n_targets, 
-        Bx_direct, By_direct, Bz_direct, 1);
+        xs, ys, zs, vol, Jx, Jy, Jz, n_sources, 
+        line_direct->x, line_direct->y, line_direct->z, n_targets, 
+        line_direct->Bx, line_direct->By, line_direct->Bz, 1);
     end = clock(); 
     double time_direct = (double)(end-start)/CLOCKS_PER_SEC;
     printf("Direct calculation time: %f s\n", time_direct);
@@ -162,9 +139,9 @@ int main(int argc, char *argv[]) {
     // Compare solutions 
     // --- 
 
-    double Bz_direct_error = rms_error(Bz_direct, Bz_analytical, n_targets); 
-    double Bz_octree_error = rms_error(Bz_octree, Bz_analytical, n_targets);
-    double octree_direct_error = rms_error(Bz_octree, Bz_direct, n_targets);
+    double Bz_direct_error = rms_error(line_direct->Bz, Bz_analytical, n_targets); 
+    double Bz_octree_error = rms_error(line_octree->Bz, Bz_analytical, n_targets);
+    double octree_direct_error = rms_error(line_octree->Bz, line_direct->Bz, n_targets);
 
     printf("RMS errors relative to analytical:\n");
     printf("Bz  direct error: %.3f %%\n", 100*Bz_direct_error);
@@ -174,15 +151,14 @@ int main(int argc, char *argv[]) {
     printf("Bz octree error: %.3f %%\n", 100*octree_direct_error);
 
     int j = n_targets/2;
-    printf("Analytical field at z = %.3f: %.3f T\n", zt[j], Bz_analytical[j]);
-    printf("Direct     field at z = %.3f: %.3f T\n", zt[j], Bz_direct[j]);
-    printf("Octree     field at z = %.3f: %.3f T\n", zt[j], Bz_octree[j]);
+    printf("Analytical field at z = %.3f: %.3f T\n", line_direct->z[j], Bz_analytical[j]);
+    printf("Direct     field at z = %.3f: %.3f T\n", line_direct->z[j], line_direct->z[j]);
+    printf("Octree     field at z = %.3f: %.3f T\n", line_direct->z[j], line_octree->z[j]);
 
 
-    // Ctrl+F gives 17 `calloc()` and 17 `free()` commands in this function
-    free(xt); free(yt); free(zt); 
+    // Ctrl+F gives 8 `calloc()` and 8 `free()` commands in this function
     free(Bz_analytical); 
-    free(Bx_direct); free(By_direct); free(Bz_direct); 
-    free(Bx_octree); free(By_octree); free(Bz_octree);
+    free_line(line_direct);
+    free_line(line_octree);
     free(xs); free(ys); free(zs); free(vol); free(Jx); free(Jy); free(Jz);
 }

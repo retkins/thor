@@ -16,12 +16,12 @@ CFILES = ../src/*.c
 # Test current-carrying loop and/or solenoid
 loop:
 	gcc $(CFLAGS) test_loop.c $(CFILES) -o test_loop.o -lm
-	./test_loop.o 100000 100000 1 0.005
+	./test_loop.o 10000 10000 1 0.005
 
-# Test current-carrying loop and/or solenoid
+# Test simple solenoid
 solenoid: 
 	gcc $(CFLAGS) test_solenoid.c $(CFILES) -o test_solenoid.o -lm
-	./test_solenoid.o 100000 100000 1 0.1
+	./test_solenoid.o 10000 10000 1 0.1
 
 
 # Use valgrind to check for memory leaks and cache misses

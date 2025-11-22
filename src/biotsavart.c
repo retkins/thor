@@ -7,6 +7,15 @@
 #include "../include/internal/octree.h"
 #include "../include/internal/utils.h"
 
+// --- 
+// Analytical solutions 
+// --- 
+
+
+double bfield_ideal_solenoid(double turns_per_unit_length, double current) {
+    return MU0 * turns_per_unit_length * current; 
+}
+
 
 int bfield_loop_axis(
     const double *restrict z, size_t n, 
@@ -20,6 +29,11 @@ int bfield_loop_axis(
 
     return 0;
 }
+
+
+// --- 
+// Discrete integration solutions 
+// ---
 
 
 int bfield_direct(
