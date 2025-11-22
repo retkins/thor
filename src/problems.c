@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h> 
 
 #include "../include/internal/utils.h"
 #include "../include/internal/problems.h"
@@ -18,9 +19,6 @@ Loop *new_loop(double radius, double current, uint32_t n) {
         loop->radius = radius; 
         loop->current = current; 
         loop->n = n; 
-
-        loop->x = NULL; loop->y = NULL; loop->z = NULL; loop->vol = NULL; 
-        loop->Jx = NULL; loop->Jy = NULL; loop->Jz = NULL;
 
         loop->x = zeros(n);
         loop->y = zeros(n);
@@ -55,7 +53,8 @@ Loop *new_loop(double radius, double current, uint32_t n) {
             return loop;
         }
         else {
-            // communication of errors is done in `zeros()`
+            // calloc() initialized all pointers to NULL, so we can free the 
+            // unallocated pointers without trouble
             free_loop(loop);
             return NULL; 
         }
@@ -89,27 +88,99 @@ void free_loop(Loop *loop) {
 // ---
 
 
+Solenoid *new_solenoid(
+    double radius, double length, double zcentroid, double current, 
+    double turns_per_unit_length, uint32_t n
+) {
+    Solenoid *solenoid = calloc(1, sizeof(Solenoid));
+
+    if (solenoid != NULL) {
+        solenoid->radius = radius; 
+        solenoid->length = length;
+        solenoid->zcentroid = zcentroid;
+        solenoid->current = current;
+        solenoid->turns_per_unit_length = turns_per_unit_length;
+        solenoid->n = n;
+
+        solenoid->x = zeros(n); solenoid->y = zeros(n); solenoid->z = zeros(n);
+        solenoid->vol = zeros(n);
+        solenoid->Jx = zeros(n); solenoid->Jy = zeros(n); solenoid->Jz = zeros(n);
+
+        if ( 
+            (solenoid->x != NULL) && (solenoid->y != NULL) && \
+            (solenoid->z != NULL) && (solenoid->vol != NULL) && \
+            (solenoid->Jx != NULL) && (solenoid->Jy != NULL) && \
+            (solenoid->Jz != NULL) 
+        ) {
+
+            // Determine how to spiral-wind the solenoid
+            double turns = turns_per_unit_length * length;      // note non-integer
+            double total_theta = 2 * PI * turns;
+            double theta_step = total_theta / (double)(n - 1);
+            double zstep = length / (double)(n - 1);
+
+            // Determine characteristics of the elements 
+            double circumference = 2 * PI * radius;
+            double total_winding_length = circumference * turns_per_unit_length * length;   // roughly
+            double element_size = total_winding_length / (double)n;
+            double element_area = element_size * element_size;
+            double element_volume = element_area * element_size;
+            double element_jdensity = current / element_area;
+
+            // Start with first element 
+            solenoid->x[0] = radius; 
+            solenoid->z[0] = zcentroid - length/2.0;
+            solenoid->vol[0] = element_volume;
+            solenoid->Jy[0] = element_jdensity;
+
+            double theta = theta_step;
+            for (size_t i=1; i<n; i++) {
+                solenoid->x[i] = radius * cos(theta); 
+                solenoid->y[i] = radius * sin(theta);
+                solenoid->z[i] = solenoid->z[i-1] + zstep; 
+                solenoid->vol[i] = element_volume;
+                solenoid->Jx[i] = -element_jdensity * sin(theta);
+                solenoid->Jy[i] = element_jdensity * cos(theta); 
+                theta += theta_step;
+                // printf("x, y, z = %.6f, %.6f, %.6f\n", solenoid->x[i], solenoid->y[i], solenoid->z[i]);
+                // printf("Jx, Jy, Jz = %.6f, %.6f, %.6f\n", solenoid->Jx[i], solenoid->Jy[i], solenoid->Jz[i]);
+            }
+            return solenoid;
+
+        }
+        else {
+            free_solenoid(solenoid);
+            return NULL;
+        }
+
+    }
+    else {
+        printf("Error: failed to allocate memory for solenoid.\n");
+        return NULL;
+    }
+}
+
+// Free memory for a Solenoid
+void free_solenoid(Solenoid *solenoid) {
+    if (solenoid != NULL) {
+        free(solenoid->x); free(solenoid->y); free(solenoid->z); 
+        free(solenoid->vol); 
+        free(solenoid->Jx); free(solenoid->Jy); free(solenoid->Jz); 
+        free(solenoid);
+    }
+}
+
+
 
 // --- 
 // Outputs
 // ---
 
-// A line in 3D space drawn along the specified axis
-// typedef struct Line {
-//     uint32_t n;                 // number of points
-//     double *x, *y, *z;          // [m]
-//     double *Bx, *By, *Bz        // [T]
-// } Line;
 
-Line *new_line(Direction dir, double start, double end, uint32_t n) {
+Line *new_line(Axis axis, double start, double end, uint32_t n) {
     Line *line = calloc(1, sizeof(Line));
     if (line != NULL) {
         line->n = n; 
-        
-        // Start with null pointers in case we have an alloc failure and need 
-        // to free them all at once (for conciseness)
-        line->x = NULL; line->y = NULL; line->z = NULL; 
-        line->Bx = NULL; line->By = NULL; line->Bz = NULL; 
 
         line->x = zeros(n); line->y = zeros(n); line->z = zeros(n); 
         line->Bx = zeros(n); line->By = zeros(n); line->Bz = zeros(n); 
@@ -120,7 +191,7 @@ Line *new_line(Direction dir, double start, double end, uint32_t n) {
             // TODO: this does not error if end < start, is that ok?
             double step = (end - start) / (double)(n - 1);
 
-            switch (dir) {
+            switch (axis) {
                 case X: 
                     line->x[0] = start;
                     for (uint32_t i=1; i<n; i++) {

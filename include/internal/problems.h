@@ -37,11 +37,13 @@ void free_loop(Loop *loop);
 // Simple solenoid
 // ---
 
-// Simple solenoid with one element in radial direction
+// Simple solenoid with one element in radial direction, centered about the z-axis
 typedef struct Solenoid {
-    double radius;              // [m]
-    double length;              // [m]
-    double current;             // [A]
+    double radius;                  // [m]
+    double length;                  // [m]
+    double zcentroid;               // [m]
+    double current;                 // [A]
+    double turns_per_unit_length;   // [turns/m]
     uint32_t n;                 // number of points
     double *x, *y, *z;          // [m] location of source points in loop 
     double *vol;                // [m^3] volume of each source point 
@@ -49,12 +51,19 @@ typedef struct Solenoid {
 
 } Solenoid;
 
+// Allocate memory for a new Solenoid
+Solenoid *new_solenoid(double radius, double length, double zcentroid, 
+                        double current, double turns_per_unit_length, uint32_t n);
+
+// Free memory for a Solenoid
+void free_solenoid(Solenoid *solenoid);
+
 // --- 
 // Output arrays
 // --- 
 
-// Defines which direction a series of points should be drawn along
-typedef enum Direction {X, Y, Z} Direction; 
+// Defines which cartesian axis a series of points should be drawn along
+typedef enum Axis {X, Y, Z} Axis; 
 
 // A line in 3D space drawn along the specified axis
 typedef struct Line {
@@ -64,7 +73,7 @@ typedef struct Line {
 } Line;
 
 // Create a new line along the specified global axis
-Line *new_line(Direction dir, double start, double end, uint32_t n);
+Line *new_line(Axis axis, double start, double end, uint32_t n);
 
 // Free allocated memory for a Line
 void free_line(Line *line);

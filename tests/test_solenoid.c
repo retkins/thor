@@ -14,12 +14,11 @@
 #include "../include/thor.h"
 
 // Constant parameters for the problem
-const double I = 1e3;           // Total current in loop 
-const double R = 1.0/(2*PI);    // Radius of loop
-double zspan = 5.0;            // Length of line to calculate results on
-double compression = 2.0;       // 'compress' target pts at center of solenoid
-// if the solenoid is requested, then the element size changes to 1 cm 
-// and 100 elements/turn
+const double current = 1e3;           // Total current in solenoid  
+const double radius = 1.0/(2*PI);    // Radius of solenoid
+const double length = 5.0;      // Length of solenoid
+const double zspan = 1.0;       // Length of line to calculate results on
+const double turns_per_unit_length = 100.0;
 
 
 // call this function like:
@@ -49,57 +48,18 @@ int main(int argc, char *argv[]) {
     // --- 
 
     // Compress points to region where analytical calculation is accurate
-    double zcenter = zspan / 2.0; 
-    double line_start = zcenter - ( zspan / (2.0 * compression) );
-    double line_end = line_start + zspan / compression;
+    double line_start = -zspan / 2.0; 
+    double line_end = zspan / 2.0;
 
     Line *line_direct = new_line(Z, line_start, line_end, n_targets);
     Line *line_octree = new_line(Z, line_start, line_end, n_targets);
     double *Bz_analytical = calloc(n_targets, sizeof(double));
 
-
     // --- 
     // Create source points 
     // --- 
 
-    double *xs = calloc(n_sources, sizeof(double));
-    double *ys = calloc(n_sources, sizeof(double));
-    double *zs = calloc(n_sources, sizeof(double));
-    double *vol = calloc(n_sources, sizeof(double));
-    double *Jx = calloc(n_sources, sizeof(double));
-    double *Jy = calloc(n_sources, sizeof(double));
-    double *Jz = calloc(n_sources, sizeof(double));
-    // Need to do some extra work to place points in a spiral 
-    double theta_step = 2*PI / (double)(n_sources - 1); 
-    double step = theta_step*R;
-    double side_length = R / 1000; 
-    double area = side_length * side_length;
-    double total_volume = area * 2*PI*R;
-    double v = total_volume/n_sources;
-    double J = I / area;
-    double z = 0.0;
-    double theta = 0; 
-    double zstep = 0.0;
-
-    int elements_per_turn = 100;
-    side_length = zspan / ((double)n_sources / (double)elements_per_turn);
-    area = side_length*side_length;
-    v = side_length*area;        
-    theta_step = 2.0*PI/(double)(elements_per_turn - 1);
-    zstep = zspan/(double)n_sources; 
-    J = I / area;
-    
-
-    for (size_t i = 0; i<n_sources; i++) {
-        xs[i] = R*cos(theta); 
-        ys[i] = R*sin(theta);
-        zs[i] = z;
-        vol[i] = v;
-        Jx[i] = -J*sin(theta); 
-        Jy[i] = J*cos(theta);
-        theta += theta_step;
-        z += zstep;
-    }
+    Solenoid *solenoid = new_solenoid(radius, length, 0.0, current, turns_per_unit_length, n_sources);
 
     // ---
     // Compute solutions
@@ -107,7 +67,7 @@ int main(int argc, char *argv[]) {
 
     // Analytical solution to test both direct and octree methods against
     // Should not change along the axis
-    double Bz_solenoid = bfield_ideal_solenoid(100.0, I); 
+    double Bz_solenoid = bfield_ideal_solenoid(turns_per_unit_length, current); 
     for (size_t i=0; i<n_targets; i++) {
         Bz_analytical[i] = Bz_solenoid;
     }
@@ -115,7 +75,8 @@ int main(int argc, char *argv[]) {
     // Octree calculation (timed internally but repeated here for calculation of speedup)
     time_t start = clock();
     bfield_octree(
-        xs, ys, zs, vol, Jx, Jy, Jz, n_sources, 
+        solenoid->x, solenoid->y, solenoid->z, solenoid->vol, 
+        solenoid->Jx, solenoid->Jy, solenoid->Jz, n_sources, 
         line_octree->x, line_octree->y, line_octree->z, n_targets, 
         line_octree->Bx, line_octree->By, line_octree->Bz, 1, phi);
     time_t end = clock();
@@ -126,7 +87,8 @@ int main(int argc, char *argv[]) {
     // Direct summation of all points
     start = clock();
     bfield_direct(
-        xs, ys, zs, vol, Jx, Jy, Jz, n_sources, 
+        solenoid->x, solenoid->y, solenoid->z, solenoid->vol, 
+        solenoid->Jx, solenoid->Jy, solenoid->Jz, n_sources, 
         line_direct->x, line_direct->y, line_direct->z, n_targets, 
         line_direct->Bx, line_direct->By, line_direct->Bz, 1);
     end = clock(); 
@@ -152,13 +114,11 @@ int main(int argc, char *argv[]) {
 
     int j = n_targets/2;
     printf("Analytical field at z = %.3f: %.3f T\n", line_direct->z[j], Bz_analytical[j]);
-    printf("Direct     field at z = %.3f: %.3f T\n", line_direct->z[j], line_direct->z[j]);
-    printf("Octree     field at z = %.3f: %.3f T\n", line_direct->z[j], line_octree->z[j]);
+    printf("Direct     field at z = %.3f: %.3f T\n", line_direct->z[j], line_direct->Bz[j]);
+    printf("Octree     field at z = %.3f: %.3f T\n", line_direct->z[j], line_octree->Bz[j]);
 
-
-    // Ctrl+F gives 8 `calloc()` and 8 `free()` commands in this function
     free(Bz_analytical); 
     free_line(line_direct);
     free_line(line_octree);
-    free(xs); free(ys); free(zs); free(vol); free(Jx); free(Jy); free(Jz);
+    free_solenoid(solenoid);
 }
