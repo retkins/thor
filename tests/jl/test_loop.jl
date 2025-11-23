@@ -6,7 +6,7 @@ Compare both to the theoretical solution along the axis of the loop.
 """
 
 cd(@__DIR__)
-include("../src/thor.jl")
+include("../../src/thor.jl")
 
 using LinearAlgebra, Plots, Statistics
 

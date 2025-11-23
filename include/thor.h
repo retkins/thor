@@ -1,4 +1,5 @@
 #include "internal/biotsavart.h"
 #include "internal/octree.h"
 #include "internal/utils.h"
-#include "internal/problems.h"
+#include "internal/sources.h"
+#include "internal/targets.h"

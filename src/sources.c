@@ -4,8 +4,8 @@
 #include <math.h> 
 
 #include "../include/internal/utils.h"
-#include "../include/internal/problems.h"
 #include "../include/internal/biotsavart.h"
+#include "../include/internal/sources.h"
 
 
 // ---
@@ -171,71 +171,112 @@ void free_solenoid(Solenoid *solenoid) {
 }
 
 
-
 // --- 
-// Outputs
+// Dense Solenoid
 // ---
 
+// typedef struct DenseSolenoid {
+//     double inner_radius;            // [m]
+//     double outer_radius;            // [m]
+//     double length;                  // [m]
+//     double zcentroid;               // [m]
+//     double current;                 // [A]
+//     double turns_per_unit_length;   // [turns/m]
+//     uint32_t n;                 // number of points
+//     double *x, *y, *z;          // [m] location of source points in loop 
+//     double *vol;                // [m^3] volume of each source point 
+//     double *Jx, *Jy, *Jz;       // [A/m^2] current density vector at each source point
 
-Line *new_line(Axis axis, double start, double end, uint32_t n) {
-    Line *line = calloc(1, sizeof(Line));
-    if (line != NULL) {
-        line->n = n; 
+// } DenseSolenoid;
 
-        line->x = zeros(n); line->y = zeros(n); line->z = zeros(n); 
-        line->Bx = zeros(n); line->By = zeros(n); line->Bz = zeros(n); 
+// Allocate memory for a new DenseSolenoid
+DenseSolenoid *new_dense_solenoid(
+    double inner_radius, double outer_radius, double length, double zcentroid, 
+    double current, double element_size
+) {
+    DenseSolenoid *ds = calloc(1, sizeof(DenseSolenoid));
 
-        if ( (line->x != NULL) && (line->y != NULL) && (line->z != NULL) && \
-            (line->Bx != NULL) && (line->By != NULL) && (line->Bz != NULL)) {
-                
-            // TODO: this does not error if end < start, is that ok?
-            double step = (end - start) / (double)(n - 1);
-
-            switch (axis) {
-                case X: 
-                    line->x[0] = start;
-                    for (uint32_t i=1; i<n; i++) {
-                        line->x[i] = line->x[i-1] + step;
-                    }
-                    break;
-
-                case Y: 
-                    line->y[0] = start;
-                    for (uint32_t i=1; i<n; i++) {
-                        line->y[i] = line->y[i-1] + step;
-                    }
-                    break;
-
-                case Z: 
-                    line->z[0] = start;
-                    for (uint32_t i=1; i<n; i++) {
-                        line->z[i] = line->z[i-1] + step;
-                    }
-                    break;
-                }
-            return line; 
-        } 
-        else {
-            free_line(line);
-            return NULL;
+    if (ds != NULL) {
+        // Determine how many points there are 
+        int nlayers= (int)ceil(length / element_size); 
+        int n_per_area = 0; 
+        int nturns_per_layer = 0;
+        double r = inner_radius;
+        while (r < outer_radius) {
+            n_per_area += (int)ceil(2*PI*r / element_size);
+            r += element_size;
+            nturns_per_layer++;
         }
 
+        int n = nlayers* n_per_area;
+        int nturns = nturns_per_layer * nlayers;
+
+        ds->inner_radius = inner_radius; ds->outer_radius = outer_radius;
+        ds->length = length; ds->zcentroid = zcentroid; ds->current = current; 
+        ds->element_size = element_size; ds->n = n;
+        ds->turns_per_unit_length = (double)nturns / length / 2.0;
+
+        ds->x = zeros(n); ds->y = zeros(n); ds->z = zeros(n); ds->vol = zeros(n);
+        ds->Jx = zeros(n); ds->Jy = zeros(n); ds->Jz = zeros(n); 
+
+        if ( (ds->x != NULL) && (ds->y != NULL) && (ds->z != NULL) && \
+            (ds->vol != NULL) && (ds->Jx != NULL) && (ds->Jy != NULL) && 
+            (ds->Jz != NULL) 
+        ) {
+
+            double element_volume = pow(element_size, 3.0); 
+            double element_area = element_size*element_size;
+            double element_jdensity = current/element_area;
+
+            double z = zcentroid / 2.0; 
+            double zstep = length / (double)(nlayers - 1); 
+            double rstep = element_size;
+            int e = 0;  // counter
+            for (int i=0; i<nlayers; i++) {
+                // outer loop over layers 
+                r = inner_radius; 
+                for (int j=0; j<nturns_per_layer; j++) {
+                    // middle loop over consecutive radii 
+                    int n_per_radius = (int)ceil(2*PI*r / element_size);
+                    double theta = 0.0; 
+                    double theta_step = 2*PI / (double)n_per_radius;
+                    for (int k=0; k<n_per_radius; k++) {
+                        // inner loop over elements in a radius
+                        ds->x[e] = r * cos(theta); 
+                        ds->y[e] = r * sin(theta); 
+                        ds->z[e] = z;
+                        ds->vol[e] = element_volume;
+                        ds->Jx[e] = -element_jdensity * sin(theta); 
+                        ds->Jy[e] = element_jdensity *cos(theta); 
+                        e++;
+                        if (e > n) {
+                            printf("Error; e > n\n");
+                        }
+                        theta += theta_step;
+                    }
+                    r += element_size;
+                }
+                z += zstep;
+            }
+            return ds;
+
+        }
+        else {
+            free_dense_solenoid(ds);
+            return NULL;
+        }
     }
     else {
-        printf("Error in allocating memory for the line().\n");
+        fprintf(stderr, "Error allocating memory for Dense Solenoid.\n");
         return NULL;
     }
 }
 
-
-void free_line(Line *line) {
-    if (line != NULL) {
-        free(line->x);
-        free(line->y);
-        free(line->z);
-        free(line->Bx);
-        free(line->By);
-        free(line->Bz);
+// Deallocate memory for a DenseSolenoid
+void free_dense_solenoid(DenseSolenoid *ds) {
+    if (ds != NULL) {
+        free(ds->x); free(ds->y); free(ds->z); free(ds->vol);
+        free(ds->Jx); free(ds->Jy); free(ds->Jz);
+        free(ds);
     }
-    free(line);
 }

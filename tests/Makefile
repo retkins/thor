@@ -6,7 +6,7 @@
 # Compiler options
 # ---
 
-CFLAGS = -O3 -march=native 
+CFLAGS = -O3 -march=native -Wall
 CFILES = ../src/*.c
 
 # ---
@@ -16,12 +16,17 @@ CFILES = ../src/*.c
 # Test current-carrying loop and/or solenoid
 loop:
 	gcc $(CFLAGS) test_loop.c $(CFILES) -o test_loop.o -lm
-	./test_loop.o 10000 10000 1 0.005
+	./test_loop.o 100000 100000 1 0.1
 
 # Test simple solenoid
 solenoid: 
 	gcc $(CFLAGS) test_solenoid.c $(CFILES) -o test_solenoid.o -lm
-	./test_solenoid.o 100000 10000 1 0.1
+	./test_solenoid.o 100000 100000 1 0.1
+
+# Test dense solenoid 
+dense_solenoid: 
+	gcc $(CFLAGS) test_dense_solenoid.c $(CFILES) -o test_dense_solenoid.o -lm 
+	./test_dense_solenoid.o
 
 
 # Use valgrind to check for memory leaks and cache misses

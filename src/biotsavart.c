@@ -55,7 +55,6 @@ int bfield_direct(
 
         // volume = 4/3 * pi * R^3
         double R = powf(ONE_OVER_FOUR_THIRDS_PI * vol[i], ONE_THIRD);
-        double R3 = R*R*R;
 
         // Inner loop over target pts 
         for (size_t j=0; j<n_targets; j++) {

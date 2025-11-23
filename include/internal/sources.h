@@ -7,8 +7,8 @@
     - Dense solenoid
 */
 
-#ifndef PROBLEMS_H
-#define PROBLEMS_H 
+#ifndef SOURCES_H
+#define SOURCES_H 
 
 #include <stdint.h>
 
@@ -59,23 +59,34 @@ Solenoid *new_solenoid(double radius, double length, double zcentroid,
 void free_solenoid(Solenoid *solenoid);
 
 // --- 
-// Output arrays
-// --- 
+// Dense Solenoid
+// ---
 
-// Defines which cartesian axis a series of points should be drawn along
-typedef enum Axis {X, Y, Z} Axis; 
+// Dense solenoid with multiple elements in radial direction, 
+// centered about the z-axis
+typedef struct DenseSolenoid {
+    double inner_radius;            // [m]
+    double outer_radius;            // [m]
+    double length;                  // [m]
+    double zcentroid;               // [m]
+    double current;                 // [A]
+    double turns_per_unit_length;   // [turns/m]
+    double element_size;            // [m]
+    uint32_t n;                     // number of points
+    double *x, *y, *z;          // [m] location of source points in loop 
+    double *vol;                // [m^3] volume of each source point 
+    double *Jx, *Jy, *Jz;       // [A/m^2] current density vector at each source point
 
-// A line in 3D space drawn along the specified axis
-typedef struct Line {
-    uint32_t n;                 // number of points
-    double *x, *y, *z;          // [m]
-    double *Bx, *By, *Bz;       // [T]
-} Line;
+} DenseSolenoid;
 
-// Create a new line along the specified global axis
-Line *new_line(Axis axis, double start, double end, uint32_t n);
+// Allocate memory for a new DenseSolenoid
+DenseSolenoid *new_dense_solenoid(
+    double inner_radius, double outer_radius, double length, double zcentroid, 
+    double current, double element_size
+);
 
-// Free allocated memory for a Line
-void free_line(Line *line);
+// Deallocate memory for a DenseSolenoid
+void free_dense_solenoid(DenseSolenoid *dense_solenoid);
+
 
 #endif

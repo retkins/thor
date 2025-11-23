@@ -2,7 +2,7 @@ cd(@__DIR__)
 
 
 
-include("../src/thor.jl")
+include("../../src/thor.jl")
 using Printf, Statistics, LinearAlgebra
 
 const N = 1000 

@@ -2,7 +2,7 @@
 """
 
 cd(@__DIR__)
-include("../src/thor.jl")
+include("../../src/thor.jl")
 using Plots, Printf
 
 # Problem parameters
