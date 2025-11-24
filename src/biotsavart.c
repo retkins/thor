@@ -6,6 +6,7 @@
 #include "../include/internal/biotsavart.h"
 #include "../include/internal/octree.h"
 #include "../include/internal/utils.h"
+#include "../include/internal/simd.h"
 
 // --- 
 // Analytical solutions 
@@ -58,6 +59,102 @@ int bfield_direct(
 
         // Inner loop over target pts 
         for (size_t j=0; j<n_targets; j++) {
+            // Calculate r'
+            double rx = x[j] - cx[i];
+            double ry = y[j] - cy[i]; 
+            double rz = z[j] - cz[i]; 
+            double rmag = sqrt(rx*rx + ry*ry + rz*rz);
+            double rmag3 = rmag*rmag*rmag;
+            double inv_rmag3;
+            if (rmag > R) { inv_rmag3 = 1 / rmag3; }
+            else { inv_rmag3 = powf(rmag / R, 3.0); }
+
+            // Calculate cross-product 
+            double jxrpx = Jy[i]*rz - Jz[i]*ry; 
+            double jxrpy = Jz[i]*rx - Jx[i]*rz; 
+            double jxrpz = Jx[i]*ry - Jy[i]*rx;
+
+            // Compute contribution to field 
+            Bx[j] += MU04PI * vol[i] * jxrpx * inv_rmag3;
+            By[j] += MU04PI * vol[i] * jxrpy * inv_rmag3;
+            Bz[j] += MU04PI * vol[i] * jxrpz * inv_rmag3;
+        }
+    }
+
+    return 0;
+}
+
+
+int bfield_direct_simd(
+    const double *restrict cx, const double *restrict cy, const double *restrict cz, 
+    const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
+    size_t n_sources,
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    size_t n_targets,
+    double *restrict Bx, double *restrict By, double *restrict Bz, 
+    int nthreads
+) {
+
+    const double ONE_OVER_FOUR_THIRDS_PI = 1 / (4.0 * PI / 3.0 );
+    const double ONE_THIRD = 1.0/3.0;
+    vpd _MU04PI = setpd(MU04PI);
+
+    // Outer loop over sources
+    // #pragma omp parallel for num_threads(nthreads) schedule(dynamic,1) reduction(+:Bx[:m], By[:m], Bz[:m])
+    for (size_t i=0; i<n_sources; i++) {
+
+        // volume = 4/3 * pi * R^3
+        double R = powf(ONE_OVER_FOUR_THIRDS_PI * vol[i], ONE_THIRD);
+        vpd _R = setpd(R);
+        vpd R3 = mulpd(mulpd(_R, _R), _R);
+
+        // Vector loads before loop 
+        vpd _Jx = setpd(Jx[i]); 
+        vpd _Jy = setpd(Jy[i]); 
+        vpd _Jz = setpd(Jz[i]);
+        vpd _MU04PI_vol = mulpd(_MU04PI, setpd(vol[i]));
+
+        // Inner loop over target pts 
+        // SIMD strides first
+        size_t j=0; 
+        for (; j<n_targets; j+=VLEND) {
+
+            // calculate r' = t[j] - s[i]
+            vpd rx = subpd(loadpd(&x[j]), setpd(cx[i]));
+            vpd ry = subpd(loadpd(&y[j]), setpd(cy[i]));
+            vpd rz = subpd(loadpd(&z[j]), setpd(cz[i]));
+            vpd rmag = mag3pd(rx, ry, rz);
+            vpd rmag3 = mulpd(mulpd(rmag, rmag), rmag);
+
+            // Branchless means of reducing the field inside the element
+            // (graceful singularity handling)
+            vpd outside = invpd(rmag3); 
+            vpd inside = mulpd(rmag3, invpd(R3));
+            vpdu mask = cmpgtpd(rmag, _R); 
+            vpd inv_rmag3 = blendpd(outside, inside, mask);
+
+            // Cross-product 
+            vpd jxrpx = subpd(mulpd(_Jy,rz), mulpd(_Jz,ry));
+            vpd jxrpy = subpd(mulpd(_Jz,rx), mulpd(_Jx,rz));
+            vpd jxrpz = subpd(mulpd(_Jx,ry), mulpd(_Jy,rx));
+
+            // Compute bfield contribution
+            vpd _Bx = mulpd(mulpd(_MU04PI_vol, jxrpx), inv_rmag3);
+            vpd _By = mulpd(mulpd(_MU04PI_vol, jxrpy), inv_rmag3);
+            vpd _Bz = mulpd(mulpd(_MU04PI_vol, jxrpz), inv_rmag3);
+
+            vpd _Bx_old = loadpd(&Bx[j]);
+            vpd _By_old = loadpd(&By[j]);
+            vpd _Bz_old = loadpd(&Bz[j]);
+
+            // Store 
+            storepd(&Bx[j], addpd(_Bx, _Bx_old));
+            storepd(&By[j], addpd(_By, _By_old));
+            storepd(&Bz[j], addpd(_Bz, _Bz_old));
+        }
+        
+        // Scalar fallback to handle remainder
+        for (; j<n_targets; j++) {
             // Calculate r'
             double rx = x[j] - cx[i];
             double ry = y[j] - cy[i]; 

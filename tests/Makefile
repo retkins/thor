@@ -16,7 +16,7 @@ CFILES = ../src/*.c
 # Test current-carrying loop and/or solenoid
 loop:
 	gcc $(CFLAGS) test_loop.c $(CFILES) -o test_loop.o -lm
-	./test_loop.o 100000 100000 1 0.1
+	./test_loop.o 10000 10000 1 0.01
 
 # Test simple solenoid
 solenoid: 
@@ -27,6 +27,11 @@ solenoid:
 dense_solenoid: 
 	gcc $(CFLAGS) test_dense_solenoid.c $(CFILES) -o test_dense_solenoid.o -lm 
 	./test_dense_solenoid.o
+
+# Test direct simd 
+simd: 
+	gcc $(CFLAGS) test_simd.c $(CFILES) -o test_simd.o -lm 
+	./test_simd.o
 
 
 # Use valgrind to check for memory leaks and cache misses

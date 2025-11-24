@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
 
     // Direct summation of all points
     start = clock();
-    bfield_direct(
+    bfield_direct_simd(
         solenoid->x, solenoid->y, solenoid->z, solenoid->vol, 
         solenoid->Jx, solenoid->Jy, solenoid->Jz, n_sources, 
         line_direct->x, line_direct->y, line_direct->z, n_targets, 

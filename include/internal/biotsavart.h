@@ -55,6 +55,18 @@ int bfield_direct(
     int nthreads
 );
 
+
+// Explicit SIMD version of the above
+int bfield_direct_simd(
+    const double *restrict cx, const double *restrict cy, const double *restrict cz, 
+    const double *restrict vol, const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
+    size_t n_sources,
+    const double *restrict x, const double *restrict y, const double *restrict z, 
+    size_t n_targets,
+    double *restrict Bx, double *restrict By, double *restrict Bz, 
+    int nthreads
+);
+
 // Direct integration of the Biot Savart law for point sources and self-fields
 // B = mu0/4pi * vol * J x r' / |r'|^3
 // (generally unused)

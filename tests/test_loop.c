@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
     // Direct summation of all points
     start = clock();
-    bfield_direct(
+    bfield_direct_simd(
         loop->x, loop->y, loop->z, loop->vol, loop->Jx, loop->Jy, loop->Jz, 
         n_sources, line_direct->x, line_direct->y, line_direct->z, n_targets, 
         line_direct->Bx, line_direct->By, line_direct->Bz, 1);

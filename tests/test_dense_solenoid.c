@@ -6,10 +6,10 @@
 const double inner_radius = 0.1; 
 const double outer_radius = 0.2; 
 const double length = 1.0; 
-const double element_size = 0.002; 
+const double element_size = 0.004; 
 const double zcentroid = 0.0; 
 const double current = 1e3; 
-const uint32_t n_targets = 10;
+const uint32_t n_targets = 1000;
 const double phi = 1e-1;
 const double zspan = length/100.0;
 
@@ -33,7 +33,7 @@ int main() {
     printf("Octree calculation time: %f s\n", time_octree);
 
     start = clock();
-    bfield_direct(ds->x, ds->y, ds->z, ds->vol, ds->Jx, ds->Jy, ds->Jz, ds->n, 
+    bfield_direct_simd(ds->x, ds->y, ds->z, ds->vol, ds->Jx, ds->Jy, ds->Jz, ds->n, 
         line_direct->x, line_direct->y, line_direct->z, line_direct->n, 
         line_direct->Bx, line_direct->By, line_direct->Bz, 1);
     end = clock();

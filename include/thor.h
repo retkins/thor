@@ -3,3 +3,4 @@
 #include "internal/utils.h"
 #include "internal/sources.h"
 #include "internal/targets.h"
+#include "internal/simd.h"
