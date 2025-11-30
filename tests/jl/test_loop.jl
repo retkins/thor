@@ -145,7 +145,7 @@ function test_phi_values(phimin=1e-3, phimax=1e-1, phistep=1e-3)
         @printf "Bexact @ min z = %.3f T\n" B_exact[1]
         @printf "Bz @ min z     = %.3f T\n" B_octree[1,3]
         # Check the field in the z-direction (other components are zero)
-        octree_err = abs.(B_octree[:,3] .- B_exact) ./ B_exact
+        octree_err = B_octree[:,3] .- B_exact ./ B_exact
         mean_err[i] = mean(octree_err)
         max_err[i] = maximum(octree_err)
     end

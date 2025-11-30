@@ -307,7 +307,7 @@ int add_points(
 
                 // deal with existing point first 
                 Octant octant = find_octant(*root->point, root);
-                int success = add_node(nodes, root, octant);
+                add_node(nodes, root, octant);
                 root->children[octant]->point = root->point;
                 root->point = NULL;
 
@@ -321,7 +321,7 @@ int add_points(
 
                 if ( root->children[octant] == NULL ) {
                     // octant node has not already been defined, make one
-                    int success = add_node(nodes, root, octant);
+                    add_node(nodes, root, octant);
                     root->children[octant]->point = point; 
                 }
                 else {
@@ -373,9 +373,51 @@ int print_tree_sum(Node *root) {
     return 0;
 }
 
+void bfield_near(Point *point, double x, double y, double z, double *Bx, double *By, double *Bz) {
+    double rx = x - point->x; 
+    double ry = y - point->y; 
+    double rz = z - point->z; 
+    double rmag = sqrt(rx*rx + ry*ry + rz*rz); 
+    if (rmag > 1e-3) {
+        double inv_rmag3 = 1/(rmag*rmag*rmag);
+        double jxrpx = point->vJy*rz - point->vJz*ry; 
+        double jxrpy = point->vJz*rx - point->vJx*rz; 
+        double jxrpz = point->vJx*ry - point->vJy*rx;
+        // Compute contribution to field 
+        *Bx += MU04PI * jxrpx * inv_rmag3;
+        *By += MU04PI * jxrpy * inv_rmag3;
+        *Bz += MU04PI * jxrpz * inv_rmag3;
+    }
+}
+
+
+void bfield_far(Node *node, double rx, double ry, double rz, double rmag, double R, double *Bx, double *By, double *Bz) {
+    // double R = node->halfwidth;
+    double rmag3 = rmag*rmag*rmag;
+    double inv_rmag3;
+
+    // If inside the source radius, correct based on volume of current
+    // density enclosed
+    if (rmag > R) {inv_rmag3 = 1/rmag3;} 
+    else {inv_rmag3 = powf(rmag / R, 3);}
+
+    // Experimental correction determined via numerical integration of a 
+    // cube element (not needed)
+    // inv_rmag3 *= 1.04*cos(node->halfwidth/rmag);
+
+    // Calculate cross-product (J x r')
+    double jxrpx = node->vJy*rz - node->vJz*ry; 
+    double jxrpy = node->vJz*rx - node->vJx*rz; 
+    double jxrpz = node->vJx*ry - node->vJy*rx;
+
+    // Compute contribution to field 
+    *Bx += MU04PI * jxrpx * inv_rmag3;
+    *By += MU04PI * jxrpy * inv_rmag3;
+    *Bz += MU04PI * jxrpz * inv_rmag3;
+}
 
 // Compute the contribution of a node to the B-field at a point (x,y,z)
-int bfield_node_contribution(
+void bfield_node_contribution(
     Node *node, double x, double y, double z, 
     double *Bx, double *By, double *Bz, 
     size_t i, double phi
@@ -385,40 +427,24 @@ int bfield_node_contribution(
     double rz = z - node->cz; 
     double rmag = sqrt(rx*rx + ry*ry + rz*rz);
 
-    double sd = (2*node->halfwidth)/rmag;        // theta < s/d (acceptance)
-    int success = 0;
-    if ((sd > phi) && has_children(node) ) {
+    if ((phi*rmag < 2*node->halfwidth) && has_children(node) ) {
+        // Failed criteria
         for (size_t j=0; j<8; j++) {
             if (node->children[j] != NULL) {
-                success += bfield_node_contribution(node->children[j], x, y, z, Bx, By, Bz, i, phi);
+                bfield_node_contribution(node->children[j], x, y, z, Bx, By, Bz, i, phi);
             }
         }
     }
     else {
         // Biot Savart kernel
         double R = node->halfwidth;
-        double rmag3 = rmag*rmag*rmag;
-        double inv_rmag3;
 
-        // If inside the source radius, correct based on volume of current
-        // density enclosed
-        if (rmag > R) {inv_rmag3 = 1/rmag3;} 
-        else {inv_rmag3 = powf(rmag / R, 3);}
-
-        // Experimental correction determined via numerical integration of a 
-        // cube element (not needed)
-        // inv_rmag3 *= 1.04*cos(node->halfwidth/rmag);
-
-        // Calculate cross-product (J x r')
-        double jxrpx = node->vJy*rz - node->vJz*ry; 
-        double jxrpy = node->vJz*rx - node->vJx*rz; 
-        double jxrpz = node->vJx*ry - node->vJy*rx;
-
-        // Compute contribution to field 
-        Bx[i] += MU04PI * jxrpx * inv_rmag3;
-        By[i] += MU04PI * jxrpy * inv_rmag3;
-        Bz[i] += MU04PI * jxrpz * inv_rmag3;
+        if (node->point != NULL) {
+            bfield_near(node->point, x, y, z, &Bx[i], &By[i], &Bz[i]);
+        }
+        else {
+            bfield_far(node, rx, ry, rz, rmag, R, &Bx[i], &By[i], &Bz[i]);
+        }
+        
     }
-
-    return success;
 }

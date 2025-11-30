@@ -270,7 +270,7 @@ int bfield_octree(
     // at each target point (downwards pass)
     start = clock();
     for (size_t i=0; i<n_targets; i++) {
-        success += bfield_node_contribution(root, x[i], y[i], z[i], Bx, By, Bz, i, phi);
+        bfield_node_contribution(root, x[i], y[i], z[i], Bx, By, Bz, i, phi);
     }
     end = clock(); 
     bfield_calc_time = (double)(end - start)/CLOCKS_PER_SEC;

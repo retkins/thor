@@ -75,7 +75,7 @@ int print_tree_sum(Node *root);
 // `phi` is the angle-opening criteria, which should be <= 0.1 for most applications
 // 
 // This function is meant to be called recursively, starting at the root node of the tree
-int bfield_node_contribution(
+void bfield_node_contribution(
     Node *node, double x, double y, double z, 
     double *Bx, double *By, double *Bz, 
     size_t i, double phi

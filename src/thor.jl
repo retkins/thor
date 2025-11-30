@@ -2,6 +2,8 @@
 """
 
 using Plots, Printf
+previous_dir = pwd()
+cd(@__DIR__)
 thorlib = "../build/thorlib.so"
 
 @enum IntegrationMethod direct=1 octree=2
@@ -82,3 +84,5 @@ function bfield_loop_axis(I::Float64, R::Float64, z::Vector{<:Real})
     return Bz
 
 end
+
+cd(previous_dir)

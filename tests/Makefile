@@ -28,6 +28,11 @@ dense_solenoid:
 	gcc $(CFLAGS) test_dense_solenoid.c $(CFILES) -o test_dense_solenoid.o -lm 
 	./test_dense_solenoid.o
 
+# Test self fieldsdense solenoid 
+dense_self: 
+	gcc $(CFLAGS) test_self_dense_solenoid.c $(CFILES) -o test_self_dense_solenoid.o -lm 
+	./test_self_dense_solenoid.o
+
 # Test direct simd 
 simd: 
 	gcc $(CFLAGS) test_simd.c $(CFILES) -o test_simd.o -lm 

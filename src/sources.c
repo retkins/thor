@@ -197,24 +197,34 @@ DenseSolenoid *new_dense_solenoid(
     DenseSolenoid *ds = calloc(1, sizeof(DenseSolenoid));
 
     if (ds != NULL) {
-        // Determine how many points there are 
-        int nlayers= (int)ceil(length / element_size); 
-        int n_per_area = 0; 
-        int nturns_per_layer = 0;
-        double r = inner_radius;
-        while (r < outer_radius) {
-            n_per_area += (int)ceil(2*PI*r / element_size);
-            r += element_size;
-            nturns_per_layer++;
+
+        // Determine how many layers and how many turns per layer there area
+        int nlayers = (int)ceil(length / element_size); 
+        int nturns_per_layer = (int)ceil((outer_radius - inner_radius) / element_size);
+        
+        // Now step through each turn in a layer to count the number of elements
+        int n_elements_per_layer = 0;
+        int *n_elements_per_radius = malloc(nturns_per_layer*sizeof(int));
+        double r = inner_radius + 0.5*element_size; 
+        double rstep = (outer_radius - inner_radius) / (double)nturns_per_layer;
+
+        for (int i=0; i<nturns_per_layer; i++) {
+            int n_elements = (int)ceil(2*PI*r/element_size); 
+            n_elements_per_layer += n_elements; 
+            n_elements_per_radius[i] = n_elements;
+            r += rstep;
         }
 
-        int n = nlayers* n_per_area;
+        // That was pretty gnarly... 
+
+        // Total number of elements 
+        int n = nlayers * n_elements_per_layer;
         int nturns = nturns_per_layer * nlayers;
 
         ds->inner_radius = inner_radius; ds->outer_radius = outer_radius;
         ds->length = length; ds->zcentroid = zcentroid; ds->current = current; 
         ds->element_size = element_size; ds->n = n;
-        ds->turns_per_unit_length = (double)nturns / length / 2.0;
+        ds->turns_per_unit_length = (double)nturns / length;
 
         ds->x = zeros(n); ds->y = zeros(n); ds->z = zeros(n); ds->vol = zeros(n);
         ds->Jx = zeros(n); ds->Jy = zeros(n); ds->Jz = zeros(n); 
@@ -228,19 +238,21 @@ DenseSolenoid *new_dense_solenoid(
             double element_area = element_size*element_size;
             double element_jdensity = current/element_area;
 
-            double z = zcentroid / 2.0; 
+            double z = zcentroid - length / 2.0; 
             double zstep = length / (double)(nlayers - 1); 
-            double rstep = element_size;
-            int e = 0;  // counter
+
+            int e = 0;  // counter for all elements 
+
             for (int i=0; i<nlayers; i++) {
                 // outer loop over layers 
-                r = inner_radius; 
+
+                double r = inner_radius; 
                 for (int j=0; j<nturns_per_layer; j++) {
                     // middle loop over consecutive radii 
-                    int n_per_radius = (int)ceil(2*PI*r / element_size);
+                    // int n_per_radius = (int)ceil(2*PI*r / element_size);
+                    double theta_step = 2*PI/(double)n_elements_per_radius[j];
                     double theta = 0.0; 
-                    double theta_step = 2*PI / (double)n_per_radius;
-                    for (int k=0; k<n_per_radius; k++) {
+                    for (int k=0; k<n_elements_per_radius[j]; k++) {
                         // inner loop over elements in a radius
                         ds->x[e] = r * cos(theta); 
                         ds->y[e] = r * sin(theta); 

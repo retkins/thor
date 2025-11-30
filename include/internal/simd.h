@@ -19,7 +19,7 @@
 static const int VLENS = 4;
 static const int VLEND = 2; 
 
-// Types: define packed double and packed single precsion floating point vectors
+// Types: define packed double and packed single precision floating point vectors
 // Also define masks for each 
 typedef float32x4_t vps;        // Vector of Packed Single [precision float]
 typedef float64x2_t vpd;        // Vector of Packed Double [precision float]
