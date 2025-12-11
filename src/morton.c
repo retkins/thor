@@ -101,7 +101,7 @@ uint64_t *rand_ints(uint32_t n, uint64_t max) {
 // Print an array of integers to the commande lin
 void print_ints(uint64_t *array, uint32_t n) {
     for (uint32_t i=0; i<n; i++) {
-        printf("%lli ", array[i]);
+        printf("%li ", array[i]);
     }
     printf("\n");
 }
@@ -116,7 +116,7 @@ void test_interleave() {
     printf("Testing interleaving function...");
     if (code == expected_result) { printf("Test PASSED\n"); }
     else { printf("Test FAILED.\n"); }
-    printf("\tMorton code for (%i, %i, %i) = %lli\n", point[0], point[1], point[2], code);
+    printf("\tMorton code for (%i, %i, %i) = %li\n", point[0], point[1], point[2], code);
 }
 
 
@@ -125,7 +125,7 @@ void test_encode(uint32_t L) {
     double point[3] = {0.75, 0.75, 0.75};
     uint64_t code = encode(point, L, bbox); 
     printf("Testing Morton encoding...\n");
-    printf("\tCode = %lli\n", code);
+    printf("\tCode = %li\n", code);
 }
 
 

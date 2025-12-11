@@ -11,7 +11,7 @@ int main() {
     double zcentroid = 0.0;
     double current = 1e3; 
     double turns_per_unit_length = 100.0;
-    double n = 25000;
+    double n = 10000;
     double zspan = 1.0;
 
     Solenoid *solenoid = new_solenoid(radius, length, zcentroid, current, turns_per_unit_length, n);

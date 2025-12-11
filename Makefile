@@ -32,10 +32,10 @@ lib: $(BUILD_DIR)/thorlib.so
 
 # For running the main program (currently not functional)
 all:
-	$(CC) $(CFLAGS) $(CFILES) -lm -o main.o
-	./main.o
-
+	$(CC) $(CFLAGS) $(CFILES) -lm -o main
+	./main
+	
 # Experimenting with some vectorization reports on GCC via homebrew, macos
 macos:
-	gcc-15 $(CFLAGS) $(CFILES) -g -fopenmp -fopt-info-vec-all=vec.log -lm -o main.o
-	./main.o
+	gcc-15 $(CFLAGS) $(CFILES) -g -fopenmp -fopt-info-vec-all=vec.log -lm -o main
+	./main

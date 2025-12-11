@@ -5,7 +5,7 @@
 
 #include "../include/internal/biotsavart.h"
 #include "../include/internal/octree.h"
-#include "../include/internal/utils.h"
+// #include "../include/internal/utils.h"
 #include "../include/internal/simd.h"
 
 // --- 
@@ -117,7 +117,7 @@ int bfield_direct_simd(
         // Inner loop over target pts 
         // SIMD strides first
         size_t j=0; 
-        for (; j<n_targets; j+=VLEND) {
+        for (; j<n_targets-VLEND; j+=VLEND) {
 
             // calculate r' = t[j] - s[i]
             vpd rx = subpd(loadpd(&x[j]), setpd(cx[i]));
@@ -130,8 +130,8 @@ int bfield_direct_simd(
             // (graceful singularity handling)
             vpd outside = invpd(rmag3); 
             vpd inside = mulpd(rmag3, invpd(R3));
-            vpdu mask = cmpgtpd(rmag, _R); 
-            vpd inv_rmag3 = blendpd(outside, inside, mask);
+            vmaskd mask = cmpgtepd(rmag, _R); 
+            vpd inv_rmag3 = blendpd(mask, outside, inside);
 
             // Cross-product 
             vpd jxrpx = subpd(mulpd(_Jy,rz), mulpd(_Jz,ry));

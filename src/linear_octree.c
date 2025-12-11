@@ -1,4 +1,4 @@
-/* Linear dual-tree octree 
+/* Linear dual-tree octree without using morton codes
 */
 
 #include <stdint.h>         // we use uint32_t throughout because we don't need more than 4B elements in the tree...
@@ -21,7 +21,7 @@ typedef struct Targets {
 // an index `i` accesses all of these arrays for info on the same node
 typedef struct SourceOctree {
     uint32_t n; 
-    double size;              // length of the bounding box
+    double size;                // length of the bounding box
     uint32_t *level;            // also defines the size of the grid (grid_size = size/2^level[i])
     double *x, *y, *z;          // centroids of the grid cell (node) in 3D space 
     double *cx, *cy, *cz;       // 'center of mass' of the grid cell (node), weighted by all Sources it contains
@@ -45,6 +45,17 @@ typedef struct TargetOctree {
     uint32_t *next_sibling; 
     uint32_t *leaf_target; 
 } TargetOctree; 
+
+
+// Build a source octree
+SourceOctree build_source_octree(
+    const double *restrict cx, const double *restrict cy, const double *restrict cz, 
+    const double *restrict vol, 
+    const double *restrict Jx, const double *restrict Jy, const double *restrict Jz, 
+    int n
+) {
+
+}
 
 
 

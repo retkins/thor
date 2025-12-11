@@ -392,14 +392,17 @@ void bfield_near(Point *point, double x, double y, double z, double *Bx, double 
 
 
 void bfield_far(Node *node, double rx, double ry, double rz, double rmag, double R, double *Bx, double *By, double *Bz) {
-    // double R = node->halfwidth;
-    double rmag3 = rmag*rmag*rmag;
-    double inv_rmag3;
+
+    // Remove a few divisions and multiplies for some small perf wins
+    double inv_rmag3 = MU04PI / (rmag*rmag*rmag);
+
+    // Removed the inverse calculation below because we're suitably far from the soure
+    // double inv_rmag3;
 
     // If inside the source radius, correct based on volume of current
     // density enclosed
-    if (rmag > R) {inv_rmag3 = 1/rmag3;} 
-    else {inv_rmag3 = powf(rmag / R, 3);}
+    // if (rmag > R) {inv_rmag3 = 1/rmag3;} 
+    // else {inv_rmag3 = powf(rmag / R, 3);}
 
     // Experimental correction determined via numerical integration of a 
     // cube element (not needed)
@@ -411,9 +414,9 @@ void bfield_far(Node *node, double rx, double ry, double rz, double rmag, double
     double jxrpz = node->vJx*ry - node->vJy*rx;
 
     // Compute contribution to field 
-    *Bx += MU04PI * jxrpx * inv_rmag3;
-    *By += MU04PI * jxrpy * inv_rmag3;
-    *Bz += MU04PI * jxrpz * inv_rmag3;
+    *Bx += jxrpx * inv_rmag3;
+    *By += jxrpy * inv_rmag3;
+    *Bz += jxrpz * inv_rmag3;
 }
 
 // Compute the contribution of a node to the B-field at a point (x,y,z)
