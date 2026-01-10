@@ -15,9 +15,10 @@ using Statistics, LinearAlgebra, Printf, Plots
 const MU0_OVER_4PI = 1e-7 
 const MU0 = MU0_OVER_4PI * 4*pi
 
+
 """ Compute the magnetic moment about the centroid of a cluster of points 
 """
-function magnetic_moment(source_pts, vol, current_density) 
+function magnetic_moment(source_pts::Matrix, vol::Vector, current_density::Matrix) 
     rc = mean(source_pts, dims=1)[:]       # centroid of cluster, as a vector
     m = zeros(3) 
     for i in 1:size(source_pts)[1] 
@@ -86,26 +87,26 @@ source_pts = rand(n,3) .- 0.5
 vol = rand(n) .+ 0.01
 current_density = (rand(n,3) .-0.5) .* 1e8
 # current_density[:,2] = 1e8 * rand(n) 
-current_density[:,1] = 1e8 .* (rand(n) .+ 1.0)
-current_density[:,2] = 1e8 .* (rand(n) .+ 1.0)
-current_density[:,3] = 1e8 .* (rand(n) .+ 1.0)
+current_density[:,1] = 1e8 .* (rand(n) .+ 1.0) .* 0.0
+current_density[:,2] = -1e8 .* (rand(n) .+ 1.0)
+current_density[:,3] = 1e8 .* (rand(n) .+ 1.0) .* 0.0
 
 
 # target points at distance 
 m = 100
-theta = [x for x in LinRange(0.001,0.1, m)]
+theta = [x for x in LinRange(0.01,1.0, m)]
 # theta = s / r; s = 1.0 
 target_pts = zeros(m,3)
 target_pts[:,1] .= 1 ./theta
 
 # Solution
+xi = m
 Bdirect = bfield_direct(source_pts, vol, current_density, target_pts)
-@printf "B direct:    (%.6f, %.6f, %.6f) \n" Bdirect[1,1] Bdirect[1,2] Bdirect[1,3]
-
+@printf "B direct:    (%.6f, %.6f, %.6f) \n" Bdirect[xi,1] Bdirect[xi,2] Bdirect[xi,3]
 Bmonopole = bfield_monopole(source_pts, vol, current_density, target_pts)
-@printf "B monopole:  (%.6f, %.6f, %.6f) \n" Bmonopole[1,1] Bmonopole[1,2] Bmonopole[1,3]
+@printf "B monopole:  (%.6f, %.6f, %.6f) \n" Bmonopole[xi,1] Bmonopole[xi,2] Bmonopole[xi,3]
 Bmultipole = bfield_multipole(source_pts, vol, current_density, target_pts) 
-@printf "B multipole: (%.6f, %.6f, %.6f) \n" Bmultipole[1,1] Bmultipole[1,2] Bmultipole[1,3]
+@printf "B multipole: (%.6f, %.6f, %.6f) \n" Bmultipole[xi,1] Bmultipole[xi,2] Bmultipole[xi,3]
 
 merrx = (Bmultipole[:,1] .- Bdirect[:,1]) ./ Bdirect[:,1]
 merry = (Bmultipole[:,2] .- Bdirect[:,2]) ./ Bdirect[:,2]
@@ -114,6 +115,7 @@ perrx = (Bmonopole[:,1] .- Bdirect[:,1]) ./ Bdirect[:,1]
 perry = (Bmonopole[:,2] .- Bdirect[:,2]) ./ Bdirect[:,2]
 perrz = (Bmonopole[:,3] .- Bdirect[:,3]) ./ Bdirect[:,3]
 
+mnorm_errx = zeros(m)
 mnorm_erry = zeros(m)
 mnorm_errz = zeros(m)
 mnorm_err = zeros(m)
@@ -121,7 +123,7 @@ pnorm_erry = zeros(m)
 pnorm_errz = zeros(m)
 pnorm_err = zeros(m)
 for i in 1:m
-    # norm_errx[i] = norm(errx[i])
+    mnorm_errx[i] = norm(merrx[i])
     mnorm_erry[i] = norm(merry[i])
     mnorm_errz[i] = norm(merrz[i])
     mnorm_err[i] = norm([mnorm_erry[i], mnorm_errz[i]])
@@ -130,11 +132,11 @@ for i in 1:m
     pnorm_err[i] = norm([pnorm_erry[i], pnorm_errz[i]])
 end
 @printf "Multipole error at theta = %.3f is \n" theta[1] 
-# @printf "\tx: %.3f %%\n" mnorm_errx[1]*100.0
+@printf "\tx: %.3f %%\n" mnorm_errx[1]*100.0
 @printf "\ty: %.3f %%\n" mnorm_erry[1]*100.0
 @printf "\tz: %.3f %%\n" mnorm_errz[1]*100.0
 @printf "Multipole error at theta = %.3f is \n" theta[end] 
-# @printf "\tx: %.3f %%\n" mnorm_errx[end]*100.0
+@printf "\tx: %.3f %%\n" mnorm_errx[end]*100.0
 @printf "\ty: %.3f %%\n" mnorm_erry[end]*100.0
 @printf "\tz: %.3f %%\n" mnorm_errz[end]*100.0
 # plot(theta, Bmultipole[:,3], label="multipole")
@@ -142,7 +144,18 @@ end
 
 # p = plot(theta,norm_errx, label="x")
 p = plot()
-plot!(p, theta,pnorm_err, label="monopole")
-plot!(p, theta,mnorm_err, label="multipole")
+plot!(p, theta, pnorm_err, label="monopole")
+plot!(p, theta, mnorm_err, label="multipole")
+xlabel!(p, "Theta = s/d")
+ylabel!(p, "Error ")
+display(p) 
+
+p2 = plot() 
+plot!(p2, theta, Bdirect[:,3], label="direct")
+plot!(p2, theta, Bmonopole[:,3], label="monopole")
+plot!(p2, theta, Bmultipole[:,3], label="multipole")
+xlabel!(p2, "Theta = s/d")
+ylabel!(p2, "Magnetic Field (Bz)")
+display(p2)
 # ylims!(p, 0, 0.1)
 # plot(theta, norm_errz)

@@ -14,7 +14,7 @@
 #include "../include/thor.h"
 
 // Constant parameters for the problem
-const double I = 1e3;           // Total current in loop 
+const double I = 1e6;           // Total current in loop 
 const double R = 1.0/(2*PI);    // Radius of loop
 double zspan = 5.0;            // Length of line to calculate results on
 
@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
     // ---
     // Create target points along the z-axis and allocate results arrays
     // --- 
-    double line_start = -zspan/2.0;
-    double line_end = zspan/2.0;
-    Line *line_direct = new_line(Z, line_start, line_end, n_targets);
-    Line *line_octree = new_line(Z, line_start, line_end, n_targets);
+    double line_start = 0.1*R;
+    double line_end = 0.9*R;
+    Line *line_direct = new_line(X, line_start, line_end, n_targets);
+    Line *line_octree = new_line(X, line_start, line_end, n_targets);
     double *Bz_analytical = calloc(n_targets, sizeof(double));
 
     // --- 
@@ -99,10 +99,18 @@ int main(int argc, char *argv[]) {
     printf("RMS error relative to direct:\n");
     printf("Bz octree error: %.3f %%\n", 100*octree_direct_error);
 
-    int j = n_targets/2;
-    printf("Analytical field at z = %.3f: %.3f T\n", line_direct->z[j], Bz_analytical[j]);
-    printf("Direct     field at z = %.3f: %.3f T\n", line_direct->z[j], line_direct->Bz[j]);
-    printf("Octree     field at z = %.3f: %.3f T\n", line_direct->z[j], line_octree->Bz[j]);
+    int j = 0;
+
+    printf("Location: (%.3f, %.3f, %.3f)\n", line_direct->x[j], line_direct->y[j], line_direct->z[j]);
+    printf("Analytical field: %.3f T\n", Bz_analytical[j]);
+    printf("Direct     field: (%.3f, %.3f, %.3f) T\n", line_direct->Bx[j], line_direct->By[j], line_direct->Bz[j]);
+    printf("Octree     field: (%.3f, %.3f, %.3f) T\n", line_octree->Bx[j], line_octree->By[j], line_octree->Bz[j]);
+
+    j = n_targets-1;
+    printf("Location: (%.3f, %.3f, %.3f)\n", line_direct->x[j], line_direct->y[j], line_direct->z[j]);
+    printf("Analytical field: %.3f T\n", Bz_analytical[j]);
+    printf("Direct     field: (%.3f, %.3f, %.3f) T\n", line_direct->Bx[j], line_direct->By[j], line_direct->Bz[j]);
+    printf("Octree     field: (%.3f, %.3f, %.3f) T\n", line_octree->Bx[j], line_octree->By[j], line_octree->Bz[j]);
 
 
     // Ctrl+F gives 11 `calloc()` and 11 `free()` commands in this function
