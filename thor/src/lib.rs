@@ -5,3 +5,5 @@ const MU0: f64 = 4.0*PI*MU0_4PI;
 
 pub mod direct;
 pub mod analytical;
+pub mod io; 
+pub mod errors;
