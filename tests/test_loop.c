@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include <stdint.h>
+#include <stdint.h> 
 #include <stdbool.h>
 #include "../include/thor.h"
 
@@ -19,7 +19,7 @@ const double R = 1.0/(2*PI);    // Radius of loop
 double zspan = 5.0;            // Length of line to calculate results on
 
 // call this function like:
-//  ./test_loop.o NUM_SOURCES NUM_TARGETS NUM_THREADS PHI
+//  ./test_loop NUM_SOURCES NUM_TARGETS NUM_THREADS PHI
 int main(int argc, char *argv[]) {
 
     // ---

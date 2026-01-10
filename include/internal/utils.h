@@ -1,7 +1,9 @@
-#include <stdlib.h>
+
 
 #ifndef UTILS_H 
 #define UTILS_H
+#include <stdlib.h>
+#include <stdint.h>
 
 // Create a random double value in the range (min, max)
 double drand(double min, double max);

@@ -7,7 +7,7 @@
 const double inner_radius = 1.0; 
 const double outer_radius = 1.1; 
 const double length = 1.0; 
-const double element_size = 0.05; 
+const double element_size = 0.015; 
 const double zcentroid = 0.0; 
 const double current = 1e3; 
 
