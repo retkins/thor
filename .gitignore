@@ -2,3 +2,4 @@
 *.log
 scratch
 target
+*.csv

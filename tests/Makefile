@@ -6,7 +6,7 @@
 # Compiler options
 # ---
 
-CFLAGS = -O3 -march=native -Wall
+CFLAGS = -O3 -march=native -Wall -lm
 CFILES = ../src/*.c
 
 # ---
@@ -51,3 +51,8 @@ perftest:
 wire: 
 	gcc $(CFLAGS) test_wire.c ../src/biotsavart.c ../src/octree.c ../src/utils.c -o build/test_wire -lm
 	./build/test_wire
+
+mesh_solenoid: $(CFILES) test_mesh_solenoid.c 
+	mkdir -p build
+	$(CC) $(CFLAGS) $(CFILES) test_mesh_solenoid.c -o mesh_solenoid -lm
+	./mesh_solenoid
