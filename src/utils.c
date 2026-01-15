@@ -72,3 +72,13 @@ double rms_error(double *restrict y, double *restrict x, size_t n) {
     error /= n; 
     return sqrt(error);
 }
+
+static inline void cross(double a1, double a2, double a3, double b1, double b2, double b3, double *c1, double *c2, double *c3) {
+    *c1 = a2*b3 - a3*b2; 
+    *c2 = a3*b1 - a1*b3; 
+    *c3 = a1*b2 - a2*b1; 
+}
+
+static inline double norm(double a1, double a2, double a3) {
+    return fabs(a1*a1 + a2*a2 + a3*a3);
+}

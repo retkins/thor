@@ -6,7 +6,7 @@
 # Compiler options
 # ---
 
-CFLAGS = -O3 -march=native -Wall -lm
+CFLAGS = -O3 -march=native -Wall
 CFILES = ../src/*.c
 
 # ---
@@ -54,5 +54,5 @@ wire:
 
 mesh_solenoid: $(CFILES) test_mesh_solenoid.c 
 	mkdir -p build
-	$(CC) $(CFLAGS) $(CFILES) test_mesh_solenoid.c -o mesh_solenoid -lm
-	./mesh_solenoid
+	$(CC) $(CFLAGS) $(CFILES) test_mesh_solenoid.c -o build/mesh_solenoid -lm
+	./build/mesh_solenoid

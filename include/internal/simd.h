@@ -67,7 +67,7 @@ static inline vpd fmapd(vpd a, vpd b, vpd c) {
 static inline vpd divpd(vpd a, vpd b) {
     return vdivq_f64(a, b);
 }
-__m512
+
 // Take the inverse of `a` 
 static inline vpd invpd(vpd a) {
     return vdivq_f64(vdupq_n_f64(1.0), a);
