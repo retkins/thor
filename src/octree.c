@@ -32,7 +32,9 @@ typedef struct Point {
 // Subdivisions are handled in counterclockwise order, + to -, 
 // i.e. children[0] is +X,+Y,+Z children[1] is -X,+Y,+Z, children[4] is +X,+Y,-Z, etc.
 typedef struct Node {
-    double cx, cy, cz;              // centroid in 3D space
+    double xg, yg, zg;              // centroid in 3D space
+    double xc, yc, zc;
+    // double mux, muy, muz;
     double halfwidth;               // extent; volume of node = (2*halfwidth)^2
     struct Node *children[8];       // null if leaf (no children)
     Point *point;                   // null if node (no point)
@@ -118,7 +120,7 @@ bool has_children(Node *node) {
 // Use the first node in the allocation
 Node *make_root(NodeAllocation *nodes, double cx, double cy, double cz, double span) {
     Node *root = &nodes->nodes[0];
-    root->cx = cx; root->cy = cy; root->cz = cz; root->halfwidth = span; 
+    root->xg = cx; root->yg = cy; root->zg = cz; root->halfwidth = span; 
     for (size_t i=0; i<8; i++) {
         root->children[i] = NULL; 
     }
@@ -178,9 +180,9 @@ NodeAllocation *reallocate_nodes(NodeAllocation *old_allocation, int new_size) {
 
     for (int i=0; i<old_allocation->capacity; i++) {
         // Copy from old to new (slow, painful)
-        new_nodes[i].cx = old_allocation->nodes[i].cx;
-        new_nodes[i].cy = old_allocation->nodes[i].cy;
-        new_nodes[i].cz = old_allocation->nodes[i].cz;
+        new_nodes[i].xg = old_allocation->nodes[i].xg;
+        new_nodes[i].yg = old_allocation->nodes[i].yg;
+        new_nodes[i].zg = old_allocation->nodes[i].zg;
         new_nodes[i].halfwidth = old_allocation->nodes[i].halfwidth;
         for (int j=0; j<8; j++) {
             new_nodes[i].children[j] = old_allocation->nodes[i].children[j];
@@ -211,9 +213,9 @@ int add_node(NodeAllocation *nodes, Node *root, Octant octant) {
 
     node->halfwidth = root->halfwidth/2.0; 
     double cx, cy, cz;
-    double rcx = root->cx; 
-    double rcy = root->cy; 
-    double rcz = root->cz;
+    double rcx = root->xg; 
+    double rcy = root->yg; 
+    double rcz = root->zg;
     double rhw2 = root->halfwidth/2;
 
     switch (octant) {
@@ -237,7 +239,8 @@ int add_node(NodeAllocation *nodes, Node *root, Octant octant) {
             printf("error in add_node()!\n"); break;
     }
 
-    node->cx = cx; node->cy = cy; node->cz = cz; 
+    node->xg = cx; node->yg = cy; node->zg = cz; 
+    node->xc = node->xg; node->yc = node->yg; node->zc = node->zg;
     // child nodes and points already have null pointers from calloc() 
     root->children[octant] = node;
 
@@ -248,7 +251,7 @@ int add_node(NodeAllocation *nodes, Node *root, Octant octant) {
 // where is the point in the node region?
 Octant find_octant(Point point, Node *node) {
     double x = point.x; double y = point.y; double z = point.z;
-    double cx = node->cx; double cy = node->cy; double cz = node->cz;
+    double cx = node->xg; double cy = node->yg; double cz = node->zg;
     // note this does not do a bounds check to see if the point is within the Node region
     if ( (x>=cx) && (y>=cy) && (z>=cz) ) { return NEU; }
     else if ( (x<cx) && (y>=cy) && (z>=cz) ) { return NWU; }
@@ -264,9 +267,9 @@ Octant find_octant(Point point, Node *node) {
 
 // is the point within the node's domain?
 bool check_in_domain(Point point, Node *node) {
-    double dx = fabs(node->cx - point.x);
-    double dy = fabs(node->cy - point.y);
-    double dz = fabs(node->cz - point.z);
+    double dx = fabs(node->xg - point.x);
+    double dy = fabs(node->yg - point.y);
+    double dz = fabs(node->zg - point.z);
 
     // TODO: this will create an error if there's a node on the boundary (?)
     if ( (dx <= node->halfwidth) && (dy <= node->halfwidth) && (dz <= node->halfwidth) ) {
@@ -305,15 +308,22 @@ int add_points(
                 // there are no children but there is an existing point
                 // both the existing and new point need to go into octants
 
-                // deal with existing point first 
-                Octant octant = find_octant(*root->point, root);
-                add_node(nodes, root, octant);
-                root->children[octant]->point = root->point;
+                Point *existing_point = root->point;
                 root->point = NULL;
+
+                // deal with existing point first 
+                Octant existing_octant = find_octant(*existing_point, root);
+                add_node(nodes, root, existing_octant);
+                root->children[existing_octant]->point = existing_point;
 
                 // recursively call this function to deal with the new point
                 // should only execute once
-                add_points(nodes, root, points, npts, i, i+1); 
+                Octant new_octant = find_octant(*point, root);
+                if (root->children[new_octant] == NULL) {
+                    add_node(nodes, root, new_octant);
+                }
+                // add_points(nodes, root, points, npts, i, i+1); 
+                root->children[new_octant]->point = point;
             }
             else {
                 // bin the new point into an octant
@@ -350,6 +360,39 @@ int calculate_moments(Node *root) {
             if (root->children[i] != NULL) {
                 int success = calculate_moments(root->children[i]); 
                 // Now that we've calculated the moments of the child nodes, add them here
+                double root_vj = sqrt(pow(root->vJx, 2) + pow(root->vJy, 2) + pow(root->vJz, 2));
+                double child_vj = sqrt(pow(root->children[i]->vJx, 2) + pow(root->children[i]->vJy, 2) + pow(root->children[i]->vJz, 2));
+                double sum_vj = root_vj + child_vj;
+                if (sum_vj > 1e12) {
+                    root->xc = (root->xc*root_vj + root->children[i]->xc*child_vj)/sum_vj;
+                    root->yc = (root->yc*root_vj + root->children[i]->yc*child_vj)/sum_vj;
+                    root->zc = (root->zc*root_vj + root->children[i]->zc*child_vj)/sum_vj;
+                } 
+                else {
+                    root->xc = root->xg;
+                    root->yc = root->yg;
+                    root->zc = root->zg;
+                }
+
+                // if (fabs(root->vJx + root->children[i]->vJx) > 1e-12) {
+                //     root->xc = (root->xc*root->vJx + root->children[i]->xc*root->children[i]->vJx)/(root->vJx + root->children[i]->vJx);
+                // }
+                // else {
+                //     root->xc = root->xg;
+                // }
+                // if (fabs(root->vJy + root->children[i]->vJy) > 1e-12) {
+                //     root->yc = (root->yc*root->vJy + root->children[i]->yc*root->children[i]->vJy)/(root->vJy + root->children[i]->vJy);
+                // }
+                // else {
+                //     root->yc = root->yg;
+                // }
+                // if (fabs(root->vJz + root->children[i]->vJz) > 1e-12) {
+                //     root->zc = (root->zc*root->vJz + root->children[i]->zc*root->children[i]->vJz)/(root->vJz + root->children[i]->vJz);
+                // }
+                // else {
+                //     root->zc = root->zg;
+                // }
+                
                 root->vJx += root->children[i]->vJx;
                 root->vJy += root->children[i]->vJy;
                 root->vJz += root->children[i]->vJz;  
@@ -362,9 +405,27 @@ int calculate_moments(Node *root) {
             root->vJx += root->point->vJx;
             root->vJy += root->point->vJy;
             root->vJz += root->point->vJz;
+            root->xc = root->point->x; 
+            root->yc = root->point->y; 
+            root->zc = root->point->z;
         }
     }
     return 0;
+}
+
+
+// TBD in work...
+void calculate_dipole_moments(Node *root) {
+
+    // first need to recursively sum the moments for each of the children
+    // but not at the leaf level
+    if (has_children(root)) {
+        for (size_t i=0; i<8; i++) {
+            if (root->children[i] != NULL) {
+                calculate_dipole_moments(root);
+            }
+        }
+    }
 }
 
 
@@ -372,6 +433,7 @@ int print_tree_sum(Node *root) {
     printf("tree sum:  (vJx, vJy, vJz) = (%f, %f, %f)\n", root->vJx, root->vJy, root->vJz);
     return 0;
 }
+
 
 void bfield_near(Point *point, double x, double y, double z, double *Bx, double *By, double *Bz) {
     double rx = x - point->x; 
@@ -425,9 +487,9 @@ void bfield_node_contribution(
     double *Bx, double *By, double *Bz, 
     size_t i, double phi
 ) {
-    double rx = x - node->cx;
-    double ry = y - node->cy; 
-    double rz = z - node->cz; 
+    double rx = x - node->xc;
+    double ry = y - node->yc; 
+    double rz = z - node->zc; 
     double rmag = sqrt(rx*rx + ry*ry + rz*rz);
 
     if ((phi*rmag < 2*node->halfwidth) && has_children(node) ) {

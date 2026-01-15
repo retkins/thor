@@ -29,4 +29,8 @@ double test(double x);
 // RMSE = sqrt(1/N * sum_i( (yi - xi)/xi)^2 )
 double rms_error(double *restrict y, double *restrict x, size_t n);
 
+// In-place cross-product 
+// a x b = c
+static inline void cross(double a1, double a2, double a3, double b1, double b2, double b3, double *c1, double *c2, double *c3);
+static inline double norm(double a1, double a2, double a3);
 #endif

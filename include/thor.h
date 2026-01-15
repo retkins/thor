@@ -4,3 +4,4 @@
 #include "internal/sources.h"
 #include "internal/targets.h"
 #include "internal/simd.h"
+#include "internal/csv.h"
