@@ -5,3 +5,4 @@ target
 *.csv
 *.so
 __pycache__
+.cargo

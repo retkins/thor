@@ -1,0 +1,18 @@
+# Notes for Building the Project
+
+## `.cargo/config.toml`
+
+Should look like this:
+```toml
+[build]
+rustdocflags = [
+    "--html-in-header", 
+    # This must be an abs path:
+    "PATH_TO_PROJECT/thor/src/docs-header.html", 
+]
+rustflags = [
+    "-C", "target-cpu=native"
+]
+```
+
+Note that this is non-portable and therefore is not included in the repo.

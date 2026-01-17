@@ -1,12 +1,18 @@
 use std::f64::consts::PI;
 
-const MU0_4PI: f64 = 1e-7;
-const MU0: f64 = 4.0*PI*MU0_4PI;
+/// Biot-Savart integration constant:  
+/// $$\frac{\mu_0}{4\pi} [H/m]$$
+pub const MU0_4PI: f64 = 1e-7;
+
+/// Magnetic permeability of free space:  
+/// $$\mu_0 = 4\pi \cdot 10^{-7} H/m$$
+pub const MU0: f64 = 4.0*PI*MU0_4PI;
 
 pub mod direct;
 pub mod analytical;
 pub mod io; 
 pub mod errors;
+pub mod sources;
 
 /// Rust computational backend for thor
 /// 
