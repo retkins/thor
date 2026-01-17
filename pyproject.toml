@@ -1,10 +1,17 @@
 [project]
 name = "thor"
 version = "0.1.0"
-description = "Add your description here"
+description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.10.8",
     "numpy>=2.4.1",
 ]
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+module-name = "_thor"

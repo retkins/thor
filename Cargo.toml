@@ -1,6 +1,12 @@
 [package]
 name = "thor"
 version = "0.1.0"
+description = "Approximate Biot-Savart Law integration in near-linear time"
 edition = "2024"
 
 [dependencies]
+pyo3 = "0.27.2"
+
+[lib]
+name = "_thor" 
+crate-type = ["cdylib"]

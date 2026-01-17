@@ -3,3 +3,5 @@
 scratch
 target
 *.csv
+*.so
+__pycache__

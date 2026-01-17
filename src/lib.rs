@@ -7,3 +7,13 @@ pub mod direct;
 pub mod analytical;
 pub mod io; 
 pub mod errors;
+
+#[pyo3::pymodule]
+mod _thor {
+    use pyo3::prelude::*;
+
+    #[pyfunction]
+    fn test(x: f64) -> PyResult<f64> {
+        Ok(2.0*x)
+    }
+}
