@@ -5,8 +5,9 @@ description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "matplotlib>=3.10.8",
+    "matplotlib>=3.10",
     "numpy>=2.4.1",
+    "pytest>=9.0.2",
 ]
 
 [build-system]
@@ -14,4 +15,5 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-module-name = "_thor"
+python-source = "."  
+module-name = "thor._thor" 

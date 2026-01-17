@@ -5,8 +5,9 @@ description = "Approximate Biot-Savart Law integration in near-linear time"
 edition = "2024"
 
 [dependencies]
-pyo3 = "0.27.2"
+numpy = "0.27.1"
+pyo3 = { version = "0.27.2", features = ["extension-module"] }
 
 [lib]
-name = "_thor" 
+name = "thor" 
 crate-type = ["cdylib"]
