@@ -102,6 +102,29 @@ mod tests {
 
     use super::*;
 
+    #[test] 
+    fn test_monopole() {
+        // if the sources are in the same position, this should be a
+        // simple sum 
+        let n: usize = 5;
+        let cx = vec![1.0; n];
+        let cy = vec![2.0; n];
+        let cz = vec![3.0; n];
+        let volumes = vec![1e-3; n];
+        let jx = vec![1e8; n];
+        let jy = vec![0.0; n];
+        let jz = vec![0.0; n];
+        let ((x, y, z), (mx, my, mz)) = monopole((&cx, &cy, &cz), &volumes, (&jx, &jy, &jz));
+
+        assert_eq!(x, cx[0]); 
+        assert_eq!(y, cy[0]); 
+        assert_eq!(z, cz[0]); 
+        let mx_expected: f64 = jx.iter().zip(volumes).map(|(_jx, _v)| _jx*_v).sum();
+        assert_eq!(mx_expected, mx);
+        assert_eq!(0.0, my);
+        assert_eq!(0.0, mz);
+    }
+
     #[test]
     fn test_dipole() {
         let cx = [1.0, 0.0, 2.0, -1.0]; 
