@@ -9,11 +9,23 @@ pub const MU0_4PI: f64 = 1e-7;
 pub const MU0: f64 = 4.0*PI*MU0_4PI;
 
 pub mod vector;
+
+/// Direct Biot-Savart Law integration functions
 pub mod direct;
+
+/// Analytical expressions for the magnetic field under highly specific conditions
 pub mod analytical;
+
+/// Basic read/write file operations
 pub mod io; 
+
+/// Error types for `thor`
 pub mod errors;
+
+/// Expressions for multipole Biot-Savart sources
 pub mod sources;
+
+/// Low-level math expressions
 pub mod math;
 
 /// Compute Morton codes and related functions
@@ -24,7 +36,10 @@ pub mod math;
 /// 1. Grids, etc. are based on a *cube* in 3d space
 pub mod morton;
 
+
+/// Octree build and traversal
+pub mod octree;
+
 /// Python bindings
 #[cfg(feature="python")]
 pub mod python;
-

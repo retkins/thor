@@ -5,7 +5,8 @@
 /// For typical double-precision problems, L=21
 pub fn calculate_scale_factor(L: u32) -> f64 {
     // TODO: should this be `1u << L` or `(1u << L) - 1`
-    (1u32 << L) as f64
+    let factor = (1u32 << L) - 1u32;
+    return factor as f64;
 }
 
 
