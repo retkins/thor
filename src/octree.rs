@@ -1,30 +1,8 @@
-/// Dual tree Barnes-Hut Octree
-///
-/// Used to calculate the effect of M source points on N target points
-/// using the Biot-Savart law for magnetic fields
-///
-/// Each source point has associated volume and current density.
-/// The direct summation algorithm is:
-/// delta_B = mu0/4pi * volume * J x r' / |r'|^3
+
 use crate::morton;
+use crate::math::{min_and_max, sort_by_indices};
 
-
-/// A Morton-encoded source octree
-pub struct SourceOctree {
-    codes: Vec<u64>, // Morton code for each source point
-    xg: Vec<f64>,    // Geometric location of the source point
-    yg: Vec<f64>,
-    zg: Vec<f64>,
-    // size: Vec<f64>,
-    // xc: Vec<f64>,
-    // yc: Vec<f64>,
-    // zc: Vec<f64>,
-    vjx: Vec<f64>, // Current density moment product
-    vjy: Vec<f64>,
-    vjz: Vec<f64>,
-    bbox: Option<BoundingBox>,
-}
-
+/// Determines the location and extent of a collection of source points
 #[derive(Debug)]
 struct BoundingBox {
     xc: f64,
@@ -36,26 +14,6 @@ struct BoundingBox {
     zbounds: (f64, f64),
 }
 
-// Define a custom min/max finding function
-// Returns the bounds of the array (min, max)
-fn min_and_max(arr: &[f64]) -> Option<(f64, f64)> {
-    let mut min: f64 = 0.0;
-    let mut max: f64 = 0.0;
-
-    if arr.len() < 1 {
-        return None;
-    }
-
-    for a in arr.iter() {
-        if *a < min {
-            min = *a;
-        }
-        if *a > max {
-            max = *a;
-        }
-    }
-    Some((min, max))
-}
 
 // Get the maximum side length of a bounding box cube that encloses all x,y,z bounds
 fn side_length_from_bounds(xbounds: (f64, f64), ybounds: (f64, f64), zbounds: (f64, f64)) -> f64 {
@@ -74,6 +32,7 @@ fn side_length_from_bounds(xbounds: (f64, f64), ybounds: (f64, f64), zbounds: (f
     }
 }
 
+
 impl BoundingBox {
     fn from_centroids(centroids: (&[f64], &[f64], &[f64])) -> Option<Self> {
         // TODO: length check
@@ -86,14 +45,12 @@ impl BoundingBox {
             return None;
         }
 
-        let buffer = 1.01; // 1% buffer to ensure all points are within the bounding box
         let (mut xb, mut yb, mut zb) = (xbounds.unwrap(), ybounds.unwrap(), zbounds.unwrap());
-        let mut side_length = side_length_from_bounds(xb, yb, zb);
+        let side_length = side_length_from_bounds(xb, yb, zb);
         let xc: f64 = xb.0 + 0.5 * side_length;
         let yc: f64 = yb.0 + 0.5 * side_length;
         let zc: f64 = zb.0 + 0.5 * side_length;
 
-        // side_length *= buffer;
         xb.0 = xc - 0.5 * side_length;
         xb.1 = xc + 0.5 * side_length;
         yb.0 = yc - 0.5 * side_length;
@@ -113,7 +70,21 @@ impl BoundingBox {
     }
 }
 
-impl SourceOctree {
+
+/// A collection of sources that can be sorted by morton codes
+pub struct Sources {
+    codes: Vec<u64>, // Morton code for each source point
+    xg: Vec<f64>,    // Geometric location of the source point
+    yg: Vec<f64>,
+    zg: Vec<f64>,
+    vjx: Vec<f64>, // Current density moment product
+    vjy: Vec<f64>,
+    vjz: Vec<f64>,
+    bbox: Option<BoundingBox>,
+}
+
+
+impl Sources {
     /// Basic constructor; zeroed with initial size
     pub fn new(n: usize) -> Self {
         Self {
@@ -127,14 +98,16 @@ impl SourceOctree {
             bbox: None,
         }
     }
+
     /// Add source points (elements) to the octree
     ///
     /// Note that this involves a data copy. We're going to be sorting the arrays
     /// and need to own the memory. (?)
-    pub fn from_sources(
+    pub fn from_source_points(
         centroids: (&[f64], &[f64], &[f64]),
         volumes: &[f64],
         jdensity: (&[f64], &[f64], &[f64]),
+        max_depth: u8
     ) -> Option<Self> {
         // TODO: length check on all vectors
         let n: usize = centroids.0.len();
@@ -155,8 +128,7 @@ impl SourceOctree {
         let mut vjy: Vec<f64> = Vec::with_capacity(n);
         let mut vjz: Vec<f64> = Vec::with_capacity(n);
 
-        let max_tree_depth: u32 = 21;
-        let scale: f64 = morton::calculate_scale_factor(max_tree_depth);
+        let scale: f64 = morton::calculate_scale_factor(max_depth as u32);
         let min_corner: (f64, f64, f64) = (bbox.xbounds.0, bbox.ybounds.0, bbox.zbounds.0);
 
         for i in 0..n {
@@ -172,7 +144,7 @@ impl SourceOctree {
             vjz.push(vol * jz[i]);
         }
 
-        return Some(SourceOctree {
+        return Some(Sources {
             codes: codes,
             xg: xg,
             yg: yg,
@@ -207,15 +179,82 @@ impl SourceOctree {
     }
 }
 
-/// Sort a slice `data` using a temporary pre-allocated buffer `scratch`, 
-/// using pre-calculated `indices` for the sort operation
-pub fn sort_by_indices<T>(data: &mut [T], scratch: &mut [T], indices: &[usize]) 
-    where T: Copy { 
-    scratch.copy_from_slice(data);
-    for (i, &idx) in indices.iter().enumerate() {
-        data[i] = scratch[idx];
+
+/// Represents a single node in the octree
+/// 
+/// Contains both geometric and physics data. Future optimizations might break it up.
+pub struct Node {
+    // Tree structure
+    n_children: u8,         
+    first_child: u32,       // we check n_children first; index into the Nodes array
+    level: u8, 
+
+    // Indexes into the sources array 
+    source_start: u32, 
+    source_end: u32,
+
+    // Geometry - this determines the acceptance criteria 
+    center: [f64; 3], 
+    size: f64,
+
+    // Physics
+    centroid: [f64; 3], 
+    vj: [f64; 3]
+}
+
+
+pub struct SourceOctree {
+    max_depth: u8, 
+    // we use sources to build the octree and then do not need it again
+    sources: Sources, 
+    nodes: Vec<Node>, 
+    leaf_threshold: u32
+}
+
+impl SourceOctree {
+
+    /// Construct a new octree using source point definitions
+    pub fn from_source_points(
+        centroids: (&[f64], &[f64], &[f64]),
+        volumes: &[f64],
+        jdensity: (&[f64], &[f64], &[f64]),
+        max_depth: u8
+    ) -> Option<Self> {
+        // TODO: length check
+
+        let n_sources: usize = centroids.0.len(); 
+        let sources = match Sources::from_source_points(centroids, volumes, jdensity, max_depth) {
+            Some(s) => s, 
+            None => {return None}
+        };
+
+        // Memory usage will be significantly more than n_sources, as 
+        // every source point has a leaf node, but this is a good place to start
+        let mut nodes: Vec<Node> = Vec::with_capacity(n_sources);
+        let leaf_threshold: u32 = 32;
+
+        make_nodes(&sources, &mut nodes, leaf_threshold);
+
+        Some(Self {
+            max_depth: max_depth, 
+            sources: sources, 
+            nodes: nodes, 
+            leaf_threshold: leaf_threshold
+        })
     }
 }
+
+
+// Build the tree
+fn make_nodes(sources: &Sources, nodes: &mut Vec<Node>, leaf_threshold: u32) -> Result<(), ()> {
+
+    let n_sources: usize = sources.codes.len(); 
+
+
+    Ok(())
+}   
+
+
 
 #[cfg(test)]
 mod tests {
@@ -233,8 +272,9 @@ mod tests {
         let jx = vec![1e8; n];
         let jy = vec![-1e8; n];
         let jz = vec![2e8; n];
+        let max_depth: u8 = 21;
 
-        let mut tree = SourceOctree::from_sources((&x, &y, &z), &volumes, (&jx, &jy, &jz)).unwrap();
+        let mut tree = Sources::from_source_points((&x, &y, &z), &volumes, (&jx, &jy, &jz), max_depth).unwrap();
 
         println!("Bounding box: {:?}", tree.bbox);
         println!("Max depth: {}", 21);
@@ -266,8 +306,9 @@ mod tests {
         let jx = vec![1e8; n];
         let jy = vec![-1e8; n];
         let jz = vec![2e8; n];
+        let max_depth: u8 = 21;
 
-        let mut tree = SourceOctree::from_sources((&x, &y, &z), &volumes, (&jx, &jy, &jz)).unwrap();
+        let mut tree = Sources::from_source_points((&x, &y, &z), &volumes, (&jx, &jy, &jz), max_depth).unwrap();
 
         println!("Bounding box: {:?}", tree.bbox);
         println!("Max depth: {}", 21);
@@ -286,6 +327,30 @@ mod tests {
             println!("\tCode (decimal): {}", code);
             println!("\tCode (binary):  {:064b}", code);
             println!("\tCode (hex):     0x{:016x}", code);
+        }
+
+    }
+
+    #[test]
+    fn test_tree_build() {
+        let n: usize = 7;
+        let x = vec![0.0, 0.4, 0.9, 0.6, 0.6, 0.1, 1.0];
+        let y = vec![0.0, 0.2, 0.4, 0.6, 0.9, 0.7, 1.0];
+        let z = vec![0.0, 0.6, 0.6, 0.6, 0.6, 0.6, 1.0];
+        let volumes = vec![1e-4; n];
+        let jx = vec![1e8; n];
+        let jy = vec![2e7; n];
+        let jz = vec![3e6; n];
+
+        let max_depth: u8 = 21; 
+
+        let mut tree = SourceOctree::from_source_points((&x, &y, &z), &volumes, (&jx, &jy, &jz), max_depth).unwrap();
+
+        let i: usize = 1;
+        println!("code:\n{:b}", tree.sources.codes[i]);
+        for k in 0..max_depth {
+            let prefix = tree.sources.codes[i] >> (3*(max_depth-k));
+            println!("k = {}, (x,y,z) = ({:.1}, {:.1}, {:.1}), prefix={:03b}", k, x[i], y[i], z[i], prefix);
         }
 
     }

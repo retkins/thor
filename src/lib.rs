@@ -25,7 +25,7 @@ pub mod errors;
 /// Expressions for multipole Biot-Savart sources
 pub mod sources;
 
-/// Low-level math expressions
+/// Low-level math and array operations
 pub mod math;
 
 /// Compute Morton codes and related functions
@@ -37,7 +37,14 @@ pub mod math;
 pub mod morton;
 
 
-/// Octree build and traversal
+/// Dual tree Barnes-Hut Octree
+///
+/// Used to calculate the effect of M source points on N target points
+/// using the Biot-Savart law for magnetic fields
+///
+/// Each source point has associated volume and current density.
+/// The direct summation algorithm is:
+/// delta_B = mu0/4pi * volume * J x r' / |r'|^3
 pub mod octree;
 
 /// Python bindings
