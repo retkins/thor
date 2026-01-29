@@ -11,7 +11,7 @@ pub const MU0: f64 = 4.0*PI*MU0_4PI;
 pub mod vector;
 
 /// Direct Biot-Savart Law integration functions
-pub mod direct;
+pub mod biotsavart;
 
 /// Analytical expressions for the magnetic field under highly specific conditions
 pub mod analytical;

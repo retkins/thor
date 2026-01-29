@@ -75,7 +75,7 @@ pub fn dipole(
     let ((cx, cy, cz), _) = monopole(centroids, volumes, jdensity);
 
     let mut moment: (f64, f64, f64) = (0.0, 0.0, 0.0);
-    let mut rxj: (f64, f64, f64) = (0.0, 0.0, 0.0);
+    let mut rxj = [0.0; 3];
 
     // Compute the position vector 
     for i in 0..n {
@@ -85,10 +85,10 @@ pub fn dipole(
         let jx: f64 = jdensity.0[i]; 
         let jy: f64 = jdensity.1[i]; 
         let jz: f64 = jdensity.2[i]; 
-        cross((rpx, rpy, rpz), (jx, jy, jz), &mut rxj); 
-        moment.0 += rxj.0; 
-        moment.1 += rxj.1; 
-        moment.2 += rxj.2;
+        cross(&[rpx, rpy, rpz], &[jx, jy, jz], &mut rxj); 
+        moment.0 += rxj[0]; 
+        moment.1 += rxj[1]; 
+        moment.2 += rxj[2];
     }
     moment.0 *= 0.5; 
     moment.1 *= 0.5; 
