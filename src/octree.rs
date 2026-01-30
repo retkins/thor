@@ -303,10 +303,10 @@ fn add_node(
         for idx in child_indices {
             if idx < 1 {
                 // Skip empty nodes
-                continue;
+                break;
             }
 
-            let parent_mag: f64 = mag(&parent_vj);
+            let mut parent_mag: f64 = mag(&parent_vj);
 
             match nodes[idx as usize] {
                 Node::Interior { level: _, size: _, children: _, centroid, vj } => {
@@ -332,6 +332,7 @@ fn add_node(
                         for k in 0..3 as usize {
                             parent_vj[k] += vj[k];
                         }
+                        parent_mag = mag(&parent_vj);
                     }
                 }
             }

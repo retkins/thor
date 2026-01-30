@@ -159,7 +159,7 @@ fn bfield_leaf_single(
     vj: &[f64; 3], 
     target: &[f64; 3]
 ) -> [f64; 3] {
-    let r = vec_distance(target, centroid); 
+    let r = vec_distance(centroid, target); 
     let rmag = (r[0]*r[0] + r[1]*r[1] + r[2]*r[2]).sqrt();
     let mut b = [0.0; 3]; 
     if rmag > 1e-4 {
