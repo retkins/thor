@@ -22,4 +22,4 @@ build-backend = "maturin"
 [tool.maturin]
 python-source = "."  
 module-name = "thor._thor" 
-features = ["python"]
+features = ["python", "parallel"]

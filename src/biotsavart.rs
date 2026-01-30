@@ -13,7 +13,7 @@ pub fn bfield_direct(
     jx: &[f64], jy: &[f64], jz: &[f64], 
     x: &[f64], y: &[f64], z: &[f64], 
     Bx: &mut [f64], By: &mut [f64], Bz: &mut [f64], 
-) {
+) -> Result<(), ()>{
 
     // TODO: length checks on input arrays
 
@@ -56,6 +56,7 @@ pub fn bfield_direct(
             *bzj += constant * jxrpz;
         }
     }
+    Ok(())
 }
 
 
@@ -178,7 +179,7 @@ fn bfield_leaf_single(
 }
 
 // Recursively call to compute the contributions of a node and all child nodes at a target point
-fn bfield_node(
+pub fn bfield_node(
     tree: &SourceOctree, 
     current_index: u32, 
     target: &[f64; 3], 
@@ -244,7 +245,7 @@ pub fn bfield_octree(
     x: &[f64], y: &[f64], z: &[f64], 
     Bx: &mut [f64], By: &mut [f64], Bz: &mut [f64], 
     theta: f64, leaf_threshold: u32
-) {
+) -> Result<(), ()> {
     // Build the source octree 
     let max_depth: u8 = 21; 
     let tree = octree::SourceOctree::from_source_points(
@@ -259,7 +260,9 @@ pub fn bfield_octree(
         By[i] += b[1]; 
         Bz[i] += b[2];
     }
+    Ok(())
 }
+
 
 #[cfg(test)]
 mod tests{

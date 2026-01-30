@@ -50,3 +50,7 @@ pub mod octree;
 /// Python bindings
 #[cfg(feature="python")]
 pub mod python;
+
+/// Parallel processing
+#[cfg(feature="parallel")]
+pub mod biotsavart_parallel;

@@ -54,8 +54,31 @@ fn _bfield_direct(
     z: PyReadonlyArray1<f64>,
     mut bx: PyReadwriteArray1<f64>, 
     mut by: PyReadwriteArray1<f64>,
-    mut bz: PyReadwriteArray1<f64>
+    mut bz: PyReadwriteArray1<f64>, 
+    nthreads_requested: u32
 ) -> PyResult<()> {
+
+    #[cfg(feature = "parallel")]
+    if nthreads_requested != 1 {
+        use crate::biotsavart_parallel;
+        biotsavart_parallel::bfield_direct_parallel(
+            centx.as_slice()?, 
+            centy.as_slice()?, 
+            centz.as_slice()?, 
+            vol.as_slice()?, 
+            jx.as_slice()?, 
+            jy.as_slice()?, 
+            jz.as_slice()?, 
+            x.as_slice()?, 
+            y.as_slice()?, 
+            z.as_slice()?, 
+            bx.as_slice_mut()?, 
+            by.as_slice_mut()?, 
+            bz.as_slice_mut()?, 
+            nthreads_requested
+        );
+        return Ok(());
+    }
 
     biotsavart::bfield_direct(
         centx.as_slice()?, 
@@ -92,8 +115,32 @@ fn _bfield_octree(
     mut by: PyReadwriteArray1<f64>,
     mut bz: PyReadwriteArray1<f64>, 
     theta: f64, 
-    leaf_threshold: u32
+    leaf_threshold: u32, 
+    nthreads_requested: u32
 ) -> PyResult<()> {
+
+    #[cfg(feature = "parallel")]
+    if nthreads_requested != 1 {
+        use crate::biotsavart_parallel;
+        biotsavart_parallel::bfield_octree_parallel(
+            centx.as_slice()?, 
+            centy.as_slice()?, 
+            centz.as_slice()?, 
+            vol.as_slice()?, 
+            jx.as_slice()?, 
+            jy.as_slice()?, 
+            jz.as_slice()?, 
+            x.as_slice()?, 
+            y.as_slice()?, 
+            z.as_slice()?, 
+            bx.as_slice_mut()?, 
+            by.as_slice_mut()?, 
+            bz.as_slice_mut()?, 
+            theta, leaf_threshold, 
+            nthreads_requested
+        );
+        return Ok(());
+    }
 
     biotsavart::bfield_octree(
         centx.as_slice()?, 
@@ -113,6 +160,7 @@ fn _bfield_octree(
     );
     Ok(())
 }
+
 
 #[pymodule]
 fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {

@@ -26,8 +26,9 @@ import os
 datafile: str = "ring"
 remesh: bool = True
 theta: float = 0.25
-mesh_size: float = 33           # ~10M interactions; set to 33 for 1e6 interactions
+mesh_size: float = 3           # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 25              # Along the axis
+nthreads = 0
 
 #
 # Generate a mesh from a STEP file
@@ -69,12 +70,12 @@ ntargets = nsources
 
 # Compute magnetic fields
 start = perf_counter()
-bdirect = thor.bfield_direct(centroids, vol, jdensity, targets)
+bdirect = thor.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
 end = perf_counter() 
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, theta=theta, leaf_threshold=1)
+boctree = thor.bfield_octree(centroids, vol, jdensity, targets, theta=theta, nthreads=nthreads)
 end = perf_counter() 
 octree_elapsed = end - start 
 
