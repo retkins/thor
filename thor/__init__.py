@@ -4,7 +4,7 @@
 
 from .biotsavart import bfield_direct, bfield_octree
 from .mesh import mesh_step
-from .test_utils import mean_squared_error, mean_relative_error, mean_absolute_error, smape
+from .test_utils import mean_squared_error, mean_relative_error, smape, make_helmholtz
 
 __all__ = [
     "bfield_direct", 
@@ -12,5 +12,6 @@ __all__ = [
     "mesh_step", 
     "mean_squared_error", 
     "mean_relative_error", 
-    "smape"
+    "smape", 
+    "make_helmholtz"
 ]
