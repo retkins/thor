@@ -1,3 +1,11 @@
+//! Lighting fast magnetic field calculations using octrees and the Barnes-Hut algorithm  
+//! 
+//! This is the Rust API documentation. 
+//! Main documentation, including a theory manual and the Python API, 
+//! is hosted [here](https://freestatelabs.com/thor).
+//! 
+
+
 use std::f64::consts::PI;
 
 /// Biot-Savart integration constant:  

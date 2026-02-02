@@ -14,7 +14,8 @@ for (i, theta) in enumerate(theta_vals):
     boctree = thor.bfield_octree(centroids, vol, jdensity, centroids, theta=theta, leaf_threshold=1)
     bmag_direct = np.linalg.norm(bdirect, axis=1) 
     bmag_octree = np.linalg.norm(boctree, axis=1) 
-    errs[i] = thor.mean_relative_error(bmag_direct, bmag_octree)
+    # errs[i] = thor.mean_relative_error(bmag_direct, bmag_octree)
+    errs[i] = thor.test_utils.smape(bmag_direct, bmag_octree)
 
 print(errs)
 fig, ax = plt.subplots()

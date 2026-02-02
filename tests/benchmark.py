@@ -20,7 +20,7 @@ interactions = np.zeros(nbenches)
 
 for (i, mesh_size) in enumerate(mesh_sizes):
 
-    centroids, vol, jdensity = thor.make_helmholtz(mesh_size)
+    centroids, vol, jdensity = thor.test_utils.make_helmholtz(mesh_size)
     n = centroids.shape[0] 
     interactions[i] = n*n
 

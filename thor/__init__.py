@@ -3,15 +3,13 @@
 
 
 from .biotsavart import bfield_direct, bfield_octree
-from .mesh import mesh_step
-from .test_utils import mean_squared_error, mean_relative_error, smape, make_helmholtz
+from . import mesh
+from . import test_utils
+# import .test_utils as test_utils
 
 __all__ = [
     "bfield_direct", 
     "bfield_octree", 
-    "mesh_step", 
-    "mean_squared_error", 
-    "mean_relative_error", 
-    "smape", 
-    "make_helmholtz"
+    "test_utils", 
+    "mesh"
 ]

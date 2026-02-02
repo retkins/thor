@@ -1,0 +1,19 @@
+site_name: Thor 
+site_url: https://freestatelabs.com/thor
+theme: terminal
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            heading_level: 1
+            show_root_heading: false
+            separate_signature: true
+            show_signature_annotations: true
+
+nav: 
+  - "About thor": index.md
+  - "Tests and Validation": tests-and-validation.md
+  - "Python API": python-api.md
+  - "Rust API": "https://freestatelabs.com/thor/rust-api/thor/index.html"
