@@ -39,7 +39,8 @@ pub fn quantize(normalized_pt: (f64, f64, f64), scale: f64) -> (u32, u32, u32) {
 
 /// Interleave the bits of three integers into a Morton code 
 /// 
-// Reference: https://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
+/// # Reference: 
+/// https://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
 pub fn interleave(quantized_pt: (u32, u32, u32)) -> u64 {
     let mut code: u64 = 0; 
     let (x, y, z) = quantized_pt;

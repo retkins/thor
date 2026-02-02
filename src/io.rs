@@ -1,8 +1,6 @@
 use crate::errors::ThorError;
 use std::{fs::read_to_string, process::Termination};
 
-/// I/O routines 
-
 /// CSV data stored in row-major format
 pub struct CsvData {
     _nrows: usize, 
@@ -11,6 +9,8 @@ pub struct CsvData {
 }
 
 impl CsvData {
+
+    /// Constructor; assign a default capacity
     pub fn new() -> Self {
         let default_capacity: usize = 1000; 
         Self {
@@ -19,8 +19,14 @@ impl CsvData {
             _data: Vec::with_capacity(default_capacity)
         }
     }
+
+    /// Get the number of rows in the file data
     pub fn nrows(&self) -> usize {self._nrows}
+
+    /// Get the number of columns in the file data
     pub fn ncols(&self) -> usize {self._ncols}
+
+    /// Print the file data to stdout
     pub fn print(&self) {
         println!("CSV Data Set of size {} x {}:\n", self.nrows(), self.ncols());
         for i in 0..self.nrows() {

@@ -17,6 +17,17 @@ fn get_nthreads(nthreads_requested: u32) -> usize {
 }
 
 
+/// Calculate magnetic flux density using direct biot-savart law integration
+/// 
+/// This version of the function uses a user-specified number of threads
+/// 
+/// # Arguments 
+/// - `centx`, `centy`, `centz`: (m) locations of source element centroids in 3D space
+/// - `vol`:                     (m^3) volume of each source element 
+/// - `jx`, `jy`, `jz`:          (A/m^2) current density vector of each source element
+/// - `x`, `y`, `z`:             (m) location of each target point
+/// - `bx`, `by`, `bz`:          (T) magnetic flux density at each target point
+/// - `nthreads_requested`:      how many OS threads the calculation should run on
 pub fn bfield_direct_parallel(
     centx: &[f64], centy: &[f64], centz: &[f64],
     vol: &[f64], 
@@ -45,7 +56,7 @@ pub fn bfield_direct_parallel(
     Ok(())
 }
 
-
+// Compute the magnetic field using the octree on a chunk of the inputs
 fn bfield_node_chunk(
     tree: &SourceOctree,
     x: &[f64], 
@@ -69,6 +80,20 @@ fn bfield_node_chunk(
 }
 
 
+/// Calculate magnetic flux density using approximate biot-savart law integration
+/// via the Barnes-Hut (octree) algorithm
+/// 
+/// This version of the function uses a user-specified number of threads
+/// 
+/// # Arguments 
+/// - `centx`, `centy`, `centz`: (m) locations of source element centroids in 3D space
+/// - `vol`:                     (m^3) volume of each source element 
+/// - `jx`, `jy`, `jz`:          (A/m^2) current density vector of each source element
+/// - `x`, `y`, `z`:             (m) location of each target point
+/// - `bx`, `by`, `bz`:          (T) magnetic flux density at each target point
+/// - `theta`:                   Barnes-Hut angle-opening parameter (recommended < 0.5)
+/// - `leaf_threshold`:          number of source points in each leaf (recommended = 1)
+/// - `nthreads_requested`:      how many OS threads the calculation should run on
 pub fn bfield_octree_parallel(
     centx: &[f64], centy: &[f64], centz: &[f64],
     vol: &[f64], 

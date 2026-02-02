@@ -12,8 +12,10 @@ pub fn cross(
     c[2] = a[0]*b[1] - a[1]*b[0];
 }
 
-/// Custom min/max finding function
-/// Returns the bounds of the array (min, max)
+/// Custom min/max finding function  
+/// 
+/// # Returns: 
+/// `(min, max)`: the maximum and minimum values in the slice
 pub fn min_and_max(arr: &[f64]) -> Option<(f64, f64)> {
     let mut min: f64 = 0.0;
     let mut max: f64 = 0.0;
@@ -33,9 +35,12 @@ pub fn min_and_max(arr: &[f64]) -> Option<(f64, f64)> {
     Some((min, max))
 }
 
-
-/// Sort a slice `data` using a temporary pre-allocated buffer `scratch`, 
-/// using pre-calculated `indices` for the sort operation
+/// Sort a slice using pre-computed indices
+/// 
+/// # Arguments:
+/// - `data`:       slice to be sorted
+/// - `scratch`:    pre-allocated buffer
+/// - `indices`:    pre-computed index for each value in `data`
 pub fn sort_by_indices<T>(data: &mut [T], scratch: &mut [T], indices: &[usize]) 
     where T: Copy { 
     scratch.copy_from_slice(data);
@@ -56,7 +61,14 @@ pub fn mag(slice: &[f64]) -> f64 {
 }
 
 
-/// Compute the distance between two points
+/// Compute the distance between two points in 3D space
+/// 
+/// # Arguments 
+/// - `a`: start vector
+/// - `b`: end vector
+/// 
+/// # Returns
+/// magnitude of the distance between the two points
 #[inline(always)]
 pub fn distance(a: &[f64; 3], b: &[f64; 3]) -> f64 {
     mag(&vec_distance(a, b))

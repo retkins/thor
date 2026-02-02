@@ -1,18 +1,26 @@
 #![allow(non_snake_case, unused)]
 
-
 use crate::{MU0_4PI}; 
 use crate::math::{cross, distance, vec_distance};
 use crate::octree;
 use crate::octree::{SourceOctree, Node};
 
 /// Compute the magnetic field at target points (x, y, z) using a direct (O(N^2)) Biot-Savart summation
+/// 
+/// This is the 'scalar' version of this function; i.e. it uses only one thread.
+/// 
+/// # Arguments 
+/// - `centx`, `centy`, `centz`: (m) locations of source element centroids in 3D space
+/// - `vol`:                     (m^3) volume of each source element 
+/// - `jx`, `jy`, `jz`:          (A/m^2) current density vector of each source element
+/// - `x`, `y`, `z`:             (m) location of each target point
+/// - `bx`, `by`, `bz`:          (T) magnetic flux density at each target point
 pub fn bfield_direct(
     centx: &[f64], centy: &[f64], centz: &[f64],
     vol: &[f64], 
     jx: &[f64], jy: &[f64], jz: &[f64], 
     x: &[f64], y: &[f64], z: &[f64], 
-    Bx: &mut [f64], By: &mut [f64], Bz: &mut [f64], 
+    bx: &mut [f64], by: &mut [f64], bz: &mut [f64], 
 ) -> Result<(), ()>{
 
     // TODO: length checks on input arrays
@@ -30,7 +38,7 @@ pub fn bfield_direct(
         let jzi = jz[i];
 
         // Inner loop over target points
-        for (((xj, yj), zj), ((bxj, byj), bzj)) in x.iter().zip(y.iter()).zip(z.iter()).zip(Bx.iter_mut().zip(By.iter_mut()).zip(Bz.iter_mut())) {
+        for (((xj, yj), zj), ((bxj, byj), bzj)) in x.iter().zip(y.iter()).zip(z.iter()).zip(bx.iter_mut().zip(by.iter_mut()).zip(bz.iter_mut())) {
 
             // Vector from the element centroid to the target point: r'
             let rx: f64 = xj - centxi; 
@@ -66,7 +74,7 @@ fn bfield_direct_old(
     vol: &[f64], 
     jx: &[f64], jy: &[f64], jz: &[f64], 
     x: &[f64], y: &[f64], z: &[f64], 
-    Bx: &mut [f64], By: &mut [f64], Bz: &mut [f64], 
+    bx: &mut [f64], by: &mut [f64], bz: &mut [f64], 
 ) {
 
     let m: usize = centx.len();
@@ -96,19 +104,19 @@ fn bfield_direct_old(
             let mask = if r > 1e-4 { 1.0 } else { 0.0 };
             let r3 = r * r * r + (1.0 - mask); // avoid div by zero
             let constant = vol_mu0_4pi * mask / r3;
-            Bx[j] += constant * jxrpx; 
-            By[j] += constant * jxrpy; 
-            Bz[j] += constant * jxrpz;
+            bx[j] += constant * jxrpx; 
+            by[j] += constant * jxrpy; 
+            bz[j] += constant * jxrpz;
         }
     }
 }
 
 
-/// Compute the bfield contributions from a leaf node at a target point 
-/// by directly integrating each source in the leaf
-/// 
-/// A leaf may contain multipole sources
-/// TODO: from testing, leaf node should likely only have one source point
+// Compute the bfield contributions from a leaf node at a target point 
+// by directly integrating each source in the leaf
+//
+// A leaf may contain multipole sources
+// TODO: from testing, leaf node should likely only have one source point
 fn bfield_leaf(
     centroids: (&[f64], &[f64], &[f64]), 
     vj: (&[f64], &[f64], &[f64]), 
@@ -174,11 +182,18 @@ fn bfield_leaf_single(
     else {
         return b;
     }
-
-
 }
 
-// Recursively call to compute the contributions of a node and all child nodes at a target point
+/// Recursively compue the contributions of a node and all child nodes at a target point
+/// 
+/// # Arguments
+/// - `tree`:               the octree to traverse, containing biot-savart sources
+/// - `current_index`:      the current node 
+/// - `target`:             (m) the location in 3D space at which to calculate fields
+/// - `theta`:              Barnes-Hut angle opening parameter
+/// 
+/// # Returns
+/// (T) magnetic flux density at the target point
 pub fn bfield_node(
     tree: &SourceOctree, 
     current_index: u32, 
@@ -238,12 +253,21 @@ pub fn bfield_node(
 }
 
 /// Compute the magnetic field at (x,y,z) using the barnes-hut (octree) method
+/// 
+/// # Arguments 
+/// - `centx`, `centy`, `centz`: (m) locations of source element centroids in 3D space
+/// - `vol`:                     (m^3) volume of each source element 
+/// - `jx`, `jy`, `jz`:          (A/m^2) current density vector of each source element
+/// - `x`, `y`, `z`:             (m) location of each target point
+/// - `bx`, `by`, `bz`:          (T) magnetic flux density at each target point
+/// - `theta`:                   Barnes-Hut angle-opening parameter (recommended < 0.5)
+/// - `leaf_threshold`:          number of source points in each leaf (recommended = 1)
 pub fn bfield_octree(
     centx: &[f64], centy: &[f64], centz: &[f64],
     vol: &[f64], 
     jx: &[f64], jy: &[f64], jz: &[f64], 
     x: &[f64], y: &[f64], z: &[f64], 
-    Bx: &mut [f64], By: &mut [f64], Bz: &mut [f64], 
+    bx: &mut [f64], by: &mut [f64], bz: &mut [f64], 
     theta: f64, leaf_threshold: u32
 ) -> Result<(), ()> {
     // Build the source octree 
@@ -256,9 +280,9 @@ pub fn bfield_octree(
     for i in 0..n {
         let centroid = [x[i], y[i], z[i]];
         let b = bfield_node(&tree, 0, &centroid, theta);
-        Bx[i] += b[0]; 
-        By[i] += b[1]; 
-        Bz[i] += b[2];
+        bx[i] += b[0]; 
+        by[i] += b[1]; 
+        bz[i] += b[2];
     }
     Ok(())
 }
@@ -269,7 +293,5 @@ mod tests{
 
     #[test]
     fn test_direct() {
-        
-
     }
 }

@@ -1,9 +1,8 @@
-//! Lighting fast magnetic field calculations using octrees and the Barnes-Hut algorithm  
+//! Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algorithm  
 //! 
 //! This is the Rust API documentation. 
 //! Main documentation, including a theory manual and the Python API, 
 //! is hosted [here](https://freestatelabs.com/thor).
-//! 
 
 
 use std::f64::consts::PI;
@@ -16,7 +15,10 @@ pub const MU0_4PI: f64 = 1e-7;
 /// $$\mu_0 = 4\pi \cdot 10^{-7} H/m$$
 pub const MU0: f64 = 4.0*PI*MU0_4PI;
 
-/// Direct Biot-Savart Law integration functions
+/// Expressions for multipole Biot-Savart sources
+pub mod sources;
+
+/// Magnetic field calculations
 pub mod biotsavart;
 
 /// Analytical expressions for the magnetic field under highly specific conditions
@@ -27,9 +29,6 @@ pub mod io;
 
 /// Error types for `thor`
 pub mod errors;
-
-/// Expressions for multipole Biot-Savart sources
-pub mod sources;
 
 /// Low-level math and array operations
 pub mod math;
