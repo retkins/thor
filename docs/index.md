@@ -4,6 +4,33 @@ Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algo
 
 ![throughput](figs/benchmarks.png)
 
+## Installation
+
+`thor` is meant to be installed from source from Python projects managed with `uv`:
+```bash
+uv add git+https://git.sr.ht/~freestatelabs/thor
+```
+
+See [Development Notes](#development-notes) below.
+
+### Example
+```python
+import thor 
+
+# Assume the following NumPy arrays are already defined: 
+# centroids: Nx3 element centroid locations
+# vol: N-length, volume of each element 
+# jdensity: Nx3 elemental current-density vectors 
+# targets: Nx3 target point locations in 3D space 
+
+theta = 0.25        # B-H accuracy parameter
+
+# Compute the magnetic flux density at each target
+b = thor.bfield_octree(
+    centroids, vol, jdensity, targets, theta=theta
+)
+```
+
 ## Background
 
 *This is a prototype code and not meant for production applications.*  
@@ -42,8 +69,23 @@ The mean relative error across every element of the source/target mesh is consid
 
 ![Mesh Error](figs/benchmarks_error.png)
 
-### Description of the Algorithm
+## Description of the Algorithm
 TODO.
+
+## Development Notes
+
+`thor` is written in Rust, with Python bindings. It can be used either directly as a dependency to a Rust project or (most commonly) through Python scripts. The program is currently only available as source (no wheels or binaries), so the following tools are required: 
+
+- `cargo` and `rustc`: for managing and compiling the Rust backend
+- `uv`: for managing the Python project
+- `maturin`: for managing the Rust/Python compiling/binding process
+
+### Rust Dependencies 
+
+This code was designed to use a minimum of dependencies. The basic algorithms have zero dependencies, though the following are added as optional for useful features:  
+
+- `rayon`: for efficient multithreading
+- `pyo3` and `numpy`: for generating Python bindings and efficiently passing arrays between Rust and Python
 
 ## License
 GPL. Closed-source forks and distributions are not permitted.
