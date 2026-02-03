@@ -24,11 +24,12 @@ import os
 
 # Runtime parameters
 datafile: str = "ring"
-remesh: bool = True
-theta: float = 0.25
-mesh_size: float = 3           # ~10M interactions; set to 33 for 1e6 interactions
+remesh: bool = False
+theta: float = 0.5
+mesh_size: float = 3         # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 25              # Along the axis
 nthreads = 0
+leaf_threshold = 16
 
 #
 # Generate a mesh from a STEP file
@@ -62,7 +63,7 @@ targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:,2] = np.linspace(-0.2, 0.2, ntargets_axis)
 
 bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, theta=theta)
+boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, theta=theta, leaf_threshold=leaf_threshold)
 
 # Targets are now the source centroids for self fields
 targets = centroids
@@ -75,7 +76,7 @@ end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, theta=theta, nthreads=nthreads)
+boctree = thor.bfield_octree(centroids, vol, jdensity, targets, theta=theta, nthreads=nthreads, leaf_threshold=leaf_threshold)
 end = perf_counter() 
 octree_elapsed = end - start 
 

@@ -235,15 +235,15 @@ pub fn bfield_node(
         },
         // Leaves require direct calculation of contribution from discrete sources
         Node::Leaf { level: _, source_range } => {
-            let (i, _) = (source_range.0 as usize, source_range.1 as usize);
-            // let _b = bfield_leaf(
-            //     (&tree.sources.xg[i..j], &tree.sources.yg[i..j], &tree.sources.zg[i..j]), 
-            //     (&tree.sources.vjx[i..j], &tree.sources.vjy[i..j], &tree.sources.vjz[i..j]), 
-            //     target
-            // );
-            let centroid = [tree.sources.xg[i], tree.sources.yg[i], tree.sources.zg[i]];
-            let vj = [tree.sources.vjx[i], tree.sources.vjy[i], tree.sources.vjz[i]];
-            let _b = bfield_leaf_single(&centroid, &vj, target);
+            let (i, j) = (source_range.0 as usize, source_range.1 as usize);
+            let _b = bfield_leaf(
+                (&tree.sources.xg[i..j], &tree.sources.yg[i..j], &tree.sources.zg[i..j]), 
+                (&tree.sources.vjx[i..j], &tree.sources.vjy[i..j], &tree.sources.vjz[i..j]), 
+                target
+            );
+            // let centroid = [tree.sources.xg[i], tree.sources.yg[i], tree.sources.zg[i]];
+            // let vj = [tree.sources.vjx[i], tree.sources.vjy[i], tree.sources.vjz[i]];
+            // let _b = bfield_leaf_single(&centroid, &vj, target);
             b[0] += _b[0];
             b[1] += _b[1]; 
             b[2] += _b[2];
