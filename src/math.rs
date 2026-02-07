@@ -83,3 +83,32 @@ pub fn vec_distance(a: &[f64; 3], b: &[f64; 3]) -> [f64; 3] {
     }
     vec_dist
 }
+
+
+/// Running average
+/// 
+/// # Arguments 
+/// - `old_quantity`: the number of values that factor into the current average `vector`
+/// - `vector`: represents the current average of a number of values
+/// - `new_number`: number of new values that are being added to the average
+/// - `new_vector`: the average of a number of new values being added to the current average
+/// 
+/// # Modifies:
+///     `vector` with the updated average value of each of its components
+/// 
+/// # Returns:
+///     new number of values that form the average
+pub fn running_average(old_quantity: u32, vector: &mut [f64], new_number: u32, new_vector: &[f64]) -> u32 {
+
+    let n: usize = vector.len(); 
+    assert_eq!(n, new_vector.len());
+
+    let new_quantity: u32 = old_quantity + new_number;
+
+    // Compute the new average of each of the components of the vector 
+    for i in 0..n {
+        vector[i] = (old_quantity as f64 * vector[i] + new_number as f64 * new_vector[i]) / new_quantity as f64;
+    }
+
+    return new_quantity;
+}

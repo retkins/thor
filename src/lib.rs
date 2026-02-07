@@ -42,7 +42,7 @@ pub mod math;
 pub mod morton;
 
 
-/// Dual tree Barnes-Hut Octree
+/// Single-tree Barnes-Hut Octree
 ///
 /// Used to calculate the effect of M source points on N target points
 /// using the Biot-Savart law for magnetic fields
@@ -51,6 +51,9 @@ pub mod morton;
 /// The direct summation algorithm is:
 /// delta_B = mu0/4pi * volume * J x r' / |r'|^3
 pub mod octree;
+
+/// Dual-tree Barnes-Hut
+pub mod dualtree;
 
 /// Python bindings
 #[cfg(feature="python")]

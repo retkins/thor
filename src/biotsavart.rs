@@ -2,8 +2,7 @@
 
 use crate::{MU0_4PI}; 
 use crate::math::{cross, distance, vec_distance};
-use crate::octree;
-use crate::octree::{SourceOctree, Node};
+use crate::octree::{SourceOctree, SourceNode};
 
 /// Compute the magnetic field at target points (x, y, z) using a direct (O(N^2)) Biot-Savart summation
 /// 
@@ -117,7 +116,7 @@ fn bfield_direct_old(
 //
 // A leaf may contain multipole sources
 // TODO: from testing, leaf node should likely only have one source point
-fn bfield_leaf(
+pub fn bfield_leaf(
     centroids: (&[f64], &[f64], &[f64]), 
     vj: (&[f64], &[f64], &[f64]), 
     target: &[f64; 3]
@@ -206,9 +205,9 @@ pub fn bfield_node(
 
     match tree.nodes[current_index as usize] {
 
-        // For interior nodes, we perform the BH acceptance test
+        // For branch nodes, we perform the BH acceptance test
         // if we pass, recursion stops here and we compute the 'super-source' contribution of the node
-        Node::Interior { level: _, size, children, centroid, vj } => {
+        SourceNode::Branch { level: _, size, children, centroid, vj } => {
             let d = distance(&centroid, target);
             if d*theta > size {
                 // Accept node, compute contribution
@@ -234,7 +233,7 @@ pub fn bfield_node(
             }
         },
         // Leaves require direct calculation of contribution from discrete sources
-        Node::Leaf { level: _, source_range } => {
+        SourceNode::Leaf { level: _, source_range, centroid } => {
             let (i, j) = (source_range.0 as usize, source_range.1 as usize);
             let _b = bfield_leaf(
                 (&tree.sources.xg[i..j], &tree.sources.yg[i..j], &tree.sources.zg[i..j]), 
@@ -272,7 +271,7 @@ pub fn bfield_octree(
 ) -> Result<(), ()> {
     // Build the source octree 
     let max_depth: u8 = 21; 
-    let tree = octree::SourceOctree::from_source_points(
+    let tree = SourceOctree::from_source_points(
         (&centx, &centy, &centz), vol, (&jx, &jy, &jz), max_depth, leaf_threshold
     ).unwrap();
     let n = x.len(); 

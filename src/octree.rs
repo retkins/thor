@@ -4,11 +4,11 @@ use crate::math::{min_and_max, sort_by_indices, mag};
 
 /// Determines the location and extent of a collection of source points
 #[derive(Debug)]
-struct BoundingBox {
+pub struct BoundingBox {
     xc: f64,
     yc: f64,
     zc: f64,
-    side_length: f64,
+    pub side_length: f64,
     xbounds: (f64, f64),
     ybounds: (f64, f64),
     zbounds: (f64, f64),
@@ -34,7 +34,7 @@ fn side_length_from_bounds(xbounds: (f64, f64), ybounds: (f64, f64), zbounds: (f
 
 
 impl BoundingBox {
-    fn from_centroids(centroids: (&[f64], &[f64], &[f64])) -> Option<Self> {
+    pub fn from_centroids(centroids: (&[f64], &[f64], &[f64])) -> Option<Self> {
         // TODO: length check
 
         let xbounds: Option<(f64, f64)> = min_and_max(centroids.0);
@@ -61,6 +61,10 @@ impl BoundingBox {
             zbounds: zb,
         })
     }
+
+    pub fn min_corner(&self) -> (f64, f64, f64) {
+        (self.xbounds.0, self.ybounds.0, self.zbounds.0)
+    }
 }
 
 
@@ -73,7 +77,7 @@ pub struct Sources {
     pub vjx: Vec<f64>,      // Current density moment product
     pub vjy: Vec<f64>,
     pub vjz: Vec<f64>,
-    bbox: Option<BoundingBox>,
+    pub bbox: Option<BoundingBox>,
 }
 
 
@@ -114,7 +118,6 @@ impl Sources {
         let (x, y, z) = centroids;
         let (jx, jy, jz) = jdensity;
         let mut codes: Vec<u64> = Vec::with_capacity(n);
-        // let mut xg: Vec<f64> = Vec::with_capacity(n);
         let mut xg = x.to_vec();
         let mut yg = y.to_vec();
         let mut zg = z.to_vec();
@@ -123,7 +126,7 @@ impl Sources {
         let mut vjz: Vec<f64> = Vec::with_capacity(n);
 
         let scale: f64 = morton::calculate_scale_factor(max_depth as u32);
-        let min_corner: (f64, f64, f64) = (bbox.xbounds.0, bbox.ybounds.0, bbox.zbounds.0);
+        let min_corner: (f64, f64, f64) = bbox.min_corner();
 
         for i in 0..n {
             let pt: (f64, f64, f64) = (x[i], y[i], z[i]);
@@ -169,11 +172,22 @@ impl Sources {
         let mut scratch_codes: Vec<u64> = vec![0;self.codes.len()];
         sort_by_indices(&mut self.codes, &mut scratch_codes, &indices);
     }
+
+    /// Get the centroid of a particular Source
+    pub fn centroid(&self, idx: u32) -> [f64; 3] {
+        let i = idx as usize;
+        return [self.xg[i], self.yg[i], self.zg[i]];
+    }
+
+    pub fn vj(&self, idx: u32) -> [f64; 3] {
+        let i = idx as usize; 
+        return [self.vjx[i], self.vjy[i], self.vjz[i]];
+    }
 }
 
 
-pub enum Node {
-    Interior {
+pub enum SourceNode {
+    Branch {
         level: u8, 
         size: f64,              // or maybe f32?
         children: [u32; 8], 
@@ -182,7 +196,8 @@ pub enum Node {
     },
     Leaf {
         level: u8,              // maybe unecessary but harmless
-        source_range: (u32, u32)
+        source_range: (u32, u32), 
+        centroid: [f64; 3]
     }
 }
 
@@ -191,7 +206,7 @@ pub struct SourceOctree {
     max_depth: u8, 
     // we use sources to build the octree and then do not need it again
     pub sources: Sources, 
-    pub nodes: Vec<Node>, 
+    pub nodes: Vec<SourceNode>, 
     leaf_threshold: u32
 }
 
@@ -216,7 +231,7 @@ impl SourceOctree {
 
         // Memory usage will be significantly more than n_sources, as 
         // every source point has a leaf node, but this is a good place to start
-        let mut nodes: Vec<Node> = Vec::with_capacity(n_sources);
+        let mut nodes: Vec<SourceNode> = Vec::with_capacity(n_sources);
 
         let _ = build_tree(&sources, &mut nodes, max_depth, leaf_threshold);
 
@@ -231,7 +246,7 @@ impl SourceOctree {
 
 
 /// Build the octree by making recursive calls to `add_node()`
-fn build_tree(sources: &Sources, nodes: &mut Vec<Node>, max_depth: u8, leaf_threshold: u32) {
+fn build_tree(sources: &Sources, nodes: &mut Vec<SourceNode>, max_depth: u8, leaf_threshold: u32) {
 
     // Recursively build the tree, starting at the beginning and at the root node
     let start: usize = 0; 
@@ -246,7 +261,7 @@ fn build_tree(sources: &Sources, nodes: &mut Vec<Node>, max_depth: u8, leaf_thre
 /// Returns: the index of the node that it created
 fn add_node(
     sources: &Sources,
-    nodes: &mut Vec<Node>,
+    nodes: &mut Vec<SourceNode>,
     max_depth: u8,
     leaf_threshold: u32,
     start: usize,
@@ -258,22 +273,33 @@ fn add_node(
 
     // Create a leaf if the number of sources in the range is small enough (dead-end for recursion)
     if end - start <= leaf_threshold as usize {
+        let mut cx = 0.0; 
+        let mut cy = 0.0; 
+        let mut cz = 0.0;
+        for i in start..end {
+            cx += sources.xg[i]; 
+            cy += sources.yg[i]; 
+            cz += sources.zg[i]; 
+        }
+        cx /= (end - start) as f64;
+        cy /= (end - start) as f64;
+        cz /= (end - start) as f64;
         nodes.push(
             // Do not descend level
-            Node::Leaf { level: level, source_range: (start as u32, end as u32) }
+            SourceNode::Leaf { level: level, source_range: (start as u32, end as u32), centroid: [cx, cy, cz] }
         );
         current_index = nodes.len() - 1;
     } 
 
-    // Otherwise, create an interior node
+    // Otherwise, create an branch node
     else {
         
         // Size of the node (cube side length) for BH acceptance criteria
         let size: f64 = size_at_level(sources.bbox.as_ref().unwrap().side_length, level);
 
-        // Initialize the interior node first, then recursive calls later fill it
+        // Initialize the branch node first, then recursive calls later fill it
         nodes.push(
-            Node::Interior { level: level, size: size, children: [0; 8], centroid: [0.0; 3], vj: [0.0;3] }
+            SourceNode::Branch { level: level, size: size, children: [0; 8], centroid: [0.0; 3], vj: [0.0;3] }
         );
 
         current_index = nodes.len() - 1;            // index of the node just created
@@ -286,7 +312,7 @@ fn add_node(
         while cursor < end {
             // We descend to next level here, hence `level+1`
             // index to sources array
-            let child_end = get_range_in_same_node(sources, level+1, max_depth, cursor);
+            let child_end = get_range_in_same_node(&sources.codes, level+1, max_depth, cursor);
 
             // index in nodes array
             let child_idx = add_node(sources, nodes, max_depth, leaf_threshold, cursor, child_end, level+1);
@@ -309,13 +335,13 @@ fn add_node(
             let mut parent_mag: f64 = mag(&parent_vj);
 
             match nodes[idx as usize] {
-                Node::Interior { level: _, size: _, children: _, centroid, vj } => {
+                SourceNode::Branch { level: _, size: _, children: _, centroid, vj } => {
                     update_centroid(&mut parent_centroid, parent_mag, &centroid, mag(&vj));
                     for k in 0..3 as usize {
                         parent_vj[k] += vj[k];
                     }
                 }, 
-                Node::Leaf { level: _, source_range } => {
+                SourceNode::Leaf { level: _, source_range , centroid} => {
                     for _i in source_range.0..source_range.1  {
                         let i = _i as usize;
                         let centroid = [
@@ -338,7 +364,7 @@ fn add_node(
             }
         }
 
-        if let Node::Interior { children, centroid, vj, ..} = &mut nodes[current_index] {
+        if let SourceNode::Branch { children, centroid, vj, ..} = &mut nodes[current_index] {
             *children = child_indices; 
             *centroid = parent_centroid;
             *vj = parent_vj;
@@ -366,22 +392,22 @@ fn get_prefix(code: u64, max_level: u8, level: u8) -> u64 {
 
 // Get the end index of a range that has the same parent node at the current level
 // Returns the index that has the changed prefix, so an open range [start_index, end_index)
-fn get_range_in_same_node(sources: &Sources, level: u8, max_depth: u8, start_index: usize) -> usize {
-    let n_sources: usize = sources.codes.len(); 
-    let current_prefix: u64 = sources.codes[start_index] >> (3*(max_depth - level));
+pub fn get_range_in_same_node(codes: &[u64], level: u8, max_depth: u8, start_index: usize) -> usize {
+    let n: usize = codes.len(); 
+    let current_prefix: u64 = codes[start_index] >> (3*(max_depth - level));
     
-    for i in start_index..n_sources {
-        let prefix: u64 = get_prefix(sources.codes[i], max_depth, level);
+    for i in start_index..n {
+        let prefix: u64 = get_prefix(codes[i], max_depth, level);
         if prefix != current_prefix {
             return i;
         }
     }
 
-    return n_sources;
+    return n;
 }
 
 
-fn size_at_level(side_length: f64, level: u8) -> f64 {
+pub fn size_at_level(side_length: f64, level: u8) -> f64 {
     side_length / (2f64.powi(level as i32))
 }
 
@@ -482,10 +508,10 @@ mod tests {
 
         for node in &tree.nodes {
             match node {
-                Node::Interior { level, size, children, centroid, vj } => {
-                    println!("INTERIOR on level: {}, size: {}, children: {:?}, centroid: {:?}, vj: {:?}", level, size, children, centroid, vj);
+                SourceNode::Branch { level, size, children, centroid, vj } => {
+                    println!("BRANCH on level: {}, size: {}, children: {:?}, centroid: {:?}, vj: {:?}", level, size, children, centroid, vj);
                 }, 
-                Node::Leaf { level, source_range } => {
+                SourceNode::Leaf { level, source_range, centroid } => {
                     let i = source_range.0 as usize;
                     let (x, y, z) = (tree.sources.xg[i], tree.sources.yg[i], tree.sources.zg[i]);
                     println!("LEAF on level: {}, source range: ({:?}); loc: ({:.1}, {:.1}, {:.1})", level, source_range, x, y, z);
@@ -496,8 +522,8 @@ mod tests {
         let (m_centroid, m_vj) = sources::monopole((&x, &y, &z), &volumes, (&jx, &jy, &jz));
         println!("Monopole approximation: \n\tCentroids: {:?}, vj: {:?}", m_centroid, m_vj);
 
-        let root: &Node = &tree.nodes[0];
-        if let Node::Interior { centroid, vj, ..} = root {
+        let root: &SourceNode = &tree.nodes[0];
+        if let SourceNode::Branch { centroid, vj, ..} = root {
             assert_eq!((centroid[0], centroid[1], centroid[2]), m_centroid);
             // assert_eq!(centroid[1], m_centroid.1);
             // assert_eq!(centroid[2], m_centroid.2);
@@ -530,7 +556,7 @@ mod tests {
         let level: u8 = 1;
         let mut i = 0; 
         while idx < tree.sources.codes.len() {
-            let end_idx = get_range_in_same_node(&tree.sources, level, max_depth, idx); 
+            let end_idx = get_range_in_same_node(&tree.sources.codes, level, max_depth, idx); 
             let count = end_idx - idx; 
             let prefix: u64 = get_prefix(tree.sources.codes[idx], max_depth, level);
             println!("Octant {}: prefix: {:b}, num child nodes: {}", i, prefix, count);

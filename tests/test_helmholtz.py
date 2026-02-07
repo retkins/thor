@@ -24,12 +24,14 @@ import os
 
 # Runtime parameters
 datafile: str = "ring"
-remesh: bool = False
+remesh: bool = True
 theta: float = 0.5
-mesh_size: float = 3         # ~10M interactions; set to 33 for 1e6 interactions
-ntargets_axis: int = 25              # Along the axis
+mesh_size: float = 5         # ~10M interactions; set to 33 for 1e6 interactions
+ntargets_axis: int = 100              # Along the axis
 nthreads = 0
 leaf_threshold = 16
+axis_halfdistance = 0.3
+octree_method = thor.bfield_dualtree
 
 #
 # Generate a mesh from a STEP file
@@ -60,10 +62,10 @@ jdensity[:,1] = jmag*np.cos(phi)
 
 # Setup the targets for the axis accuracy test
 targets_axis = np.zeros((ntargets_axis, 3))
-targets_axis[:,2] = np.linspace(-0.2, 0.2, ntargets_axis)
+targets_axis[:,2] = np.linspace(-axis_halfdistance, axis_halfdistance, ntargets_axis)
 
 bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, theta=theta, leaf_threshold=leaf_threshold)
+boctree_axis = octree_method(centroids, vol, jdensity, targets_axis, leaf_threshold=leaf_threshold)
 
 # Targets are now the source centroids for self fields
 targets = centroids
@@ -76,7 +78,7 @@ end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, theta=theta, nthreads=nthreads, leaf_threshold=leaf_threshold)
+boctree = octree_method(centroids, vol, jdensity, targets, nthreads=nthreads, leaf_threshold=leaf_threshold)
 end = perf_counter() 
 octree_elapsed = end - start 
 
@@ -88,6 +90,8 @@ def total_force_on_coil(jdensity, bfield, vol):
 print("Thor: Helmholtz Coil Test\n---")
 print(f"theta = {theta:.3}")
 print(f"Problem size: {nsources} x {ntargets} ({nsources*ntargets:.3e} interactions)")
+print(f"Using nthreads = {nthreads}")
+print("")
 
 # Compute total force on each coil 
 j_upper, j_lower = np.split(jdensity, 2, axis=0)
@@ -105,8 +109,8 @@ foctree_lower = total_force_on_coil(j_lower, b_octree_lower, vol_lower)
 f_upper_error = np.linalg.norm(foctree_upper - fdirect_upper) / np.linalg.norm(fdirect_upper)
 f_lower_error = np.linalg.norm(foctree_lower - fdirect_lower) / np.linalg.norm(fdirect_lower )
 print("Total force errors:")
-print(f"\tLower: {f_lower_error*100:.2}%")
-print(f"\tUpper: {f_upper_error*100:.2}%")
+print(f"\tLower: {f_lower_error*100:.2f}%")
+print(f"\tUpper: {f_upper_error*100:.2f}%")
 
 print("Bfield at Helmholtz coil center: ")
 i: int = ntargets_axis//2
@@ -118,13 +122,13 @@ print(f"Error at center: {100*err:.3f} %")
 bmag_direct_axis = np.linalg.norm(bdirect_axis, axis=1) 
 bmag_octree_axis = np.linalg.norm(boctree_axis, axis=1)
 err_axis = thor.test_utils.smape(bmag_direct_axis, bmag_octree_axis)
-print(f"Mean error along coil axis (|z| < radius): {err_axis*100:.2}%")
+print(f"Mean error along coil axis (|z| < radius): {err_axis*100:.2f}%")
 
 bmag_direct = np.linalg.norm(bdirect, axis=1) 
 bmag_octree = np.linalg.norm(boctree, axis=1) 
 
 err_mesh = thor.test_utils.smape(bmag_direct, bmag_octree)
-print(f"Mean fields error within the mesh: {err_mesh*100:.2}%")
+print(f"Mean fields error within the mesh: {err_mesh*100:.2f}%")
 
 print("Times: ")
 print(f"Direct solution time: {direct_elapsed*1e3:.3f} ms")
@@ -146,7 +150,13 @@ ax2 = fig2.add_subplot()
 ax2.plot(targets_axis[:,2], axis_error)
 ax2.set_xlabel('z position')
 ax2.set_ylabel('SMAPE')
-fig2.savefig("error.png")
+ax2.legend("lowerright")
+fig2.savefig("tests/error.png")
+
+fig3 = plt.figure() 
+ax3 = fig3.add_subplot() 
+ax3.plot((bmag_octree - bmag_direct) / bmag_direct)
+fig3.savefig("tests/error_mesh.png")
 
 def test_helmholtz():
     assert(err_mesh < 1e-2)
