@@ -5,6 +5,7 @@ use numpy::{PyReadonlyArray1, PyReadwriteArray1};
 
 use crate::biotsavart;
 use crate::dualtree;
+use crate::sources::bfield_hexahedron;
 
 #[pyfunction]
 fn _bfield_direct(
@@ -167,11 +168,31 @@ fn _bfield_dualtree(
     Ok(())
 }
 
+#[pyfunction]
+fn _bfield_hexahedron(
+    nx: PyReadonlyArray1<f64>, 
+    ny: PyReadonlyArray1<f64>, 
+    nz: PyReadonlyArray1<f64>, 
+    jdensity: PyReadonlyArray1<f64>,
+    target: PyReadonlyArray1<f64>
+)-> PyResult<(f64, f64, f64)> {
+
+    let b = bfield_hexahedron(
+    nx.as_slice()?, 
+    ny.as_slice()?,
+    nz.as_slice()?,
+    jdensity.as_slice()?,
+    target.as_slice()?);
+
+    Ok((b[0], b[1], b[2]))
+}
+
 
 #[pymodule]
 fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_bfield_direct, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_octree, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_dualtree, m.clone())?)?;
+    m.add_function(wrap_pyfunction!(_bfield_hexahedron, m.clone())?)?;
     Ok(())
 }

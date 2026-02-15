@@ -2,11 +2,11 @@
 """
 
 
-from numpy import float64, ascontiguousarray, zeros, hstack, newaxis
+from numpy import float64, ascontiguousarray, zeros, hstack, newaxis, array
 from numpy.typing import NDArray
 
 # Create bindings for calculation engine written in Rust
-from ._thor import _bfield_direct, _bfield_octree, _bfield_dualtree
+from ._thor import _bfield_direct, _bfield_octree, _bfield_dualtree, _bfield_hexahedron
 
 # For typing; currently unused
 Nx3Arrray = NDArray[float64]
@@ -165,3 +165,25 @@ def bfield_dualtree(
     )
 
     return hstack((bx[:, newaxis], by[:, newaxis], bz[:, newaxis]))
+
+
+def bfield_hexahedron(
+    nodes: NDArray[float64], 
+    jdensity: NDArray[float64], 
+    target: NDArray[float64]
+) -> NDArray[float64]: 
+    
+    nx = nodes[:,0] 
+    ny = nodes[:,1] 
+    nz = nodes[:,2] 
+
+    b = _bfield_hexahedron(
+        ascontiguousarray(nodes[:,0]), 
+        ascontiguousarray(nodes[:,1]), 
+        ascontiguousarray(nodes[:,2]), 
+        ascontiguousarray(jdensity), 
+        ascontiguousarray(target)
+    )
+
+    return array([b[0], b[1], b[2]])
+
