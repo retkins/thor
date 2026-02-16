@@ -376,7 +376,7 @@ fn add_node(
 
 
 /// Update the parent centroid by weighting each of the axes
-fn update_centroid(parent_centroid: &mut [f64; 3], parent_mag: f64, child_centroid: &[f64;3], child_mag: f64) {
+pub fn update_centroid(parent_centroid: &mut [f64; 3], parent_mag: f64, child_centroid: &[f64;3], child_mag: f64) {
     let total_mag: f64 = parent_mag + child_mag;
     for i in 0..3 as usize {
         parent_centroid[i] = (parent_centroid[i]*parent_mag + child_centroid[i]*child_mag) / total_mag;
@@ -384,7 +384,7 @@ fn update_centroid(parent_centroid: &mut [f64; 3], parent_mag: f64, child_centro
 }
 
 #[inline(always)]
-fn get_prefix(code: u64, max_level: u8, level: u8) -> u64 {
+pub fn get_prefix(code: u64, max_level: u8, level: u8) -> u64 {
     let shift: u64 = 3u64 * (max_level - level) as u64;
     let prefix: u64 = code >> shift;
     return prefix;
