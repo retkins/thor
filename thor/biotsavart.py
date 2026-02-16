@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from ._thor import _bfield_direct, _bfield_octree, _bfield_dualtree, _bfield_hexahedron
 
 # For typing; currently unused
-Nx3Arrray = NDArray[float64]
+Nx3Array = NDArray[float64]
 
 
 def bfield_direct(
