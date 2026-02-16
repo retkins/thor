@@ -51,6 +51,8 @@ pub mod morton;
 /// The direct summation algorithm is:
 /// delta_B = mu0/4pi * volume * J x r' / |r'|^3
 pub mod octree;
+pub mod octree_generic;
+
 
 /// Dual-tree Barnes-Hut
 pub mod dualtree;
