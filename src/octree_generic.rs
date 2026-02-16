@@ -2,8 +2,9 @@
 // Rebuild the octree implementation so that it's generic over different types of sources in the tree
 
 // these will be moved into this file eventually
-use crate::octree::{BoundingBox, size_at_level, get_range_in_same_node, update_centroid};
+use crate::octree::{BoundingBox, size_at_level, get_range_in_same_node};
 use crate::math::{distance, mag, sort_by_indices};
+use crate::vec3::Vec3;
 
 
 pub mod point;
@@ -12,8 +13,8 @@ pub mod tet_element;
 pub trait Sources {
     fn len(&self) -> usize;
     fn bbox(&self) -> &BoundingBox;
-    fn centroid(&self, i: usize) -> [f64; 3];
-    fn moment(&self, i: usize) -> [f64; 3];         // vj for current sources, dipole for dipole sources
+    fn centroid(&self, i: usize) -> Vec3;
+    fn moment(&self, i: usize) -> Vec3;         // vj for current sources, dipole for dipole sources
     fn sort(&mut self, indices: &[usize]);
     fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>);
 }
@@ -23,8 +24,8 @@ pub struct DipoleSources<S>(pub S);     // for magnetic materials
 impl <S: Sources> Sources for DipoleSources<S> {
     fn len(&self) -> usize {self.0.len()}
     fn bbox(&self) -> &BoundingBox {self.0.bbox()}
-    fn centroid(&self, i: usize) -> [f64; 3] {self.0.centroid(i)}
-    fn moment(&self, i: usize) -> [f64; 3] {self.0.moment(i)}
+    fn centroid(&self, i: usize) -> Vec3 {self.0.centroid(i)}
+    fn moment(&self, i: usize) -> Vec3 {self.0.moment(i)}
     fn sort(&mut self, indices: &[usize]) -> () {self.0.sort(indices)}
     fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>) {
         self.0.encode(max_depth)
@@ -36,8 +37,8 @@ pub struct CurrentSources<S>(pub S);    // for current-carrying conductors
 impl <S: Sources> Sources for CurrentSources<S> {
     fn len(&self) -> usize {self.0.len()}
     fn bbox(&self) -> &BoundingBox {self.0.bbox()}
-    fn centroid(&self, i: usize) -> [f64; 3] {self.0.centroid(i)}
-    fn moment(&self, i: usize) -> [f64; 3] {self.0.moment(i)}
+    fn centroid(&self, i: usize) -> Vec3 {self.0.centroid(i)}
+    fn moment(&self, i: usize) -> Vec3 {self.0.moment(i)}
     fn sort(&mut self, indices: &[usize]) -> () {self.0.sort(indices)}
     fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>) {
         self.0.encode(max_depth)
@@ -45,8 +46,8 @@ impl <S: Sources> Sources for CurrentSources<S> {
 }
 
 pub trait HFieldSolver {
-    fn h_field_branch(&self, centroid: &[f64;3], moment: &[f64;3], target: &[f64;3]) -> [f64;3];
-    fn h_field_leaf(&self, start: usize, end: usize, target: &[f64;3]) -> [f64;3];
+    fn h_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> Vec3;
+    fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3;
 }
 
 pub trait DipoleHFieldSolver {
@@ -67,13 +68,22 @@ pub enum Node {
         level: u8, 
         size: f64,              // or maybe f32?
         children: [u32; 8], 
-        centroid: [f64; 3],     // of the cluster of sources it represents
-        moment: [f64; 3],           
+        centroid: Vec3,     // of the cluster of sources it represents
+        moment: Vec3,           
     },
     Leaf {
         level: u8,              // maybe unecessary but harmless
         source_range: (u32, u32), 
-        centroid: [f64; 3]
+        centroid: Vec3
+    }
+}
+
+
+// Copied from the original implementation
+fn update_centroid(parent_centroid: &mut Vec3, parent_mag: f64, child_centroid: &Vec3, child_mag: f64) {
+    let total_mag: f64 = parent_mag + child_mag;
+    for i in 0..3 as usize {
+        parent_centroid[i] = (parent_centroid[i]*parent_mag + child_centroid[i]*child_mag) / total_mag;
     }
 }
 
@@ -100,21 +110,16 @@ fn add_node<S: Sources>(
 
     // Create a leaf if the number of sources in the range is small enough (dead-end for recursion)
     if end - start <= leaf_threshold as usize {
-        let mut cx = 0.0; 
-        let mut cy = 0.0; 
-        let mut cz = 0.0;
+        let mut centroid: Vec3 = Vec3([0.0;3]);
         for i in start..end {
-            let cent = sources.centroid(i);
-            cx += cent[0]; 
-            cy += cent[1];
-            cz += cent[2];
+            centroid += sources.centroid(i);
         }
-        cx /= (end - start) as f64;
-        cy /= (end - start) as f64;
-        cz /= (end - start) as f64;
+
+        let scale = 1.0 / ((end - start) as f64);
+        centroid *= scale;
         nodes.push(
             // Do not descend level
-            Node::Leaf { level: level, source_range: (start as u32, end as u32), centroid: [cx, cy, cz] }
+            Node::Leaf { level: level, source_range: (start as u32, end as u32), centroid: centroid }
         );
         current_index = nodes.len() - 1;
     } 
@@ -127,7 +132,7 @@ fn add_node<S: Sources>(
 
         // Initialize the branch node first, then recursive calls later fill it
         nodes.push(
-            Node::Branch { level: level, size: size, children: [0; 8], centroid: [0.0; 3], moment: [0.0;3] }
+            Node::Branch { level: level, size: size, children: [0; 8], centroid: Vec3([0.0; 3]), moment: Vec3([0.0; 3]) }
         );
 
         current_index = nodes.len() - 1;            // index of the node just created
@@ -152,8 +157,8 @@ fn add_node<S: Sources>(
 
         // Update the previously-initialized node with indices to its children
         // and the volume current density product 
-        let mut parent_centroid: [f64; 3] = [0.0; 3];
-        let mut parent_moment: [f64; 3] = [0.0; 3];
+        let mut parent_centroid: Vec3 = Vec3([0.0; 3]);
+        let mut parent_moment: Vec3 = Vec3([0.0; 3]);
         
         for idx in child_indices {
             if idx < 1 {
@@ -161,11 +166,11 @@ fn add_node<S: Sources>(
                 break;
             }
 
-            let mut parent_mag: f64 = mag(&parent_moment);
+            let mut parent_mag: f64 = parent_moment.mag();
 
             match nodes[idx as usize] {
                 Node::Branch { level: _, size: _, children: _, centroid, moment } => {
-                    update_centroid(&mut parent_centroid, parent_mag, &centroid, mag(&moment));
+                    update_centroid(&mut parent_centroid, parent_mag, &centroid, moment.mag());
                     for k in 0..3 as usize {
                         parent_moment[k] += moment[k];
                     }
@@ -180,7 +185,7 @@ fn add_node<S: Sources>(
                         for k in 0..3 as usize {
                             parent_moment[k] += moment[k];
                         }
-                        parent_mag = mag(&parent_moment);
+                        parent_mag = parent_moment.mag();
                     }
                 }
             }
@@ -235,13 +240,13 @@ impl <S: Sources> Octree<S> {
 impl <S: HFieldSolver> Octree<S> {
 
     // Recursively traverse the tree to compute the h-field at a single target from all nodes
-    fn h_traverse(&self, idx: u32, target: &[f64; 3], theta: f64) -> [f64; 3] {
+    fn h_traverse(&self, idx: u32, target: &Vec3, theta: f64) -> Vec3 {
 
-        let mut h = [0.0; 3]; 
+        let mut h = Vec3([0.0; 3]); 
 
         match &self.nodes[idx as usize] {
             Node::Branch { level, size, children, centroid, moment } => {
-                let d = distance(centroid, target);
+                let d = (*target - *centroid).mag();
                 if d*theta > *size {
                     // Node accepted
                     h = self.sources.h_field_branch(centroid, moment, target);
@@ -278,7 +283,7 @@ impl <S: HFieldSolver> Octree<S> {
         let n = targets.0.len();
 
         for i in 0..n {
-            let target = [targets.0[i], targets.1[i], targets.2[i]];
+            let target = Vec3::from_slice_tuple(targets, i);
             let idx = 0;
             let _h = self.h_traverse ( idx, &target,  theta);
             h.0[i] += _h[0]; 
@@ -293,7 +298,7 @@ impl <S: HFieldSolver> Octree<S> {
 
 impl <S: GradHFieldSolver> Octree<S> {
     // need to figure out proper layout for gradh, should it be 9 mutable slices? or something like:
-    // gradh: &mut [[[f64; 3]; 3]]
+    // gradh: &mut [[Vec3; 3]]
     // perhaps it needs its own type?
     fn gradh_field(&self, targets: (&[f64], &[f64], &[f64]), gradh: (&mut [f64], &mut [f64], &mut [f64])) -> () {}
 }

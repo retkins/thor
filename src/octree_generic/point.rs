@@ -1,9 +1,10 @@
 
 use crate::octree::BoundingBox;
 use crate::octree_generic::{
-    Sources, HFieldSolver, CurrentSources
+    CurrentSources, DipoleSources, HFieldSolver, Sources
 };
-use crate::sources::h_point;
+use crate::vec3::Vec3;
+use crate::sources::{h_point, h_point_dipole};
 use crate::math::sort_by_indices;
 use crate::morton;
 use std::f64::consts::PI;
@@ -50,12 +51,12 @@ impl Sources for PointSources {
         self.xg.len()
     }
 
-    fn centroid(&self, i: usize) -> [f64; 3] {
-        [self.xg[i], self.yg[i], self.zg[i]]
+    fn centroid(&self, i: usize) -> Vec3 {
+        Vec3([self.xg[i], self.yg[i], self.zg[i]])
     }
 
-    fn moment(&self, i: usize) -> [f64; 3] {
-        [self.vjx[i], self.vjy[i], self.vjz[i]]
+    fn moment(&self, i: usize) -> Vec3 {
+        Vec3([self.vjx[i], self.vjy[i], self.vjz[i]])
     }
 
     fn sort(&mut self, indices: &[usize]) {
@@ -91,21 +92,36 @@ impl Sources for PointSources {
 }
 
 impl HFieldSolver for CurrentSources<PointSources> {
-    fn h_field_branch(&self, centroid: &[f64;3], vj: &[f64;3], target: &[f64;3]) -> [f64;3] {
+    fn h_field_branch(&self, centroid: &Vec3, vj: &Vec3, target: &Vec3) -> Vec3 {
         let radius = 0.0;
         h_point(centroid, vj, radius, target)
     }
 
-    fn h_field_leaf(&self, start: usize, end: usize, target: &[f64;3]) -> [f64;3] {
-        let mut h = [0.0; 3]; 
-
+    fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3 {
+        let mut h = Vec3([0.0; 3]);
         for i in start..end {
-            let centroid = [self.0.xg[i], self.0.yg[i], self.0.zg[i]];
-            let vj = [self.0.vjx[i], self.0.vjy[i], self.0.vjz[i]];
-            let _h = h_point(&centroid, &vj, self.0.r[i], target);
-            h[0] += _h[0]; 
-            h[1] += _h[1]; 
-            h[2] += _h[2];
+            let centroid = Vec3::from_slice_tuple((&self.0.xg, &self.0.yg, &self.0.zg), i);
+            let vj =Vec3::from_slice_tuple((&self.0.vjx, &self.0.vjy, &self.0.vjz), i);
+            h += h_point(&centroid, &vj, self.0.r[i], target);
+
+        }
+        h
+    }
+}
+
+
+impl HFieldSolver for DipoleSources<PointSources> {
+    fn h_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> Vec3 {
+        let radius = 0.0;   // far-field
+        h_point_dipole(centroid, moment, radius, target)
+    }
+
+    fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3 {
+        let mut h = Vec3([0.0;3]);
+        for i in start..end {
+            let centroid = Vec3::from_slice_tuple((&self.0.xg, &self.0.yg, &self.0.zg), i);
+            let moment = Vec3::from_slice_tuple((&self.0.vjx, &self.0.vjy, &self.0.vjz), i);
+            h += h_point_dipole(&centroid, &moment, self.0.r[i], target);
         }
         h
     }

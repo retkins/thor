@@ -33,6 +33,9 @@ pub mod errors;
 /// Low-level math and array operations
 pub mod math;
 
+/// Define a 3-length vector type for math operations
+pub mod vec3;
+
 /// Compute Morton codes and related functions
 /// 
 /// These are generally taken from previous work on the C implementation
