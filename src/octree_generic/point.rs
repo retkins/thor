@@ -21,11 +21,11 @@ pub struct PointSources {
 }
 
 impl PointSources {
-    fn new(x: &[f64], y: &[f64], z: &[f64], vol: &[f64], jx: &[f64], jy: &[f64], jz: &[f64]) -> Self {
+    pub fn new(x: &[f64], y: &[f64], z: &[f64], vol: &[f64], jx: &[f64], jy: &[f64], jz: &[f64]) -> Self {
         let n = x.len();
-        let xg: Vec<f64> = x.clone().into();
-        let yg: Vec<f64> = y.clone().into();
-        let zg: Vec<f64> = x.clone().into();
+        let xg: Vec<f64> = x.to_vec();
+        let yg: Vec<f64> = y.to_vec();
+        let zg: Vec<f64> = z.to_vec();
         let mut r  = vec![0.0; n];
         let mut vjx  = vec![0.0; n];
         let mut vjy  = vec![0.0; n];

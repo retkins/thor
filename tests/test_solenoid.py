@@ -25,6 +25,7 @@ remesh: bool = True
 theta: float = 0.25
 mesh_size: float = 25                 # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 25              # Along the axis
+nthreads: int = 1
 
 #
 # Generate a mesh from a STEP file
@@ -59,7 +60,7 @@ targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:,2] = np.linspace(-0.125, 0.125, ntargets_axis)
 
 bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, theta=theta)
+boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads,theta=theta)
 
 #
 # Solve for self-fields
@@ -74,7 +75,7 @@ end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, theta=theta)
+boctree = thor.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads,theta=theta)
 end = perf_counter() 
 octree_elapsed = end - start 
 

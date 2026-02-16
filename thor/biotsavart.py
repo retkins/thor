@@ -2,7 +2,7 @@
 """
 
 
-from numpy import float64, ascontiguousarray, zeros, hstack, newaxis, array
+from numpy import float64, ascontiguousarray, zeros, hstack, newaxis, array, pi
 from numpy.typing import NDArray
 
 # Create bindings for calculation engine written in Rust
@@ -109,7 +109,7 @@ def bfield_octree(
         nthreads
     )
 
-    return hstack((bx[:, newaxis], by[:, newaxis], bz[:, newaxis]))
+    return (4*pi*10**-7)*hstack((bx[:, newaxis], by[:, newaxis], bz[:, newaxis]))
 
 def bfield_dualtree(
     centroids: NDArray[float64], 

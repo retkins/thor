@@ -26,12 +26,11 @@ import os
 datafile: str = "ring"
 remesh: bool = True
 theta: float = 0.5
-mesh_size: float = 5         # ~10M interactions; set to 33 for 1e6 interactions
+mesh_size: float = 15         # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 100              # Along the axis
-nthreads = 0
-leaf_threshold = 16
+nthreads = 1
+leaf_threshold = 1
 axis_halfdistance = 0.3
-octree_method = thor.bfield_dualtree
 
 #
 # Generate a mesh from a STEP file
@@ -60,16 +59,23 @@ phi = np.atan2(centroids[:,1], centroids[:,0])
 jdensity[:,0] = -jmag*np.sin(phi)
 jdensity[:,1] = jmag*np.cos(phi)
 
+
 # Setup the targets for the axis accuracy test
 targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:,2] = np.linspace(-axis_halfdistance, axis_halfdistance, ntargets_axis)
 
 bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = octree_method(centroids, vol, jdensity, targets_axis, leaf_threshold=leaf_threshold)
+boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta,leaf_threshold=leaf_threshold)
 
 # Targets are now the source centroids for self fields
 targets = centroids
 ntargets = nsources
+
+print("Thor: Helmholtz Coil Test\n---")
+print(f"theta = {theta:.3}")
+print(f"Problem size: {nsources} x {ntargets} ({nsources*ntargets:.3e} interactions)")
+print(f"Using nthreads = {nthreads}")
+print("")
 
 # Compute magnetic fields
 start = perf_counter()
@@ -78,7 +84,7 @@ end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = octree_method(centroids, vol, jdensity, targets, nthreads=nthreads, leaf_threshold=leaf_threshold)
+boctree = thor.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta,leaf_threshold=leaf_threshold)
 end = perf_counter() 
 octree_elapsed = end - start 
 
@@ -87,11 +93,7 @@ def total_force_on_coil(jdensity, bfield, vol):
     return np.sum(fdensity*vol[:,np.newaxis], axis=0)
 
 
-print("Thor: Helmholtz Coil Test\n---")
-print(f"theta = {theta:.3}")
-print(f"Problem size: {nsources} x {ntargets} ({nsources*ntargets:.3e} interactions)")
-print(f"Using nthreads = {nthreads}")
-print("")
+
 
 # Compute total force on each coil 
 j_upper, j_lower = np.split(jdensity, 2, axis=0)

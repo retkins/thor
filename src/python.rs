@@ -109,7 +109,8 @@ fn _bfield_octree(
         return Ok(());
     }
 
-    biotsavart::bfield_octree(
+    use crate::octree_generic::{Octree, point, HFieldSolver, CurrentSources};
+    let mut sources: CurrentSources<point::PointSources>= CurrentSources(point::PointSources::new(
         centx.as_slice()?, 
         centy.as_slice()?, 
         centz.as_slice()?, 
@@ -117,14 +118,37 @@ fn _bfield_octree(
         jx.as_slice()?, 
         jy.as_slice()?, 
         jz.as_slice()?, 
-        x.as_slice()?, 
+    ));
+    let tree: Octree<CurrentSources<point::PointSources>>= Octree::build_from_sources(sources);
+
+    tree.h_field(
+        (x.as_slice()?, 
         y.as_slice()?, 
-        z.as_slice()?, 
-        bx.as_slice_mut()?, 
+        z.as_slice()?), 
+        (bx.as_slice_mut()?, 
         by.as_slice_mut()?, 
-        bz.as_slice_mut()?, 
-        theta, leaf_threshold
+        bz.as_slice_mut()?), 
+        theta,
     );
+
+    // original version:
+    //
+    // biotsavart::bfield_octree(
+    //     centx.as_slice()?, 
+    //     centy.as_slice()?, 
+    //     centz.as_slice()?, 
+    //     vol.as_slice()?, 
+    //     jx.as_slice()?, 
+    //     jy.as_slice()?, 
+    //     jz.as_slice()?, 
+    //     x.as_slice()?, 
+    //     y.as_slice()?, 
+    //     z.as_slice()?, 
+    //     bx.as_slice_mut()?, 
+    //     by.as_slice_mut()?, 
+    //     bz.as_slice_mut()?, 
+    //     theta, leaf_threshold
+    // );
     Ok(())
 }
 

@@ -3,7 +3,7 @@
 
 // these will be moved into this file eventually
 use crate::octree::{BoundingBox, size_at_level, get_range_in_same_node, update_centroid};
-use crate::math::{mag};
+use crate::math::{distance, mag, sort_by_indices};
 
 
 pub mod point;
@@ -20,10 +20,32 @@ pub trait Sources {
 
 pub struct DipoleSources<S>(pub S);     // for magnetic materials
 
+impl <S: Sources> Sources for DipoleSources<S> {
+    fn len(&self) -> usize {self.0.len()}
+    fn bbox(&self) -> &BoundingBox {self.0.bbox()}
+    fn centroid(&self, i: usize) -> [f64; 3] {self.0.centroid(i)}
+    fn moment(&self, i: usize) -> [f64; 3] {self.0.moment(i)}
+    fn sort(&mut self, indices: &[usize]) -> () {self.0.sort(indices)}
+    fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>) {
+        self.0.encode(max_depth)
+    }
+}
+
 pub struct CurrentSources<S>(pub S);    // for current-carrying conductors
 
+impl <S: Sources> Sources for CurrentSources<S> {
+    fn len(&self) -> usize {self.0.len()}
+    fn bbox(&self) -> &BoundingBox {self.0.bbox()}
+    fn centroid(&self, i: usize) -> [f64; 3] {self.0.centroid(i)}
+    fn moment(&self, i: usize) -> [f64; 3] {self.0.moment(i)}
+    fn sort(&mut self, indices: &[usize]) -> () {self.0.sort(indices)}
+    fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>) {
+        self.0.encode(max_depth)
+    }
+}
+
 pub trait HFieldSolver {
-    fn h_field_branch(&self, centroid: &[f64;3], vj: &[f64;3], target: &[f64;3]) -> [f64;3];
+    fn h_field_branch(&self, centroid: &[f64;3], moment: &[f64;3], target: &[f64;3]) -> [f64;3];
     fn h_field_leaf(&self, start: usize, end: usize, target: &[f64;3]) -> [f64;3];
 }
 
@@ -59,7 +81,11 @@ pub enum Node {
 /// Recursively add nodes to the octree
 /// 
 /// Returns: the index of the node that it created
-fn add_node<S: Sources+Copy>(
+/// 
+/// This function was copied from the previous version and needs some cleanup
+/// TODO:
+/// - add guard on level (prevent infinite recursion if there's an error in the inputs)
+fn add_node<S: Sources>(
     sources: &S,
     codes: &Vec<u64>,
     nodes: &mut Vec<Node>,
@@ -112,13 +138,14 @@ fn add_node<S: Sources+Copy>(
         let mut cursor = start;
 
         while cursor < end {
-            // We descend to next level here, hence `level+1`
+            
+            // Descend to next level here, hence `level+1`
             // index to sources array
             let child_end = get_range_in_same_node(&codes, level+1, max_depth, cursor);
 
             // index in nodes array
             let child_idx = add_node(sources, codes, nodes, max_depth, leaf_threshold, cursor, child_end, level+1);
-            child_indices[n_children] = child_idx;
+            child_indices[n_children] = child_idx; 
             n_children += 1;
             cursor = child_end;     // index in sources array
         } 
@@ -146,7 +173,7 @@ fn add_node<S: Sources+Copy>(
                 Node::Leaf { level: _, source_range , centroid} => {
                     for _i in source_range.0..source_range.1  {
                         let i = _i as usize;
-                        let moment = &sources.moment(i);
+                        let moment = sources.moment(i);
                         let moment_mag = mag(&[moment[0], moment[1], moment[2]]);
                         
                         update_centroid(&mut parent_centroid, parent_mag, &sources.centroid(i), moment_mag);
@@ -170,7 +197,6 @@ fn add_node<S: Sources+Copy>(
 }
 
 
-
 pub struct Octree<S> {
     pub nodes: Vec<Node>,
     pub codes: Vec<u64>, 
@@ -179,29 +205,90 @@ pub struct Octree<S> {
 }
 
 impl <S: Sources> Octree<S> {
-    fn build_from_sources(s: S) -> Self {
+
+    pub fn build_from_sources(mut s: S) -> Self {
         let max_depth: u8 = 21; 
         let leaf_threshold: u32 = 1;
-        let (bbox, codes) = s.encode(max_depth);
+        let (bbox, mut codes) = s.encode(max_depth);
+        let bbox = bbox.clone();
         
         // sort the sources by morton code
         let mut indices: Vec<usize> = (0..codes.len()).collect();
         indices.sort_by(|&i, &j| codes[i].cmp(&codes[j]));
-        s.sort(&&indices);      // why double borrow here? 
+        s.sort(&indices);      
+
+        // now sort the codes themselves
+        let mut scratch_codes: Vec<u64> = vec![0;codes.len()];
+        sort_by_indices(&mut codes, &mut scratch_codes, &indices);
 
         // make nodes 
         let mut nodes: Vec<Node> = Vec::with_capacity(s.len());
         let start = 0; 
         let end = s.len();
         let level: u8 = 0;
-        add_node(s, codes, nodes, max_depth, leaf_threshold, start, end, level);
+        add_node(&s, &codes, &mut nodes, max_depth, leaf_threshold, start, end, level);
 
-        Self {nodes: nodes, codes: codes, bbox: bbox, }
+        Self {nodes: nodes, codes: codes, bbox: bbox, sources: s}
     }
 }
 
 impl <S: HFieldSolver> Octree<S> {
-    fn h_field(&self, targets: (&[f64], &[f64], &[f64]), h: (&mut [f64], &mut [f64], &mut [f64])) -> () {}
+
+    // Recursively traverse the tree to compute the h-field at a single target from all nodes
+    fn h_traverse(&self, idx: u32, target: &[f64; 3], theta: f64) -> [f64; 3] {
+
+        let mut h = [0.0; 3]; 
+
+        match &self.nodes[idx as usize] {
+            Node::Branch { level, size, children, centroid, moment } => {
+                let d = distance(centroid, target);
+                if d*theta > *size {
+                    // Node accepted
+                    h = self.sources.h_field_branch(centroid, moment, target);
+
+                }
+                else {
+                    // Node too close, recurse into children
+                    for &child in children {
+                        if child > 0 {
+                            let h_child = self.h_traverse(child, target, theta);
+                            h[0] += h_child[0]; 
+                            h[1] += h_child[1]; 
+                            h[2] += h_child[2];
+                        }
+                    }
+                }
+            }, 
+            Node::Leaf { level, source_range, centroid } => {
+                let (i, j) = (source_range.0 as usize, source_range.1 as usize);
+                h = self.sources.h_field_leaf(i, j, target);
+            }
+        }
+        h
+    }
+
+
+    // Compute the h-field at the target locations
+    pub fn h_field(
+        &self, 
+        targets: (&[f64], &[f64], &[f64]), 
+        h: (&mut [f64], &mut [f64], &mut [f64]), 
+        theta: f64, 
+    ) -> () {
+        let n = targets.0.len();
+
+        for i in 0..n {
+            let target = [targets.0[i], targets.1[i], targets.2[i]];
+            let idx = 0;
+            let _h = self.h_traverse ( idx, &target,  theta);
+            h.0[i] += _h[0]; 
+            h.1[i] += _h[1];
+            h.2[i] += _h[2];
+        }
+    }
+
+    #[cfg(feature="parallel")]
+    fn hfield_parallel() -> () {}
 }
 
 impl <S: GradHFieldSolver> Octree<S> {

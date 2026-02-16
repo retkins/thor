@@ -3,7 +3,7 @@ use crate::morton;
 use crate::math::{min_and_max, sort_by_indices, mag};
 
 /// Determines the location and extent of a collection of source points
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct BoundingBox {
     xc: f64,
     yc: f64,
