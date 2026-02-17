@@ -34,10 +34,29 @@ impl PointSources {
 
         // compute radius of each point and current density moment
         for i in 0..n {
-            r[i] = ((3.0*PI/4.0)*vol[i]).powi(3);
+            r[i] = ((3.0/(4.0*PI))*vol[i]).powf(1.0/3.0);
             vjx[i] = vol[i]*jx[i];
             vjy[i] = vol[i]*jy[i];
             vjz[i] = vol[i]*jz[i];
+        }
+        let bbox = BoundingBox::from_centroids((&xg, &yg, &zg)).unwrap();
+
+        Self { xg: xg, yg: yg, zg: zg, r: r, vjx: vjx, vjy: vjy, vjz: vjz, bbox }
+    }
+
+    pub fn new_dipole(x: &[f64], y: &[f64], z: &[f64], vol: &[f64], mx: &[f64], my: &[f64], mz: &[f64]) -> Self {
+        let n = x.len();
+        let xg: Vec<f64> = x.to_vec();
+        let yg: Vec<f64> = y.to_vec();
+        let zg: Vec<f64> = z.to_vec();
+        let mut r  = vec![0.0; n];
+        let vjx  = mx.to_vec();
+        let vjy  = my.to_vec();
+        let vjz  = mz.to_vec();
+
+        // compute radius of each point and current density moment
+        for i in 0..n {
+            r[i] = ((3.0/(4.0*PI))*vol[i]).powf(1.0/3.0);
         }
         let bbox = BoundingBox::from_centroids((&xg, &yg, &zg)).unwrap();
 

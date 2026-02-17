@@ -2,7 +2,7 @@
 """
 
 
-from .biotsavart import bfield_direct, bfield_octree, bfield_dualtree, bfield_hexahedron
+from .biotsavart import bfield_direct, bfield_octree, bfield_dualtree, bfield_hexahedron, hfield_dipole
 from .materials import FreeSpace, LinearMaterial, NonlinearMaterial, BHCurve
 from . import mesh
 from . import test_utils
@@ -22,5 +22,6 @@ __all__ = [
     "test_utils", 
     "mesh", 
     "bfield_dualtree", 
-    "bfield_hexahedron"
+    "bfield_hexahedron",
+    "hfield_dipole"
 ]

@@ -212,11 +212,54 @@ fn _bfield_hexahedron(
 }
 
 
+#[pyfunction]
+fn _hfield_dipole(
+    centx: PyReadonlyArray1<f64>, 
+    centy: PyReadonlyArray1<f64>,
+    centz: PyReadonlyArray1<f64>,
+    vol: PyReadonlyArray1<f64>,
+    mx: PyReadonlyArray1<f64>,
+    my: PyReadonlyArray1<f64>,
+    mz: PyReadonlyArray1<f64>,
+    x: PyReadonlyArray1<f64>,
+    y: PyReadonlyArray1<f64>,
+    z: PyReadonlyArray1<f64>,
+    mut hx: PyReadwriteArray1<f64>, 
+    mut hy: PyReadwriteArray1<f64>,
+    mut hz: PyReadwriteArray1<f64>, 
+    theta: f64,
+    leaf_threshold: u32, 
+    nthreads_requested: u32
+) ->PyResult<()> {
+    use crate::octree_generic::{Octree, DipoleSources, point::PointSources};
+    let sources = DipoleSources(PointSources::new_dipole(
+        centx.as_slice()?, 
+        centy.as_slice()?, 
+        centz.as_slice()?, 
+        vol.as_slice()?, 
+        mx.as_slice()?, 
+        my.as_slice()?, 
+        mz.as_slice()?
+    ));
+let tree = Octree::build_from_sources(sources);
+
+// Evaluate
+tree.h_field((x.as_slice()?, 
+        y.as_slice()?, 
+        z.as_slice()?), (hx.as_slice_mut()?, 
+        hy.as_slice_mut()?, 
+        hz.as_slice_mut()?), theta);
+
+Ok(())
+}
+
+
 #[pymodule]
 fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_bfield_direct, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_octree, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_dualtree, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_hexahedron, m.clone())?)?;
+    m.add_function(wrap_pyfunction!(_hfield_dipole, m.clone())?)?;
     Ok(())
 }
