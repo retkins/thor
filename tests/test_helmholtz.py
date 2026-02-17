@@ -25,8 +25,8 @@ import os
 # Runtime parameters
 datafile: str = "ring"
 remesh: bool = True
-theta: float = 0.5
-mesh_size: float = 15         # ~10M interactions; set to 33 for 1e6 interactions
+theta: float = 0.25
+mesh_size: float = 5         # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 100              # Along the axis
 nthreads = 1
 leaf_threshold = 1
@@ -93,8 +93,6 @@ def total_force_on_coil(jdensity, bfield, vol):
     return np.sum(fdensity*vol[:,np.newaxis], axis=0)
 
 
-
-
 # Compute total force on each coil 
 j_upper, j_lower = np.split(jdensity, 2, axis=0)
 vol_upper, vol_lower = np.split(vol, 2, axis=0)
@@ -144,7 +142,7 @@ ax.plot(targets_axis[:,2], boctree_axis[:,2], 'rs', label="Octree")
 ax.set_xlabel("Distance Along Coil Centerr (Z-axis) [m]")
 ax.set_ylabel("Field Along Axis (Bz) [T]")
 ax.set_title("Thor - Helmholtz Coil Test")
-fig.savefig("tests/helmholtz_test.png")
+fig.savefig("tests/fig/helmholtz_test.png")
 
 axis_error = 2 * np.abs(bdirect_axis - boctree_axis) / (np.abs(bdirect_axis) + np.abs(boctree_axis))
 fig2 = plt.figure()
@@ -153,12 +151,12 @@ ax2.plot(targets_axis[:,2], axis_error)
 ax2.set_xlabel('z position')
 ax2.set_ylabel('SMAPE')
 ax2.legend("lowerright")
-fig2.savefig("tests/error.png")
+fig2.savefig("tests/fig/error.png")
 
 fig3 = plt.figure() 
 ax3 = fig3.add_subplot() 
 ax3.plot((bmag_octree - bmag_direct) / bmag_direct)
-fig3.savefig("tests/error_mesh.png")
+fig3.savefig("tests/fig/error_mesh.png")
 
 def test_helmholtz():
     assert(err_mesh < 1e-2)

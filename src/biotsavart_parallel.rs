@@ -2,7 +2,7 @@ use rayon::prelude::*;
 use std::thread::available_parallelism;
 use std::num::NonZeroUsize;
 
-use crate::{biotsavart::{bfield_direct, bfield_node}, octree::SourceOctree};
+use crate::{biotsavart::{bfield_direct, bfield_node, hfield_direct_tet}, octree::SourceOctree};
 
 fn get_nthreads(nthreads_requested: u32) -> usize {
     let nthreads: usize;
@@ -37,7 +37,7 @@ pub fn bfield_direct_parallel(
     nthreads_requested: u32
 ) -> Result<(),()>{
     // TODO: length checks
-    let n: usize = centx.len();
+    let n: usize = x.len();
     let nthreads: usize = get_nthreads(nthreads_requested);
     let chunk_size: usize = (n / nthreads).max(1);
 
@@ -52,6 +52,38 @@ pub fn bfield_direct_parallel(
     (_x, _y, _z, _bx, _by, _bz)
         .into_par_iter()
         .try_for_each(|(_x, _y, _z, _bx, _by, _bz)| {bfield_direct(centx, centy, centz, vol, jx, jy, jz, _x, _y, _z, _bx, _by, _bz)})?;
+
+    Ok(())
+}
+
+pub fn hfield_direct_tet_parallel(
+    nodes_flat: &[f64], 
+    vol: &[f64], 
+    jdensity_flat: &[f64], 
+    x: &[f64], 
+    y: &[f64], 
+    z: &[f64], 
+    hx: &mut [f64],
+    hy: &mut [f64],
+    hz: &mut [f64],
+    nthreads_requested: u32
+) -> Result<(),()>{
+    // TODO: length checks
+    let n: usize = x.len();
+    let nthreads: usize = get_nthreads(nthreads_requested);
+    let chunk_size: usize = (n / nthreads).max(1);
+
+    // chunk the inputs 
+    let _x = x.par_chunks(chunk_size);
+    let _y = y.par_chunks(chunk_size);
+    let _z = z.par_chunks(chunk_size);
+    let _hx = hx.par_chunks_mut(chunk_size);
+    let _hy = hy.par_chunks_mut(chunk_size);
+    let _bz = hz.par_chunks_mut(chunk_size);
+
+    (_x, _y, _z, _hx, _hy, _bz)
+        .into_par_iter()
+        .try_for_each(|(_x, _y, _z, _hx, _hy, _hz)| {hfield_direct_tet(nodes_flat, vol, jdensity_flat, _x, _y, _z, _hx, _hy, _hz)})?;
 
     Ok(())
 }

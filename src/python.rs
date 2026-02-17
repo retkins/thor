@@ -211,6 +211,75 @@ fn _bfield_hexahedron(
     Ok((b[0], b[1], b[2]))
 }
 
+#[pyfunction]
+fn _hfield_tetrahedrons(
+    nodes_flat: PyReadonlyArray1<f64>, 
+    centroids_flat: PyReadonlyArray1<f64>, 
+    vol: PyReadonlyArray1<f64>, 
+    jdensity_flat: PyReadonlyArray1<f64>, 
+    x: PyReadonlyArray1<f64>, 
+    y: PyReadonlyArray1<f64>, 
+    z: PyReadonlyArray1<f64>, 
+    mut bx: PyReadwriteArray1<f64>,
+    mut by: PyReadwriteArray1<f64>,
+    mut bz: PyReadwriteArray1<f64>, 
+    theta: f64, 
+    nthreads_requested: u32
+) -> PyResult<()> {
+
+    use crate::octree_generic::{Octree, tet_element, HFieldSolver, CurrentSources};
+    let mut sources: CurrentSources<tet_element::TetSources> = CurrentSources(tet_element::TetSources::new(
+        nodes_flat.as_slice()?, 
+        centroids_flat.as_slice()?, 
+        vol.as_slice()?, 
+        jdensity_flat.as_slice()?, 
+    ));
+    let tree: Octree<CurrentSources<tet_element::TetSources>>= Octree::build_from_sources(sources);
+
+    tree.h_field(
+        (x.as_slice()?, 
+        y.as_slice()?, 
+        z.as_slice()?), 
+        (bx.as_slice_mut()?, 
+        by.as_slice_mut()?, 
+        bz.as_slice_mut()?), 
+        theta,
+    );
+    Ok(())
+}
+
+#[pyfunction]
+pub fn _hfield_tetrahedrons_direct(
+    nodes_flat: PyReadonlyArray1<f64>, 
+    centroids_flat: PyReadonlyArray1<f64>, 
+    vol: PyReadonlyArray1<f64>, 
+    jdensity_flat: PyReadonlyArray1<f64>, 
+    x: PyReadonlyArray1<f64>, 
+    y: PyReadonlyArray1<f64>, 
+    z: PyReadonlyArray1<f64>, 
+    mut hx: PyReadwriteArray1<f64>,
+    mut hy: PyReadwriteArray1<f64>,
+    mut hz: PyReadwriteArray1<f64>, 
+    nthreads_requested: u32
+) -> PyResult<()> {
+
+    use crate::biotsavart_parallel;
+    biotsavart_parallel::hfield_direct_tet_parallel(
+        nodes_flat.as_slice()?, 
+        vol.as_slice()?, 
+        jdensity_flat.as_slice()?,
+        x.as_slice()?,
+        y.as_slice()?,
+        z.as_slice()?,
+        hx.as_slice_mut()?,
+        hy.as_slice_mut()?,
+        hz.as_slice_mut()?,
+        nthreads_requested
+    );
+
+    Ok(())
+}
+
 
 #[pyfunction]
 fn _hfield_dipole(
@@ -260,6 +329,9 @@ fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_bfield_octree, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_dualtree, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_hexahedron, m.clone())?)?;
+    m.add_function(wrap_pyfunction!(_hfield_tetrahedrons, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_hfield_dipole, m.clone())?)?;
+    m.add_function(wrap_pyfunction!(_hfield_tetrahedrons_direct, m.clone())?)?;
+    
     Ok(())
 }

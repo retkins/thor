@@ -1,6 +1,7 @@
 #![allow(unused)]
 use crate::morton;
 use crate::math::{min_and_max, sort_by_indices, mag};
+use crate::vec3::Vec3;
 
 /// Determines the location and extent of a collection of source points
 #[derive(Debug, Clone, Copy)]
@@ -60,6 +61,21 @@ impl BoundingBox {
             ybounds: yb,
             zbounds: zb,
         })
+    }
+
+    /// TODO: fix this so there's no data copy
+    pub fn from_centroids_vec(centroids: &Vec<Vec3>) -> Self {
+        let n: usize = centroids.len(); 
+        let mut x: Vec<f64> = vec![0.0; n];
+        let mut y: Vec<f64> = vec![0.0; n];
+        let mut z: Vec<f64> = vec![0.0; n];
+        for i in 0..n {
+            x[i] = centroids[i][0];
+            y[i] = centroids[i][1];
+            z[i] = centroids[i][2];
+        }
+
+        Self::from_centroids((&x, &y, &z)).unwrap()
     }
 
     pub fn min_corner(&self) -> (f64, f64, f64) {

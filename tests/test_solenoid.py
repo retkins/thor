@@ -23,7 +23,7 @@ import os
 datafile: str = "solenoid"
 remesh: bool = True
 theta: float = 0.25
-mesh_size: float = 25                 # ~10M interactions; set to 33 for 1e6 interactions
+mesh_size: float = 15                 # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 25              # Along the axis
 nthreads: int = 1
 
@@ -70,7 +70,7 @@ targets = centroids
 ntargets = targets.shape[0]
 
 start = perf_counter()
-bdirect = boctree = thor.bfield_direct(centroids, vol, jdensity, targets)
+bdirect = boctree = thor.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
 end = perf_counter() 
 direct_elapsed = end - start
 
@@ -115,7 +115,7 @@ ax.plot(targets[:,2], boctree[:,2], 'rs', label="Octree")
 ax.set_xlabel("Distance from Solenoid Center (Z-axis) [m]")
 ax.set_ylabel("Field Along Solenoid Axis (Bz) [T]")
 ax.set_title("Thor - Solenoid Test")
-plt.savefig("tests/solenoid_test.png")
+plt.savefig("tests/fig/solenoid_test.png")
 
 def test_solenoid():
     assert(err_mesh < 1e-2)

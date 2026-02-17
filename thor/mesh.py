@@ -2,6 +2,8 @@
 """
 
 import numpy as np
+from numpy.typing import NDArray 
+from numpy import float64
 
 def plot_mesh(x,y,z): 
     """ Make a scatter plot of element centroids
@@ -38,6 +40,86 @@ def mesh_step(infile: str, outfile: str, min_size: float, max_size: float):
 
     except ImportError:
         print(f"Error - gmsh is not installed. Could not mesh file `{infile}`")
+
+
+def mesh_step_tets(step_file: str, min_size: float, max_size: float, scale: float=1e-3) -> tuple[NDArray[float64], NDArray[float64], NDArray[float64]]:
+    """
+    Mesh a step file with gmsh and return tet element data. This is meant to 
+    be used with the tet element source functionality.
+    
+    Args
+    ---
+    - `step_file`: Path to STEP file
+    - `min_size`, `max_size`: Mesh element size bounds (in model units, usually mm)
+    
+    Returns
+    ---
+    (`nodes`, `centroids`, `volume`)
+    - `nodes`: N*12-length flat array of nodal coordinates for each tet, row-major:
+        [x0,y0,z0, x1,y1,z1, x2,y2,z2, x3,y3,z3, ...]
+    - `centroids`: Nx3 array of the centroids of each element
+    - `volume`: N-length array of volume of each element
+    """
+
+    import gmsh 
+
+    # Setup gmsh and generate elements
+    gmsh.initialize()
+    gmsh.option.setNumber("General.Terminal", 0)  # suppress output
+    gmsh.model.add("model")
+    gmsh.model.occ.importShapes(step_file)
+    gmsh.model.occ.synchronize()
+    gmsh.option.setNumber("Mesh.MeshSizeMin", min_size)
+    gmsh.option.setNumber("Mesh.MeshSizeMax", max_size)
+    gmsh.model.mesh.generate(3)
+    
+    # Get all node coordinates: node_tags is 1-indexed
+    node_tags, node_coords, _ = gmsh.model.mesh.getNodes()
+    # node_coords is flat [x1,y1,z1, x2,y2,z2, ...]
+    # Build a lookup from tag -> coordinates
+    all_coords = node_coords.reshape(-1, 3)
+    # node_tags might not be contiguous, so use a dict
+    tag_to_idx = {int(tag): i for i, tag in enumerate(node_tags)}
+    
+    # Get tet elements (type 4 = linear tet with 4 nodes)
+    tet_type = 4
+    tet_tags, tet_node_tags = gmsh.model.mesh.getElementsByType(tet_type)
+    
+    n_tets = len(tet_tags)
+    tet_connectivity = tet_node_tags.reshape(n_tets, 4)  # each row: 4 node tags
+    
+    # Build the 12*N flat node coordinate array
+    nodes = np.zeros((n_tets, 4, 3))
+    for i in range(n_tets):
+        for j in range(4):
+            idx = tag_to_idx[int(tet_connectivity[i, j])]
+            nodes[i, j, :] = all_coords[idx]
+
+    nodes *= scale
+    
+    # Centroids: average of 4 nodes (TODO: should this be done differently?)
+    centroids = nodes.mean(axis=1) 
+    
+    # Volumes: V = |det([v1-v0, v2-v0, v3-v0])| / 6 like below, but now vectorized 
+    v0 = nodes[:, 0, :]
+    v1 = nodes[:, 1, :]
+    v2 = nodes[:, 2, :]
+    v3 = nodes[:, 3, :]
+    
+    d1 = v1 - v0
+    d2 = v2 - v0
+    d3 = v3 - v0
+    
+    cross = np.cross(d1, d2)
+    det = np.sum(cross * d3, axis=1)
+    volumes = np.abs(det) / 6.0
+    
+    # Flatten nodes to row-major 12*N
+    nodes_flat = nodes.reshape(-1)  # [x0,y0,z0,x1,y1,z1,...] per tet
+    
+    gmsh.finalize()
+    
+    return nodes_flat, centroids, volumes
 
 
 def tet_volume(p0, p1, p2, p3):

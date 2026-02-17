@@ -50,16 +50,14 @@ pub trait HFieldSolver {
     fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3;
 }
 
-pub trait DipoleHFieldSolver {
-    fn h_field(&self, targets: (&[f64], &[f64], &[f64]), h: (&[f64], &[f64], &[f64]));
-}
-
 pub trait GradHFieldSolver {
-    fn gradh_field(&self, targets: (&[f64], &[f64], &[f64]), h: (&[f64], &[f64], &[f64]));
+    fn gradh_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> [Vec3; 3];
+    fn gradh_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> [Vec3; 3];
 }
 
 pub trait AFieldSolver {
-    fn a_field(&self, targets: (&[f64], &[f64], &[f64]), h: (&[f64], &[f64], &[f64]));
+    fn a_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> Vec3;
+    fn a_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3;
 }
 
 /// Previous node definition
@@ -105,6 +103,12 @@ fn add_node<S: Sources>(
     end: usize,
     level: u8,
 ) -> u32 {
+
+    // Recursion guard 
+    if level > 21 {
+        eprintln!("DEEP: level={}, start={}, end={}, n={}", level, start, end, end - start);
+        assert!(false);
+    }
 
     let current_index: usize;
 

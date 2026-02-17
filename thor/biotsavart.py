@@ -6,7 +6,7 @@ from numpy import float64, ascontiguousarray, zeros, hstack, newaxis, array, pi
 from numpy.typing import NDArray
 
 # Create bindings for calculation engine written in Rust
-from ._thor import _bfield_direct, _bfield_octree, _bfield_dualtree, _bfield_hexahedron, _hfield_dipole
+from ._thor import _bfield_direct, _bfield_octree, _bfield_dualtree, _bfield_hexahedron, _hfield_dipole, _hfield_tetrahedrons, _hfield_tetrahedrons_direct
 
 # For typing; currently unused
 Nx3Array = NDArray[float64]
@@ -172,10 +172,6 @@ def bfield_hexahedron(
     jdensity: NDArray[float64], 
     target: NDArray[float64]
 ) -> NDArray[float64]: 
-    
-    nx = nodes[:,0] 
-    ny = nodes[:,1] 
-    nz = nodes[:,2] 
 
     b = _bfield_hexahedron(
         ascontiguousarray(nodes[:,0]), 
@@ -186,6 +182,100 @@ def bfield_hexahedron(
     )
 
     return array([b[0], b[1], b[2]])
+
+
+def bfield_tetrahedrons(
+    nodes: NDArray[float64], 
+    centroids: NDArray[float64], 
+    vol: NDArray[float64],
+    jdensity: NDArray[float64], 
+    targets: NDArray[float64], 
+    theta: float=0.5,
+    nthreads: int=0 
+) -> NDArray[float64]:
+    """ Compute the magnetic flux density at a set of target points
+        using a tetrahedral finite element mesh as a source. 
+
+    Args: 
+        - `nodes`: (12*N,) nodal coordinates of each element 
+        - `vol`: (N,) volume of each element 
+        - `jdensity`: (N,3) current density vector assumed constant over each element
+        - `targets`: (M,3) target point locations in 3d space 
+        - `theta`: angle-opening criteria for barnes-hut
+    
+    Returns:
+        (N,3) magnetic flux density at each target point 
+
+    """
+
+    ntargets = targets.shape[0]
+    hx = zeros(ntargets)
+    hy = zeros(ntargets)
+    hz = zeros(ntargets)
+
+    _hfield_tetrahedrons(
+        ascontiguousarray(nodes[:]),
+        ascontiguousarray(centroids.ravel()),
+        ascontiguousarray(vol[:]),
+        ascontiguousarray(jdensity.ravel()),
+        ascontiguousarray(targets[:,0]),
+        ascontiguousarray(targets[:,1]),
+        ascontiguousarray(targets[:,2]),
+        ascontiguousarray(hx[:]),
+        ascontiguousarray(hy[:]),
+        ascontiguousarray(hz[:]), 
+        theta,
+        nthreads
+    )
+
+    return (4*pi*10**-7)*hstack((hx[:, newaxis], hy[:, newaxis], hz[:, newaxis]))
+
+
+def bfield_tetrahedrons_direct(
+    nodes: NDArray[float64], 
+    centroids: NDArray[float64], 
+    vol: NDArray[float64],
+    jdensity: NDArray[float64], 
+    targets: NDArray[float64], 
+    theta: float=0.5,
+    nthreads: int=0 
+) -> NDArray[float64]:
+    """ Compute the magnetic flux density at a set of target points
+        using a tetrahedral finite element mesh as a source. 
+
+    Args: 
+        - `nodes`: (12*N,) nodal coordinates of each element 
+        - `vol`: (N,) volume of each element 
+        - `jdensity`: (N,3) current density vector assumed constant over each element
+        - `targets`: (M,3) target point locations in 3d space 
+        - `theta`: angle-opening criteria for barnes-hut
+    
+    Returns:
+        (N,3) magnetic flux density at each target point 
+
+    """
+
+    ntargets = targets.shape[0]
+    hx = zeros(ntargets)
+    hy = zeros(ntargets)
+    hz = zeros(ntargets)
+
+    _hfield_tetrahedrons_direct(
+        ascontiguousarray(nodes[:]),
+        ascontiguousarray(centroids.ravel()),
+        ascontiguousarray(vol[:]),
+        ascontiguousarray(jdensity.ravel()),
+        ascontiguousarray(targets[:,0]),
+        ascontiguousarray(targets[:,1]),
+        ascontiguousarray(targets[:,2]),
+        ascontiguousarray(hx[:]),
+        ascontiguousarray(hy[:]),
+        ascontiguousarray(hz[:]), 
+        nthreads
+    )
+
+    return (4*pi*10**-7)*hstack((hx[:, newaxis], hy[:, newaxis], hz[:, newaxis]))
+
 
 
 def hfield_dipole(
