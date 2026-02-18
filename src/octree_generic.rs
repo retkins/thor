@@ -175,20 +175,15 @@ fn add_node<S: Sources>(
             match nodes[idx as usize] {
                 Node::Branch { level: _, size: _, children: _, centroid, moment } => {
                     update_centroid(&mut parent_centroid, parent_mag, &centroid, moment.mag());
-                    for k in 0..3 as usize {
-                        parent_moment[k] += moment[k];
-                    }
+                    parent_moment += moment;
                 }, 
                 Node::Leaf { level: _, source_range , centroid} => {
                     for _i in source_range.0..source_range.1  {
                         let i = _i as usize;
                         let moment = sources.moment(i);
-                        let moment_mag = mag(&[moment[0], moment[1], moment[2]]);
                         
-                        update_centroid(&mut parent_centroid, parent_mag, &sources.centroid(i), moment_mag);
-                        for k in 0..3 as usize {
-                            parent_moment[k] += moment[k];
-                        }
+                        update_centroid(&mut parent_centroid, parent_mag, &sources.centroid(i), moment.mag());
+                        parent_moment += moment;
                         parent_mag = parent_moment.mag();
                     }
                 }
@@ -241,7 +236,7 @@ impl <S: Sources> Octree<S> {
     }
 }
 
-impl <S: HFieldSolver> Octree<S> {
+impl <S: HFieldSolver+std::marker::Sync> Octree<S> {
 
     // Recursively traverse the tree to compute the h-field at a single target from all nodes
     fn h_traverse(&self, idx: u32, target: &Vec3, theta: f64) -> Vec3 {
@@ -283,7 +278,7 @@ impl <S: HFieldSolver> Octree<S> {
         targets: (&[f64], &[f64], &[f64]), 
         h: (&mut [f64], &mut [f64], &mut [f64]), 
         theta: f64, 
-    ) -> () {
+    ) -> Result<(),()> {
         let n = targets.0.len();
 
         for i in 0..n {
@@ -294,10 +289,38 @@ impl <S: HFieldSolver> Octree<S> {
             h.1[i] += _h[1];
             h.2[i] += _h[2];
         }
+        Ok(())
     }
 
     #[cfg(feature="parallel")]
-    fn hfield_parallel() -> () {}
+    pub fn h_field_parallel(
+        &self, 
+        targets: (&[f64], &[f64], &[f64]), 
+        h: (&mut [f64], &mut [f64], &mut [f64]), 
+        theta: f64,
+        nthreads_requested: u32
+    ) -> Result<(),()> {
+        let n: usize = targets.0.len();
+        let nthreads: usize = crate::biotsavart_parallel::get_nthreads(nthreads_requested);
+        let chunk_size: usize = (n / nthreads).max(1);
+
+        // chunk the inputs 
+        use rayon::prelude::*;
+        let _x = targets.0.par_chunks(chunk_size);
+        let _y = targets.1.par_chunks(chunk_size);
+        let _z = targets.2.par_chunks(chunk_size);
+        let _hx = h.0.par_chunks_mut(chunk_size);
+        let _hy = h.1.par_chunks_mut(chunk_size);
+        let _bz = h.2.par_chunks_mut(chunk_size);
+
+        (_x, _y, _z, _hx, _hy, _bz)
+            .into_par_iter()
+            .try_for_each(|(_x, _y, _z, _hx, _hy, _hz)| {
+                self.h_field((_x, _y, _z), (_hx, _hy, _hz), theta)
+            })?;
+
+        Ok(())
+    }
 }
 
 impl <S: GradHFieldSolver> Octree<S> {

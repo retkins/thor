@@ -4,7 +4,7 @@ use std::num::NonZeroUsize;
 
 use crate::{biotsavart::{bfield_direct, bfield_node, hfield_direct_tet}, octree::SourceOctree};
 
-fn get_nthreads(nthreads_requested: u32) -> usize {
+pub fn get_nthreads(nthreads_requested: u32) -> usize {
     let nthreads: usize;
     let nthreads_available: usize = available_parallelism().unwrap_or(NonZeroUsize::MIN).get();
     if nthreads_requested as usize > nthreads_available || nthreads_requested == 0 {

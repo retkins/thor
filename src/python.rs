@@ -86,28 +86,28 @@ fn _bfield_octree(
     nthreads_requested: u32
 ) -> PyResult<()> {
 
-    #[cfg(feature = "parallel")]
-    if nthreads_requested != 1 {
-        use crate::biotsavart_parallel;
-        biotsavart_parallel::bfield_octree_parallel(
-            centx.as_slice()?, 
-            centy.as_slice()?, 
-            centz.as_slice()?, 
-            vol.as_slice()?, 
-            jx.as_slice()?, 
-            jy.as_slice()?, 
-            jz.as_slice()?, 
-            x.as_slice()?, 
-            y.as_slice()?, 
-            z.as_slice()?, 
-            bx.as_slice_mut()?, 
-            by.as_slice_mut()?, 
-            bz.as_slice_mut()?, 
-            theta, leaf_threshold, 
-            nthreads_requested
-        );
-        return Ok(());
-    }
+    // #[cfg(feature = "parallel")]
+    // if nthreads_requested != 1 {
+    //     use crate::biotsavart_parallel;
+    //     biotsavart_parallel::bfield_octree_parallel(
+    //         centx.as_slice()?, 
+    //         centy.as_slice()?, 
+    //         centz.as_slice()?, 
+    //         vol.as_slice()?, 
+    //         jx.as_slice()?, 
+    //         jy.as_slice()?, 
+    //         jz.as_slice()?, 
+    //         x.as_slice()?, 
+    //         y.as_slice()?, 
+    //         z.as_slice()?, 
+    //         bx.as_slice_mut()?, 
+    //         by.as_slice_mut()?, 
+    //         bz.as_slice_mut()?, 
+    //         theta, leaf_threshold, 
+    //         nthreads_requested
+    //     );
+    //     return Ok(());
+    // }
 
     use crate::octree_generic::{Octree, point, HFieldSolver, CurrentSources};
     let mut sources: CurrentSources<point::PointSources>= CurrentSources(point::PointSources::new(
@@ -121,7 +121,8 @@ fn _bfield_octree(
     ));
     let tree: Octree<CurrentSources<point::PointSources>>= Octree::build_from_sources(sources);
 
-    tree.h_field(
+    #[cfg(feature = "parallel")]
+    tree.h_field_parallel(
         (x.as_slice()?, 
         y.as_slice()?, 
         z.as_slice()?), 
@@ -129,6 +130,7 @@ fn _bfield_octree(
         by.as_slice_mut()?, 
         bz.as_slice_mut()?), 
         theta,
+        nthreads_requested
     );
 
     // original version:
@@ -236,7 +238,7 @@ fn _hfield_tetrahedrons(
     ));
     let tree: Octree<CurrentSources<tet_element::TetSources>>= Octree::build_from_sources(sources);
 
-    tree.h_field(
+    tree.h_field_parallel(
         (x.as_slice()?, 
         y.as_slice()?, 
         z.as_slice()?), 
@@ -244,6 +246,7 @@ fn _hfield_tetrahedrons(
         by.as_slice_mut()?, 
         bz.as_slice_mut()?), 
         theta,
+        nthreads_requested
     );
     Ok(())
 }
