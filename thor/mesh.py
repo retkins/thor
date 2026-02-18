@@ -49,16 +49,16 @@ def mesh_step_tets(step_file: str, min_size: float, max_size: float, scale: floa
     
     Args
     ---
-    - `step_file`: Path to STEP file
-    - `min_size`, `max_size`: Mesh element size bounds (in model units, usually mm)
+    step_file: Path to STEP file
+    min_size, `max_size`: Mesh element size bounds (in model units, usually mm)
     
     Returns
     ---
     (`nodes`, `centroids`, `volume`)
-    - `nodes`: N*12-length flat array of nodal coordinates for each tet, row-major:
+    nodes: N*12-length flat array of nodal coordinates for each tet, row-major:
         [x0,y0,z0, x1,y1,z1, x2,y2,z2, x3,y3,z3, ...]
-    - `centroids`: Nx3 array of the centroids of each element
-    - `volume`: N-length array of volume of each element
+    centroids: Nx3 array of the centroids of each element
+    volume: N-length array of volume of each element
     """
 
     import gmsh 

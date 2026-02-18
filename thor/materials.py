@@ -3,9 +3,14 @@
 
 
 from dataclasses import dataclass
+from numpy import pi
 from numpy.typing import NDArray 
 from numpy import float64, interp
 import thor
+
+""" Magnetic permeability of free space
+"""
+MU0: float = (4.0*pi) * 10**-7 
 
 @dataclass
 class BHCurve:
