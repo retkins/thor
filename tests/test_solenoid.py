@@ -22,7 +22,7 @@ import os
 
 datafile: str = "solenoid"
 remesh: bool = True
-theta: float = 0.25
+theta: float = 0.1
 mesh_size: float = 15                 # ~10M interactions; set to 33 for 1e6 interactions
 ntargets_axis: int = 25              # Along the axis
 nthreads: int = 1

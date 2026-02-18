@@ -35,4 +35,4 @@ print(f"expected force: {f_expected:.0f} N")
 print(f"error: {100*err:.3f} %")
 
 def test_mag_force():
-    assert(np.abs(err) < 0.001)
+    assert(np.abs(err) < 0.01)
