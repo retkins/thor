@@ -2,7 +2,7 @@
 
 use crate::sources::hfield_tetrahedron;
 use crate::{MU0_4PI}; 
-use crate::math::{cross, distance, vec_distance};
+use crate::math::{cross, distance, vec_distance, mag3};
 use crate::octree::{SourceOctree, SourceNode};
 use crate::vec3::Vec3;
 

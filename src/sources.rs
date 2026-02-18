@@ -166,9 +166,19 @@ pub fn dipole(
 // Reference: Eq 52 of CRYO-06-034
 fn edge_integral(x: f64, y: f64, z: f64) -> f64 {
     let r: f64 = mag3(x, y, z);
-    (x + r).ln()
-    + z.abs()/(y+1e-8)
-    * ((x*z.abs()/(y*r+1e-8)).atan() - (x/(y+1e-8)).atan())
+    
+    if r <= 1e-8 { return 0.0; }
+    
+    // r could be close to -x, resulting in a singularity
+    let mut result = if (x+r).abs() > 1e-8 {(x + r).ln()} else {0.0};
+    
+    // prevent singularities when target is on the edge
+    let za = z.abs();
+    if (y.abs() > 1e-12 * r) && (za > 1e-12 * r ) {
+        result += za / y * ((x * za / (y * r)).atan() - (x / y).atan());
+    }
+    
+    result
 }
 
 
