@@ -29,6 +29,10 @@ impl Vec3 {
     pub fn mag(&self) -> f64 {
         self.dot(self).sqrt()
     }
+
+    pub fn to_slice(&self) -> &[f64; 3] {
+        &self.0
+    }
 }
 
 

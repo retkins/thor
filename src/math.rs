@@ -1,3 +1,9 @@
+pub mod atan2; 
+pub mod ln;
+
+pub use atan2::atan2;
+pub use ln::ln;
+
 
 /// In place cross-product  
 /// $$ \vec{a} \times \vec{b} = \vec{c} $$

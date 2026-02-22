@@ -27,14 +27,16 @@ ctol: float = 1e-8          # convergence tolerance
 # Load mesh and remesh if needed 
 # ---
 
-if remesh:
-    thor.mesh.mesh_step("tests/data/sphere.stp", "tests/data/sphere_mesh.csv", min_size, max_size)
-data = np.loadtxt("tests/data/sphere_mesh.csv", delimiter=',', skiprows=1)
+# if remesh:
+#     thor.mesh.mesh_step("tests/data/sphere.stp", "tests/data/sphere_mesh.csv", min_size, max_size)
+# data = np.loadtxt("tests/data/sphere_mesh.csv", delimiter=',', skiprows=1)
 
-n = data.shape[0]
-centroids = data[:,0:3]
-vol = data[:,3]
 
+# centroids = data[:,0:3]
+# vol = data[:,3]
+nodes_flat, centroids, vol = thor.mesh.mesh_step_tets("tests/data/sphere.stp", min_size, max_size)
+
+n = vol.shape[0]
 print("Thor - Magnetized sphere test")
 print(f"Problem size: {n} elements in mesh")
 
@@ -55,7 +57,7 @@ m_field = mat.chi(1) * h_ext
 moments = m_field * vol[:,np.newaxis]
 
 # Initial guess for h-field in the sphere
-h = thor.hfield_dipole(centroids, vol, moments, centroids, theta=theta)
+h = thor.hfield_dipole_tetrahedrons(nodes_flat, centroids, vol, m_field, centroids, theta=theta)
 print(f"Initial guess for demagnetizing B-field in sphere (avg): {np.average(h,axis=0)*thor.MU0} T")
 
 h_total = np.copy(h_ext)
@@ -73,7 +75,8 @@ def fixed_point(h_total: NDArray[float64], n_iterations: int):
         moments = m_field * vol[:, np.newaxis]          # m = M*V
 
         # Demagnetizing field from magnetization
-        h_demag = thor.hfield_dipole(centroids, vol, moments, centroids, theta=theta)
+        # h_demag = thor.hfield_dipole(centroids, vol, moments, centroids, theta=theta)
+        h_demag = thor.hfield_dipole_tetrahedrons(nodes_flat, centroids, vol, m_field/vol[:,np.newaxis], centroids, theta=theta)
 
         # Update total field
         h_total_new = h_ext + h_demag
@@ -125,11 +128,11 @@ fig, ax = plt.subplots()
 sc = ax.scatter(
     centroids[mask, 0], 
     centroids[mask, 1], 
-    c=h_total[mask, 2], 
+    c=b_z[mask], 
     cmap='viridis'
 )
-plt.colorbar(sc, label='H_z (A/m)')
+plt.colorbar(sc, label='B_z [T]')
 ax.set_aspect('equal')
-ax.set_title('H_z on z-centerplane')
+ax.set_title('B_z on z-centerplane')
 plt.savefig('tests/fig/sphere_slice.png')
 plt.show()

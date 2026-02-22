@@ -1,8 +1,8 @@
 
 use crate::{
     math::sort_by_indices, morton, octree::BoundingBox, octree_generic::{
-        CurrentSources, HFieldSolver, Sources
-    }, sources::{hfield_tetrahedron, h_point}, vec3::Vec3
+        CurrentSources, HFieldSolver, Sources, DipoleSources
+    }, sources::{hfield_tetrahedron, h_point, h_point_dipole, hmag_tetrahedron}, vec3::Vec3
 };
 
 
@@ -117,19 +117,16 @@ impl HFieldSolver for CurrentSources<TetSources> {
 }
 
 
-// impl HFieldSolver for DipoleSources<PointSources> {
-//     fn h_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> Vec3 {
-//         let radius = 0.0;   // far-field
-//         h_point_dipole(centroid, moment, radius, target)
-//     }
+impl HFieldSolver for DipoleSources<TetSources> {
+    fn h_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> Vec3 {
+        h_point_dipole(centroid, moment, 0.0, target)
+    }
 
-//     fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3 {
-//         let mut h = Vec3([0.0;3]);
-//         for i in start..end {
-//             let centroid = Vec3::from_slice_tuple((&self.0.xg, &self.0.yg, &self.0.zg), i);
-//             let moment = Vec3::from_slice_tuple((&self.0.vjx, &self.0.vjy, &self.0.vjz), i);
-//             h += h_point_dipole(&centroid, &moment, self.0.r[i], target);
-//         }
-//         h
-//     }
-// }
+    fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3 {
+        let mut h = Vec3([0.0; 3]);
+        for i in start..end {
+            h += hmag_tetrahedron(&self.0.nodes[i], &(self.0.jdensity[i] * self.0.volumes[i]), target);
+        }
+        h
+    }
+}

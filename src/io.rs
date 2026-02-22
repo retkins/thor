@@ -106,7 +106,7 @@ mod tests {
     /// extra whitespace
     #[test]
     fn test_read_csv() -> Result<CsvData, ThorError>{
-        let filename: String = "tests/test_read.csv".to_owned(); 
+        let filename: String = "tests/data/test_read.csv".to_owned(); 
         let skiprows: usize = 1; 
         let delimiter: char = ',';
         let data: CsvData = read_csv(&filename, delimiter, skiprows)?; 

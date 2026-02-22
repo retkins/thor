@@ -6,7 +6,16 @@ from numpy import float64, ascontiguousarray, zeros, hstack, newaxis, array, pi
 from numpy.typing import NDArray
 
 # Create bindings for calculation engine written in Rust
-from ._thor import _bfield_direct, _bfield_octree, _bfield_dualtree, _bfield_hexahedron, _hfield_dipole, _hfield_tetrahedrons, _hfield_tetrahedrons_direct
+from ._thor import (
+    _bfield_direct, 
+    _bfield_octree,
+    _bfield_dualtree, 
+    _bfield_hexahedron, 
+    _hfield_dipole, 
+    _hfield_tetrahedrons, 
+    _hfield_tetrahedrons_direct, 
+    _hfield_dipole_tetrahedrons
+)
 
 # For typing; currently unused
 Nx3Array = NDArray[float64]
@@ -331,3 +340,51 @@ def hfield_dipole(
     )
 
     return hstack((hx[:, newaxis], hy[:, newaxis], hz[:, newaxis]))
+
+
+def hfield_dipole_tetrahedrons(
+    nodes: NDArray[float64], 
+    centroids: NDArray[float64], 
+    vol: NDArray[float64],
+    moments: NDArray[float64], 
+    targets: NDArray[float64], 
+    theta: float=0.5,
+    nthreads: int=0 
+) -> NDArray[float64]:
+    """ Compute the magnetic field intensity at a set of target points
+        using a tetrahedral finite element mesh as a near-field dipole source,
+        and a point approximation for the far-field. 
+
+    Args: 
+        nodes: (12*N,) nodal coordinates of each element 
+        vol: (N,) volume of each element 
+        moments: (N,3) current density vector assumed constant over each element
+        targets: (M,3) target point locations in 3d space 
+        theta: angle-opening criteria for barnes-hut
+    
+    Returns:
+        (N,3) magnetic flux density at each target point 
+
+    """
+
+    ntargets = targets.shape[0]
+    hx = zeros(ntargets)
+    hy = zeros(ntargets)
+    hz = zeros(ntargets)
+
+    _hfield_dipole_tetrahedrons(
+        ascontiguousarray(nodes[:]),
+        ascontiguousarray(centroids.ravel()),
+        ascontiguousarray(vol[:]),
+        ascontiguousarray(moments.ravel()),
+        ascontiguousarray(targets[:,0]),
+        ascontiguousarray(targets[:,1]),
+        ascontiguousarray(targets[:,2]),
+        ascontiguousarray(hx[:]),
+        ascontiguousarray(hy[:]),
+        ascontiguousarray(hz[:]), 
+        theta,
+        nthreads
+    )
+
+    return (4*pi*10**-7)*hstack((hx[:, newaxis], hy[:, newaxis], hz[:, newaxis]))
