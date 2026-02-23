@@ -1,5 +1,7 @@
 #![allow(unused)]
 
+use std::cmp::max;
+
 use pyo3::prelude::*;
 use numpy::{PyReadonlyArray1, PyReadwriteArray1};
 
@@ -119,7 +121,8 @@ fn _bfield_octree(
         jy.as_slice()?, 
         jz.as_slice()?, 
     ));
-    let tree: Octree<CurrentSources<point::PointSources>>= Octree::build_from_sources(sources);
+    let max_depth: u8 = 21;
+    let tree: Octree<CurrentSources<point::PointSources>>= Octree::build_from_sources(sources, max_depth, leaf_threshold);
 
     #[cfg(feature = "parallel")]
     tree.h_field_parallel(
@@ -226,6 +229,7 @@ fn _hfield_tetrahedrons(
     mut by: PyReadwriteArray1<f64>,
     mut bz: PyReadwriteArray1<f64>, 
     theta: f64, 
+    leaf_threshold: u32,
     nthreads_requested: u32
 ) -> PyResult<()> {
 
@@ -236,7 +240,9 @@ fn _hfield_tetrahedrons(
         vol.as_slice()?, 
         jdensity_flat.as_slice()?, 
     ));
-    let tree: Octree<CurrentSources<tet_element::TetSources>>= Octree::build_from_sources(sources);
+    let max_depth: u8 = 21;
+    
+    let tree: Octree<CurrentSources<tet_element::TetSources>>= Octree::build_from_sources(sources, max_depth, leaf_threshold);
 
     tree.h_field_parallel(
         (x.as_slice()?, 
@@ -265,6 +271,7 @@ fn _hfield_dipole_tetrahedrons(
     mut by: PyReadwriteArray1<f64>,
     mut bz: PyReadwriteArray1<f64>, 
     theta: f64, 
+    leaf_threshold: u32,
     nthreads_requested: u32
 ) -> PyResult<()> {
 
@@ -275,7 +282,9 @@ fn _hfield_dipole_tetrahedrons(
         vol.as_slice()?, 
         jdensity_flat.as_slice()?, 
     ));
-    let tree: Octree<DipoleSources<tet_element::TetSources>> = Octree::build_from_sources(sources);
+    let max_depth: u8 = 21; 
+
+    let tree: Octree<DipoleSources<tet_element::TetSources>> = Octree::build_from_sources(sources, max_depth, leaf_threshold);
 
     tree.h_field_parallel(
         (x.as_slice()?, 
@@ -352,7 +361,8 @@ fn _hfield_dipole(
         my.as_slice()?, 
         mz.as_slice()?
     ));
-let tree = Octree::build_from_sources(sources);
+    let max_depth: u8 = 21; 
+let tree = Octree::build_from_sources(sources, max_depth, leaf_threshold);
 
 // Evaluate
 tree.h_field((x.as_slice()?, 

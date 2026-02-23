@@ -210,9 +210,7 @@ pub struct Octree<S> {
 
 impl <S: Sources> Octree<S> {
 
-    pub fn build_from_sources(mut s: S) -> Self {
-        let max_depth: u8 = 21; 
-        let leaf_threshold: u32 = 1;
+    pub fn build_from_sources(mut s: S, max_depth: u8, leaf_threshold: u32) -> Self {
         let (bbox, mut codes) = s.encode(max_depth);
         let bbox = bbox.clone();
         

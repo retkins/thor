@@ -288,6 +288,7 @@ pub fn bfield_octree(
     Ok(())
 }
 
+use crate::sources::tet4::h_field_tet4;
 
 /// Compute the magnetic field using the direct tetrahedral integration method 
 pub fn hfield_direct_tet(
@@ -308,26 +309,18 @@ pub fn hfield_direct_tet(
     for i in 0..n_sources {
 
         let node_slice = &nodes_flat[12*i..12*i+12];
-        let mut nx = [0.0; 4];
-        let mut ny = [0.0; 4]; 
-        let mut nz = [0.0; 4];
-
-        for ni in 0..4 {
-            nx[ni] = node_slice[3*ni+0];
-            ny[ni] = node_slice[3*ni+1];
-            nz[ni] = node_slice[3*ni+2];
-
-        }
+        let nodes = [
+            Vec3([node_slice[0], node_slice[1], node_slice[2]]),
+            Vec3([node_slice[3], node_slice[4], node_slice[5]]), 
+            Vec3([node_slice[6], node_slice[7], node_slice[8]]), 
+            Vec3([node_slice[9], node_slice[10], node_slice[11]])
+        ];
 
         let jdensity = Vec3([jdensity_flat[3*i], jdensity_flat[3*i+1], jdensity_flat[3*i+2]]);
-
-        for j in 0..n_targets {
-            let target = Vec3::from_slice_tuple((x, y, z), j);
-            let h = hfield_tetrahedron(&nx, &ny, &nz, &jdensity, &target);
-            hx[j] += h[0]; 
-            hy[j] += h[1]; 
-            hz[j] += h[2];
+        unsafe {
+h_field_tet4(&nodes, &jdensity, (x, y, z), (hx, hy, hz));
         }
+        
     }
 
     Ok(())

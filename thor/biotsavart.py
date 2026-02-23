@@ -200,6 +200,7 @@ def bfield_tetrahedrons(
     jdensity: NDArray[float64], 
     targets: NDArray[float64], 
     theta: float=0.5,
+    leaf_threshold: int=1, 
     nthreads: int=0 
 ) -> NDArray[float64]:
     """ Compute the magnetic flux density at a set of target points
@@ -235,6 +236,7 @@ def bfield_tetrahedrons(
         ascontiguousarray(hy[:]),
         ascontiguousarray(hz[:]), 
         theta,
+        leaf_threshold,
         nthreads
     )
 

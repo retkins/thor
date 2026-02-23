@@ -1,7 +1,7 @@
 pub mod atan2; 
 pub mod ln;
 
-pub use atan2::atan2;
+pub use atan2::{atan2, atan_approx, atan};
 pub use ln::ln;
 
 
@@ -85,6 +85,7 @@ pub fn dot3(a: &[f64; 3], b: &[f64; 3]) -> f64 {
 /// Compute the unit vector from a to b
 /// 
 /// \vec{u_ab} = \frac{\vec{b} - \vec{a}}{|\vec{b} - \vec{a}|}
+#[inline(always)]
 pub fn unit_vector(a: &[f64; 3], b: &[f64; 3]) -> [f64; 3] {
     let cx = b[0] - a[0]; 
     let cy = b[1] - a[1]; 

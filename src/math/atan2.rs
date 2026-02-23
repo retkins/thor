@@ -34,7 +34,7 @@ pub fn atan2(y: f64, x: f64) -> f64 {
 // https://blasingame.engr.tamu.edu/z_zCourse_Archive/P620_18C/P620_zReference/PDF_Txt_Hst_Apr_Cmp_(1955).pdf
 // This is accurate in the range [-1, 1]
 #[inline(always)]
-fn atan_approx(v: f64) -> f64 {
+pub fn atan_approx(v: f64) -> f64 {
     let a1: f64  =  0.99997726;
     let a3: f64  = -0.33262347;
     let a5: f64  =  0.19354346;
@@ -46,6 +46,17 @@ fn atan_approx(v: f64) -> f64 {
 
     // v * (a1 + v2 * (a3 + v2 * (a5 + v2 * (a7 + v2 * (a9 + v2 * a11)))))
     v * v2.mul_add(v2.mul_add(v2.mul_add(v2.mul_add(v2.mul_add(a11, a9), a7), a5), a3), a1)   
+}
+
+/// Compute atan(x), which is needed for the finite element edge integrals
+#[inline(always)]
+pub fn atan(v: f64) -> f64 {
+    let av = v.abs();
+    let swap = av > 1.0;
+    let t = if swap { 1.0 / av } else { av };
+    let p = atan_approx(t);
+    let p = if swap { FRAC_PI_2 - p } else { p };
+    if v < 0.0 { -p } else { p }
 }
 
 

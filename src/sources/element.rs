@@ -55,8 +55,31 @@ pub fn edge_csys(
     return (xp_hat, yp_hat, zp_hat)
 }
 
+use crate::vec3::Vec3;
+/// Fast version of the above
+#[inline(always)]
+pub fn edge_csys_fast(
+    node1: &Vec3, 
+    node2: &Vec3, 
+    node3: &Vec3,
+) -> (Vec3, Vec3, Vec3) {
+    let xp_hat = Vec3(unit_vector(node2.to_slice(), node1.to_slice()));
+    let yp_hat_temp = unit_vector(node3.to_slice(), node1.to_slice()); 
+    let mut zp_hat = xp_hat.cross(&Vec3(yp_hat_temp));
+    let norm_inv = 1.0/zp_hat.mag();
+    zp_hat *= norm_inv;
+    let yp_hat = xp_hat.cross(&zp_hat);
+    (xp_hat, yp_hat, zp_hat)
+}
+
 
 // transform a global xyz position into a local coordinate system
 pub fn transform(g: &[f64; 3], xhat: &[f64; 3], yhat: &[f64; 3], zhat: &[f64; 3]) -> [f64; 3] {
     [dot3(xhat, g), dot3(yhat, g), dot3(zhat, g)]
+}
+
+// transform a global xyz position into a local coordinate system
+#[inline(always)]
+pub fn transform_fast(g: &Vec3, xhat: &Vec3, yhat: &Vec3, zhat: &Vec3) -> Vec3 {
+    Vec3([xhat.dot(g), yhat.dot(g), zhat.dot(g)])
 }

@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from time import perf_counter
 
 min_size: float = 2.5 
-max_size: float = 10.0
+max_size: float = 5.0
 jmag: float = 1e8 
 theta_pt: float = 0.5
 theta_tet: float = 0.5
@@ -53,7 +53,7 @@ print(f"\tDirect (tet) solution: ({bdirect_tet_axis[i,0]:.6f}, {bdirect_tet_axis
 print(f"\tOctree (pt) solution:  ({boctree_pt_axis[i,0]:.6f}, {boctree_pt_axis[i,1]:.6f}, {boctree_pt_axis[i,2]:.6f})")
 print(f"\tOctree (tet) solution: ({boctree_tet_axis[i,0]:.6f}, {boctree_tet_axis[i,1]:.6f}, {boctree_tet_axis[i,2]:.6f})")
 err = (boctree_tet_axis[i,2] - bdirect_tet_axis[i,2])/bdirect_tet_axis[i,2]
-print(f"Error at center: {100*err:.3f} %")
+print(f"Error at center (tet octree vs tet direct): {100*err:.3f} %")
 
 bmag_direct_pt_axis = np.linalg.norm(bdirect_pt_axis, axis=1) 
 bmag_direct_tet_axis = np.linalg.norm(bdirect_tet_axis, axis=1) 
@@ -101,9 +101,11 @@ bmag_direct_tet = np.linalg.norm(bdirect_tet, axis=1)
 bmag_octree_pt = np.linalg.norm(boctree_pt, axis=1) 
 bmag_octree_tet = np.linalg.norm(boctree_tet, axis=1) 
 err_mesh_pt = thor.test_utils.smape(bmag_direct_tet, bmag_octree_pt)
+err_mesh_pt_direct = thor.test_utils.smape(bmag_direct_tet, bmag_direct_pt)
 err_mesh_tet = thor.test_utils.smape(bmag_direct_tet, bmag_octree_tet)
-print(f"Mean fields error within the mesh (pt sources):  {err_mesh_pt*100:.2}%")
-print(f"Mean fields error within the mesh (tet sources): {err_mesh_tet*100:.2}%")
+print(f"Mean fields error within the mesh (pt/direct sources):  {err_mesh_pt_direct*100:.2}%")
+print(f"Mean fields error within the mesh (pt/octree sources):  {err_mesh_pt*100:.2}%")
+print(f"Mean fields error within the mesh (tet/octree sources): {err_mesh_tet*100:.2}%")
 
 print("Times: ")
 print(f"\tDirect (pt) solution time:  {direct_pt_elapsed*1e3:.3f} ms")
