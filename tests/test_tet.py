@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from time import perf_counter
 
 min_size: float = 2.5 
-max_size: float = 5.0
+max_size: float = 10.0
 jmag: float = 1e8 
 theta_pt: float = 0.5
 theta_tet: float = 0.5

@@ -12,7 +12,7 @@ pub fn calculate_scale_factor(L: u32) -> f64 {
 
 /// Normalize a points location in a grid to the range [0, 1] (inclusive)
 /// 
-/// Args:  
+/// # Args:  
 ///     point: (x,y,z) coordinates of the point to be normalized  
 ///     side_length: length of the grid size  
 ///     min_corner: (xmin, ymin, zmin) of the grid  

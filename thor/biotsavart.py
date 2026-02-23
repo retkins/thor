@@ -351,6 +351,7 @@ def hfield_dipole_tetrahedrons(
     moments: NDArray[float64], 
     targets: NDArray[float64], 
     theta: float=0.5,
+    leaf_threshold=1,
     nthreads: int=0 
 ) -> NDArray[float64]:
     """ Compute the magnetic field intensity at a set of target points
@@ -386,6 +387,7 @@ def hfield_dipole_tetrahedrons(
         ascontiguousarray(hy[:]),
         ascontiguousarray(hz[:]), 
         theta,
+        leaf_threshold,
         nthreads
     )
 

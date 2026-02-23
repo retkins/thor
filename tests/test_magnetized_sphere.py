@@ -14,9 +14,9 @@ import matplotlib.pyplot as plt
 # Problem inputs
 # ---
 
-min_size: float = 4.0
-max_size: float = 15.0
-theta: float = 0.1
+min_size: float = 10.0
+max_size: float = 20.0
+theta: float = 0.25
 alpha: float = 1.0          # relaxation factor for higher mu_r materials
 remesh: bool = True 
 bext_mag = 5.0              # [T] External field magnitude

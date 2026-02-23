@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused)]
 
-use crate::sources::hfield_tetrahedron;
+
 use crate::{MU0_4PI}; 
 use crate::math::{cross, distance, vec_distance, mag3};
 use crate::octree::{SourceOctree, SourceNode};
@@ -304,6 +304,7 @@ pub fn hfield_direct_tet(
 ) -> Result<(), ()> {
     let n_sources = vol.len();
     let n_targets = x.len(); 
+    let mut f = vec![Vec3([0.0; 3]); n_targets];
 
     // TODO: length checks
     for i in 0..n_sources {
@@ -317,9 +318,8 @@ pub fn hfield_direct_tet(
         ];
 
         let jdensity = Vec3([jdensity_flat[3*i], jdensity_flat[3*i+1], jdensity_flat[3*i+2]]);
-        unsafe {
-h_field_tet4(&nodes, &jdensity, (x, y, z), (hx, hy, hz));
-        }
+        h_field_tet4(&nodes, &jdensity, (x, y, z), &mut f, (hx, hy, hz));
+        f.fill(Vec3([0.0; 3]));
         
     }
 

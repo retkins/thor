@@ -42,7 +42,6 @@ impl std::ops::Index<usize> for Vec3 {
     fn index(&self, index: usize) -> &Self::Output {
         &self.0[index]
     }
-
 }
 
 impl std::ops::IndexMut<usize> for Vec3 {

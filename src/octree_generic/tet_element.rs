@@ -2,7 +2,7 @@
 use crate::{
     math::sort_by_indices, morton, octree::BoundingBox, octree_generic::{
         CurrentSources, HFieldSolver, Sources, DipoleSources
-    }, sources::{hfield_tetrahedron, h_point, h_point_dipole, hmag_tetrahedron}, vec3::Vec3
+    }, sources::{h_point, h_point_dipole, hmag_tetrahedron, h_field_tet4}, vec3::Vec3
 };
 
 
@@ -103,16 +103,15 @@ impl HFieldSolver for CurrentSources<TetSources> {
     }
 
     fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3 {
-        let mut h = Vec3([0.0; 3]);
+        let mut hx = [0.0];
+        let mut hy = [0.0];
+        let mut hz = [0.0];
+        let mut f = vec![Vec3([0.0;3]);1];
         for i in start..end {
-
-            let nx = [self.0.nodes[i][0][0], self.0.nodes[i][1][0], self.0.nodes[i][2][0], self.0.nodes[i][3][0]];
-            let ny = [self.0.nodes[i][0][1], self.0.nodes[i][1][1], self.0.nodes[i][2][1], self.0.nodes[i][3][1]];
-            let nz = [self.0.nodes[i][0][2], self.0.nodes[i][1][2], self.0.nodes[i][2][2], self.0.nodes[i][3][2]];
-
-            h += hfield_tetrahedron(&nx, &ny, &nz, &self.0.jdensity[i], target)
+            h_field_tet4(&self.0.nodes[i], &self.0.jdensity[i], (&[target[0]], &[target[1]], &[target[2]]), &mut f, (&mut hx, &mut hy, &mut hz));
+            f.fill(Vec3([0.0; 3]));
         }
-        h
+        Vec3([hx[0], hy[0], hz[0]])
     }
 }
 

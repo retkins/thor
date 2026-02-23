@@ -12,7 +12,7 @@ pub use element::{transform, edge_integral, edge_csys};
 pub mod point; 
 pub use point::{h_point, h_point_dipole};
 pub mod tet4; 
-pub use tet4::{hmag_tetrahedron, hfield_tetrahedron};
+pub use tet4::{hmag_tetrahedron, h_field_tet4};
 pub mod hex8;
 pub use hex8::bfield_hexahedron;
 
