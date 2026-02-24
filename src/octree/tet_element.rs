@@ -1,6 +1,6 @@
 
 use crate::{
-    math::sort_by_indices, morton, octree::BoundingBox, octree_generic::{
+    math::sort_by_indices, morton, octree::BoundingBox, octree::{
         CurrentSources, HFieldSolver, Sources, DipoleSources
     }, sources::{h_point, h_point_dipole, hmag_tetrahedron, h_field_tet4}, vec3::Vec3
 };

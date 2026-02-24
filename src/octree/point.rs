@@ -1,6 +1,6 @@
 
 use crate::octree::BoundingBox;
-use crate::octree_generic::{
+use crate::octree::{
     CurrentSources, DipoleSources, HFieldSolver, Sources
 };
 use crate::vec3::Vec3;

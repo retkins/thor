@@ -1,8 +1,8 @@
-#[allow(dead_code)]
+#[allow(unused)]
 
-use crate::biotsavart::{bfield_leaf};
+use crate::archive::biotsavart::{bfield_leaf};
 use crate::{MU0_4PI, morton};
-use crate::octree::{
+use crate::archive::octree::{
     BoundingBox, SourceNode, SourceOctree, Sources, get_range_in_same_node, size_at_level 
 };
 use crate::math::{
@@ -103,10 +103,8 @@ pub enum TargetNode {
 
 /// Represents the target tree for dual-tree Barnes Hut
 pub struct TargetOctree {
-    max_depth: u8, 
     pub targets: Targets,
     pub nodes: Vec<TargetNode>, 
-    leaf_threshold: u32
 }
 
 impl TargetOctree { 
@@ -200,7 +198,7 @@ impl TargetOctree {
                 }
 
                 match nodes[idx as usize] {
-                    TargetNode::Branch { level: _, size: _, children: _, centroid, b, n_targets } => {
+                    TargetNode::Branch { level: _, size: _, children: _, centroid, b: _, n_targets } => {
                         n_targets_parent = running_average(n_targets_parent, &mut parent_centroid, n_targets, &centroid);
                     }, 
                     TargetNode::Leaf { level: _, target_range, .. } => {
@@ -212,7 +210,7 @@ impl TargetOctree {
                 }
             }
 
-            if let TargetNode::Branch { level: _, size: _, children, centroid, b, n_targets} = &mut nodes[current_index] {
+            if let TargetNode::Branch { level: _, size: _, children, centroid, b: _, n_targets} = &mut nodes[current_index] {
                 *children = child_indices; 
                 *centroid = parent_centroid;
                 *n_targets = n_targets_parent;
@@ -251,10 +249,8 @@ impl TargetOctree {
         TargetOctree::build_tree(&targets, &mut nodes, max_depth, leaf_threshold);
 
         Self {
-            max_depth, 
             targets,
             nodes, 
-            leaf_threshold
         }
     } 
 

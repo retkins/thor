@@ -15,7 +15,7 @@ pub const MU0_4PI: f64 = 1e-7;
 /// $$\mu_0 = 4\pi \cdot 10^{-7} H/m$$
 pub const MU0: f64 = 4.0*PI*MU0_4PI;
 
-/// Expressions for multipole Biot-Savart sources
+/// Expressions for various Biot-Savart sources
 pub mod sources;
 
 /// Magnetic field calculations
@@ -38,27 +38,15 @@ pub mod vec3;
 
 /// Compute Morton codes and related functions
 /// 
-/// These are generally taken from previous work on the C implementation
-/// 
 /// Notes: 
 /// 1. Grids, etc. are based on a *cube* in 3d space
 pub mod morton;
 
-
-/// Single-tree Barnes-Hut Octree
+/// Single-tree Barnes-Hut octree methods
 ///
-/// Used to calculate the effect of M source points on N target points
+/// Used to calculate the effect of M sources on N target points
 /// using the Biot-Savart law for magnetic fields
-///
-/// Each source point has associated volume and current density.
-/// The direct summation algorithm is:
-/// delta_B = mu0/4pi * volume * J x r' / |r'|^3
 pub mod octree;
-pub mod octree_generic;
-
-
-/// Dual-tree Barnes-Hut
-pub mod dualtree;
 
 /// Python bindings
 #[cfg(feature="python")]
@@ -67,3 +55,6 @@ pub mod python;
 /// Parallel processing
 #[cfg(feature="parallel")]
 pub mod biotsavart_parallel;
+
+/// Older versions of the methods; keep around for testing
+pub mod archive;

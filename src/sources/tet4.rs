@@ -1,5 +1,4 @@
 
-
 use crate::sources::element::{edge_csys_fast, transform_fast};
 use crate::vec3::Vec3;
 use crate::sources::{edge_csys,transform};
@@ -116,6 +115,7 @@ pub fn h_field_tet4(
 /// CRYO-06-034: "MAGNUM - A Fortran Library for the Calculation of Magnetic Configurations"
 /// https://supermagnet.sourceforge.io/notes/CRYO-06-034.pdf
 /// 
+#[allow(dead_code)]
 fn hfield_tetrahedron(
     nx: &[f64],         // 4-length
     ny: &[f64],         // 4-length

@@ -6,7 +6,6 @@ use pyo3::prelude::*;
 use numpy::{PyReadonlyArray1, PyReadwriteArray1};
 
 use crate::biotsavart;
-use crate::dualtree;
 use crate::sources::bfield_hexahedron;
 
 #[pyfunction]
@@ -111,7 +110,7 @@ fn _bfield_octree(
     //     return Ok(());
     // }
 
-    use crate::octree_generic::{Octree, point, HFieldSolver, CurrentSources};
+    use crate::octree::{Octree, point, HFieldSolver, CurrentSources};
     let mut sources: CurrentSources<point::PointSources>= CurrentSources(point::PointSources::new(
         centx.as_slice()?, 
         centy.as_slice()?, 
@@ -177,6 +176,8 @@ fn _bfield_dualtree(
     leaf_threshold: u32, 
     nthreads_requested: u32
 ) -> PyResult<()> {
+
+    use crate::archive::dualtree;
     dualtree::bfield_dualtree(
         centx.as_slice()?, 
         centy.as_slice()?, 
@@ -233,7 +234,7 @@ fn _hfield_tetrahedrons(
     nthreads_requested: u32
 ) -> PyResult<()> {
 
-    use crate::octree_generic::{Octree, tet_element, HFieldSolver, CurrentSources};
+    use crate::octree::{Octree, tet_element, HFieldSolver, CurrentSources};
     let mut sources: CurrentSources<tet_element::TetSources> = CurrentSources(tet_element::TetSources::new(
         nodes_flat.as_slice()?, 
         centroids_flat.as_slice()?, 
@@ -275,7 +276,7 @@ fn _hfield_dipole_tetrahedrons(
     nthreads_requested: u32
 ) -> PyResult<()> {
 
-    use crate::octree_generic::{Octree, tet_element, HFieldSolver, DipoleSources};
+    use crate::octree::{Octree, tet_element, HFieldSolver, DipoleSources};
     let mut sources: DipoleSources<tet_element::TetSources>  = DipoleSources(tet_element::TetSources::new(
         nodes_flat.as_slice()?, 
         centroids_flat.as_slice()?, 
@@ -351,7 +352,7 @@ fn _hfield_dipole(
     leaf_threshold: u32, 
     nthreads_requested: u32
 ) ->PyResult<()> {
-    use crate::octree_generic::{Octree, DipoleSources, point::PointSources};
+    use crate::octree::{Octree, DipoleSources, point::PointSources};
     let sources = DipoleSources(PointSources::new_dipole(
         centx.as_slice()?, 
         centy.as_slice()?, 
