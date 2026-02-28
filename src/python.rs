@@ -363,18 +363,33 @@ fn _hfield_dipole(
         mz.as_slice()?
     ));
     let max_depth: u8 = 21; 
-let tree = Octree::build_from_sources(sources, max_depth, leaf_threshold);
+    let tree = Octree::build_from_sources(sources, max_depth, leaf_threshold);
 
-// Evaluate
-tree.h_field((x.as_slice()?, 
-        y.as_slice()?, 
-        z.as_slice()?), (hx.as_slice_mut()?, 
-        hy.as_slice_mut()?, 
-        hz.as_slice_mut()?), theta);
+    // Evaluate
+    tree.h_field(
+        (x.as_slice()?, y.as_slice()?, z.as_slice()?), 
+        (hx.as_slice_mut()?, hy.as_slice_mut()?, hz.as_slice_mut()?), 
+        theta
+    );
 
-Ok(())
+    Ok(())
 }
 
+
+#[pyfunction]
+fn _h_demag_tet4(
+    nodes_flat: PyReadonlyArray1<f64>, 
+    element_connectivity_flat: PyReadonlyArray1<f64>, 
+    mx: PyReadonlyArray1<f64>, 
+    my: PyReadonlyArray1<f64>, 
+    mz: PyReadonlyArray1<f64>, 
+    mut hx: PyReadwriteArray1<f64>,
+    mut hy: PyReadwriteArray1<f64>, 
+    mut hz: PyReadwriteArray1<f64>,  
+) -> PyResult<()> {
+
+    Ok(())
+}
 
 #[pymodule]
 fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
@@ -386,6 +401,7 @@ fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_hfield_dipole, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_hfield_tetrahedrons_direct, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_hfield_dipole_tetrahedrons, m.clone())?)?;
+    m.add_function(wrap_pyfunction!(_h_demag_tet4, m.clone())?)?;
     
     Ok(())  
 }

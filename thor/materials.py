@@ -3,7 +3,7 @@
 
 
 from dataclasses import dataclass
-from numpy import pi
+from numpy import pi, array
 from numpy.typing import NDArray 
 from numpy import float64, interp
 import thor
@@ -37,6 +37,9 @@ class Material:
         """
         return self.mu_r(h) - 1.0 
 
+    def to_mh_curve(self) -> tuple[NDArray[float64], NDArray[float64]]:
+        raise NotImplementedError
+
 
 @dataclass
 class FreeSpace(Material):
@@ -59,6 +62,11 @@ class LinearMaterial(Material):
     def mu_r(self, h: float): 
         return self._mu_r 
 
+    def to_mh_curve(self) -> tuple[NDArray[float64], NDArray[float64]]:
+        h_values = array([1.0, 1e10])
+        m_values = array([self.mu_r(h) for h in h_values])
+        return (h_values, m_values)
+
 
 @dataclass
 class NonlinearMaterial(Material):
@@ -77,3 +85,6 @@ class NonlinearMaterial(Material):
             return (b/thor.MU0)/h - 1.0
         else: 
             return 1.0
+
+    def to_mh_curve(self) -> tuple[NDArray[float64], NDArray[float64]]:
+        return (self.curve.h_values, self.curve.b_values / MU0 - self.curve.h_values)
