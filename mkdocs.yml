@@ -1,5 +1,5 @@
 site_name: Thor 
-site_url: https://freestatelabs.com/thor
+site_url: https://retkins.github.io/thor
 theme: terminal
 plugins:
   - search
@@ -16,4 +16,4 @@ nav:
   - "About thor": index.md
   - "Tests and Validation": tests-and-validation.md
   - "Python API": python-api.md
-  - "Rust API": "https://freestatelabs.com/thor/rust-api/thor/index.html"
+  - "Rust API": "https://retkins.github.io/thor/rust-api/thor/index.html"

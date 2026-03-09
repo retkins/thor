@@ -1,8 +1,9 @@
 [package]
 name = "thor"
 version = "0.1.0"
-description = "Approximate Biot-Savart Law integration in near-linear time"
 edition = "2024"
+authors = ["Ryan Etkins <retkins@pm.me>"]
+description = "Approximate Biot-Savart Law integration in near-linear time"
 
 [dependencies]
 numpy = {version = "0.27.1", optional=true}

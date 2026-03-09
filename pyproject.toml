@@ -1,6 +1,7 @@
 [project]
 name = "thor"
 version = "0.1.0"
+authors = [{name = "Ryan Etkins", email = "retkins@pm.me"}]
 description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
 requires-python = ">=3.13"

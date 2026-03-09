@@ -1,9 +1,8 @@
 //! Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algorithm  
-//! 
-//! This is the Rust API documentation. 
-//! Main documentation, including a theory manual and the Python API, 
-//! is hosted [here](https://freestatelabs.com/thor).
-
+//!
+//! This is the Rust API documentation.
+//! Main documentation, including a theory manual and the Python API,
+//! is hosted [here](https://retkins.github.io/thor).
 
 use std::f64::consts::PI;
 
@@ -13,7 +12,7 @@ pub const MU0_4PI: f64 = 1e-7;
 
 /// Magnetic permeability of free space:  
 /// $$\mu_0 = 4\pi \cdot 10^{-7} H/m$$
-pub const MU0: f64 = 4.0*PI*MU0_4PI;
+pub const MU0: f64 = 4.0 * PI * MU0_4PI;
 
 /// Expressions for various Biot-Savart sources
 pub mod sources;
@@ -25,7 +24,7 @@ pub mod biotsavart;
 pub mod analytical;
 
 /// Basic read/write file operations
-pub mod io; 
+pub mod io;
 
 /// Error types for `thor`
 pub mod errors;
@@ -33,13 +32,13 @@ pub mod errors;
 /// Low-level math and array operations
 pub mod math;
 
+pub mod mat3;
 /// Define a 3-length vector type for math operations
 pub mod vec3;
-pub mod mat3;
 
 /// Compute Morton codes and related functions
-/// 
-/// Notes: 
+///
+/// Notes:
 /// 1. Grids, etc. are based on a *cube* in 3d space
 pub mod morton;
 
@@ -50,11 +49,11 @@ pub mod morton;
 pub mod octree;
 
 /// Python bindings
-#[cfg(feature="python")]
+#[cfg(feature = "python")]
 pub mod python;
 
 /// Parallel processing
-#[cfg(feature="parallel")]
+#[cfg(feature = "parallel")]
 pub mod biotsavart_parallel;
 
 /// Older versions of the methods; keep around for testing
