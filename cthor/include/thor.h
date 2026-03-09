@@ -1,7 +1,0 @@
-#include "internal/biotsavart.h"
-#include "internal/octree.h"
-#include "internal/utils.h"
-#include "internal/sources.h"
-#include "internal/targets.h"
-#include "internal/simd.h"
-#include "internal/csv.h"
