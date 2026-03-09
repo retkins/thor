@@ -8,7 +8,7 @@ Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algo
 
 `thor` is meant to be installed from source from Python projects managed with `uv`:
 ```bash
-uv add git+https://git.sr.ht/~freestatelabs/thor
+uv add git+https://github.com/retkins/thor
 ```
 
 See [Development Notes](#development-notes) below.
