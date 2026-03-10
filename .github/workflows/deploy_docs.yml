@@ -29,7 +29,11 @@ jobs:
           python-version: 3.x 
       - run: pip install mkdocs mkdocs-terminal mkdocstrings mkdocstrings-python
       - run: mkdocs build
-      - uses: peaceiris/actions-gh-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+          path: './site'
+      
+      - name: Deploy docs to GH pages
+        id: deployment
+        uses: actions/deploy-pages@v4
