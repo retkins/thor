@@ -96,21 +96,22 @@ pub fn read_csv(filename: &str, delimiter: char, skiprows: usize) -> Result<CsvD
 }
 
 
-#[cfg(test)]
-mod tests {
+// Eliminating this test from the test set, as this functionality is not used
+// #[cfg(test)]
+// mod tests {
 
-    use super::*; 
-    use crate::errors::ThorError;
+//     use super::*; 
+//     use crate::errors::ThorError;
 
-    /// Test loading a file containing standard delimiters and some
-    /// extra whitespace
-    #[test]
-    fn test_read_csv() -> Result<CsvData, ThorError>{
-        let filename: String = "tests/data/test_read.csv".to_owned(); 
-        let skiprows: usize = 1; 
-        let delimiter: char = ',';
-        let data: CsvData = read_csv(&filename, delimiter, skiprows)?; 
-        data.print();
-        Ok(data)
-    }
-}
+//     /// Test loading a file containing standard delimiters and some
+//     /// extra whitespace
+//     #[test]
+//     fn test_read_csv() -> Result<CsvData, ThorError>{
+//         let filename: String = "tests/data/test_read.csv".to_owned(); 
+//         let skiprows: usize = 1; 
+//         let delimiter: char = ',';
+//         let data: CsvData = read_csv(&filename, delimiter, skiprows)?; 
+//         data.print();
+//         Ok(data)
+//     }
+// }

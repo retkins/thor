@@ -3,7 +3,11 @@ name = "thor"
 version = "0.1.0"
 edition = "2024"
 authors = ["Ryan Etkins <retkins@pm.me>"]
-description = "Approximate Biot-Savart Law integration in near-linear time"
+description = "Lightning-fast magnetic fields calculations"
+license = "MIT OR Apache-2.0"
+license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
+repository = "https://github.com/retkins/thor/"
+homepage = "https://retkins.github.io/thor/"
 
 [dependencies]
 numpy = {version = "0.27.1", optional=true}
