@@ -48,4 +48,4 @@ The mean relative error across every element of the source/target mesh is consid
 TODO.
 
 ## License
-GPL. Closed-source forks and distributions are not permitted.
+[MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), at your option.
