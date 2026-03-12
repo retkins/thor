@@ -41,11 +41,11 @@ jobs:
 
     - name: Format
       run: |
-        uv run --no-sync ruff check ./thor
-        uv run --no-sync ruff format ./thor --check
+        uv run --no-sync ruff check ./src
+        uv run --no-sync ruff format ./src --check
 
     - name: Static typing
-      run: uv run --no-sync ty check ./thor
+      run: uv run --no-sync ty check ./src
 
     - name: Test
       run: uv run --no-sync pytest .
