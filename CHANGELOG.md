@@ -27,3 +27,4 @@
 * Derive PartialEq on Vec3 and Mat3 structs instead of manually implementing methods
 * Use slice `&[T]` instead of vec reference `&Vec<T>`
 * Use PI and LN_2 built-in constants instead of baked values
+* Only deploy docs when running actions on main branch

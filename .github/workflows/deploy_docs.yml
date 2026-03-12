@@ -44,5 +44,6 @@ jobs:
           path: './site'
       
       - name: Deploy docs to GH pages
+        if: github.ref == 'refs/heads/main'  # only run on main
         id: deployment
         uses: actions/deploy-pages@v4
