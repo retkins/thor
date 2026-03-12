@@ -6,11 +6,18 @@ description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "matplotlib>=3.10",
     "numpy>=1.21.2",
-    "pytest>=9.0.2",
 ]
 
+# Optional deps not exposed to pypi install interface
+[project.dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "matplotlib>=3.10",
+    "gmsh>=4.15",
+]
+
+# Optional deps accessible from pypi
 [project.optional-dependencies]
 mesh = [
     "gmsh>=4.15"

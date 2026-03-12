@@ -1,0 +1,26 @@
+name: Rust
+
+on:
+  pull_request:
+    branches: [ "*" ]
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Format
+      run: cargo fmt --check --verbose
+    - name: Lint
+      run: cargo clippy --features=parallel
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Run tests with parallel feature
+      run: cargo test --features=parallel --verbose
