@@ -13,3 +13,4 @@
 * Add rust lint/test workflow
 * Add dev dep group
 * Suppress interactive plots when running tests
+* Use pathlib for test_utils paths
