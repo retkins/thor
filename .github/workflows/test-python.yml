@@ -46,3 +46,26 @@ jobs:
 
     - name: Test
       run: uv run --no-sync pytest .
+
+  test_platforms:
+    runs-on: ${{ matrix.platform.runner }}
+    strategy:
+      matrix:
+        platform:
+          # - runner: windows-latest
+          # - runner: ubuntu-latest
+          - runner: ubuntu-24.04-arm  # aarch64
+          - runner: macos-15-intel  # x86_64
+          - runner: macos-15  # aarch64
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: "3.10"
+
+    - name: Test
+      run: |
+        uv sync --locked --no-editable --extra mesh --group dev
+        uv run --no-sync pytest .
