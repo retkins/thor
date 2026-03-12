@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1
+## 0.1.1 2026-Mar-11
 
 * Add changelog
 * Robustify condition for using parallel implementation in python bindings to handle zero input
