@@ -1,14 +1,10 @@
-
-use crate::octree::BoundingBox;
-use crate::octree::{
-    CurrentSources, DipoleSources, HFieldSolver, Sources
-};
-use crate::vec3::Vec3;
-use crate::sources::{h_point, h_point_dipole};
 use crate::math::sort_by_indices;
 use crate::morton;
+use crate::octree::BoundingBox;
+use crate::octree::{CurrentSources, DipoleSources, HFieldSolver, Sources};
+use crate::sources::{h_point, h_point_dipole};
+use crate::vec3::Vec3;
 use std::f64::consts::PI;
-
 
 pub struct PointSources {
     pub xg: Vec<f64>,
@@ -18,52 +14,85 @@ pub struct PointSources {
     pub vjx: Vec<f64>,
     pub vjy: Vec<f64>,
     pub vjz: Vec<f64>,
-    bbox: BoundingBox
+    bbox: BoundingBox,
 }
 
 impl PointSources {
-    pub fn new(x: &[f64], y: &[f64], z: &[f64], vol: &[f64], jx: &[f64], jy: &[f64], jz: &[f64]) -> Self {
+    pub fn new(
+        x: &[f64],
+        y: &[f64],
+        z: &[f64],
+        vol: &[f64],
+        jx: &[f64],
+        jy: &[f64],
+        jz: &[f64],
+    ) -> Self {
         let n = x.len();
         let xg: Vec<f64> = x.to_vec();
         let yg: Vec<f64> = y.to_vec();
         let zg: Vec<f64> = z.to_vec();
-        let mut r  = vec![0.0; n];
-        let mut vjx  = vec![0.0; n];
-        let mut vjy  = vec![0.0; n];
-        let mut vjz  = vec![0.0; n];
+        let mut r = vec![0.0; n];
+        let mut vjx = vec![0.0; n];
+        let mut vjy = vec![0.0; n];
+        let mut vjz = vec![0.0; n];
 
         // compute radius of each point and current density moment
         for i in 0..n {
-            r[i] = ((3.0/(4.0*PI))*vol[i]).powf(1.0/3.0);
-            vjx[i] = vol[i]*jx[i];
-            vjy[i] = vol[i]*jy[i];
-            vjz[i] = vol[i]*jz[i];
+            r[i] = ((3.0 / (4.0 * PI)) * vol[i]).powf(1.0 / 3.0);
+            vjx[i] = vol[i] * jx[i];
+            vjy[i] = vol[i] * jy[i];
+            vjz[i] = vol[i] * jz[i];
         }
         let bbox = BoundingBox::from_centroids((&xg, &yg, &zg)).unwrap();
 
-        Self { xg: xg, yg: yg, zg: zg, r: r, vjx: vjx, vjy: vjy, vjz: vjz, bbox }
+        Self {
+            xg: xg,
+            yg: yg,
+            zg: zg,
+            r: r,
+            vjx: vjx,
+            vjy: vjy,
+            vjz: vjz,
+            bbox,
+        }
     }
 
-    pub fn new_dipole(x: &[f64], y: &[f64], z: &[f64], vol: &[f64], mx: &[f64], my: &[f64], mz: &[f64]) -> Self {
+    pub fn new_dipole(
+        x: &[f64],
+        y: &[f64],
+        z: &[f64],
+        vol: &[f64],
+        mx: &[f64],
+        my: &[f64],
+        mz: &[f64],
+    ) -> Self {
         let n = x.len();
         let xg: Vec<f64> = x.to_vec();
         let yg: Vec<f64> = y.to_vec();
         let zg: Vec<f64> = z.to_vec();
-        let mut r  = vec![0.0; n];
-        let vjx  = mx.to_vec();
-        let vjy  = my.to_vec();
-        let vjz  = mz.to_vec();
+        let mut r = vec![0.0; n];
+        let vjx = mx.to_vec();
+        let vjy = my.to_vec();
+        let vjz = mz.to_vec();
 
         // compute radius of each point and current density moment
         for i in 0..n {
-            r[i] = ((3.0/(4.0*PI))*vol[i]).powf(1.0/3.0);
+            r[i] = ((3.0 / (4.0 * PI)) * vol[i]).powf(1.0 / 3.0);
         }
         let bbox = BoundingBox::from_centroids((&xg, &yg, &zg)).unwrap();
 
-        Self { xg: xg, yg: yg, zg: zg, r: r, vjx: vjx, vjy: vjy, vjz: vjz, bbox }
+        Self {
+            xg: xg,
+            yg: yg,
+            zg: zg,
+            r: r,
+            vjx: vjx,
+            vjy: vjy,
+            vjz: vjz,
+            bbox,
+        }
     }
 }
-
 
 impl Sources for PointSources {
     fn len(&self) -> usize {
@@ -87,7 +116,6 @@ impl Sources for PointSources {
         sort_by_indices(&mut self.vjx, &mut scratch, &indices);
         sort_by_indices(&mut self.vjy, &mut scratch, &indices);
         sort_by_indices(&mut self.vjz, &mut scratch, &indices);
-        
     }
 
     fn bbox(&self) -> &BoundingBox {
@@ -120,23 +148,21 @@ impl HFieldSolver for CurrentSources<PointSources> {
         let mut h = Vec3([0.0; 3]);
         for i in start..end {
             let centroid = Vec3::from_slice_tuple((&self.0.xg, &self.0.yg, &self.0.zg), i);
-            let vj =Vec3::from_slice_tuple((&self.0.vjx, &self.0.vjy, &self.0.vjz), i);
+            let vj = Vec3::from_slice_tuple((&self.0.vjx, &self.0.vjy, &self.0.vjz), i);
             h += h_point(&centroid, &vj, self.0.r[i], target);
-
         }
         h
     }
 }
 
-
 impl HFieldSolver for DipoleSources<PointSources> {
     fn h_field_branch(&self, centroid: &Vec3, moment: &Vec3, target: &Vec3) -> Vec3 {
-        let radius = 0.0;   // far-field
+        let radius = 0.0; // far-field
         h_point_dipole(centroid, moment, radius, target)
     }
 
     fn h_field_leaf(&self, start: usize, end: usize, target: &Vec3) -> Vec3 {
-        let mut h = Vec3([0.0;3]);
+        let mut h = Vec3([0.0; 3]);
         for i in start..end {
             let centroid = Vec3::from_slice_tuple((&self.0.xg, &self.0.yg, &self.0.zg), i);
             let moment = Vec3::from_slice_tuple((&self.0.vjx, &self.0.vjy, &self.0.vjz), i);

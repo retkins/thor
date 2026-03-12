@@ -1,13 +1,13 @@
 [project]
 name = "thor"
-version = "0.1.0"
+dynamic = ["version"]
 authors = [{name = "Ryan Etkins", email = "retkins@pm.me"}]
 description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "matplotlib>=3.10",
-    "numpy>=2.4.1",
+    "numpy>=1.21.2",
     "pytest>=9.0.2",
 ]
 
@@ -24,3 +24,5 @@ build-backend = "maturin"
 python-source = "."  
 module-name = "thor._thor" 
 features = ["python", "parallel"]
+profile = "release"
+version = { source = "cargo" }

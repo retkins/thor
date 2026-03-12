@@ -8,3 +8,5 @@ __pycache__
 .cargo
 *.msh
 site/
+
+tests/fig/*.png
