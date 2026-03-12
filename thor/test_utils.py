@@ -21,7 +21,7 @@ def mean_squared_error(
     Args:
     ---
         baseline: N-length array of 'ground-truth' values
-        measurement: N-length array of values to which determine error (deviation) from 
+        measurement: N-length array of values to which determine error (deviation) from
                      baseline
 
     """

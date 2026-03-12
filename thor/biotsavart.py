@@ -34,7 +34,7 @@ def bfield_direct(
                    space
         vol: [m^3] N-length array, volume of each source element
         jdensity: [A/m^2] Nx3 array, current density vectors for each source element
-        targets: [m] Nx3 array, describes location of target points at which to 
+        targets: [m] Nx3 array, describes location of target points at which to
                  calculate magnetic fields
         nthreads: number of threads to use for the calculation (default: all available)
 
@@ -322,7 +322,7 @@ def hfield_dipole(
         nthreads: number of threads to use for the calculation (default: all available)
 
     Returns:
-        [A/m] Nx3 array, magnetic field intensity [H-field] at each specified target 
+        [A/m] Nx3 array, magnetic field intensity [H-field] at each specified target
               point
 
     """
