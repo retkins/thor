@@ -37,7 +37,8 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-python-source = "."  
+python-source = "src"
+python-packages = ["interpn"]
 module-name = "thor._thor" 
 features = ["python", "parallel"]
 profile = "release"
