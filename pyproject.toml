@@ -38,7 +38,7 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "src"
-python-packages = ["interpn"]
+python-packages = ["thor"]
 module-name = "thor._thor" 
 features = ["python", "parallel"]
 profile = "release"
