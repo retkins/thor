@@ -5,13 +5,14 @@ use std::thread::available_parallelism;
 use crate::biotsavart::{bfield_direct, hfield_direct_tet};
 
 pub fn get_nthreads(nthreads_requested: u32) -> usize {
-    let nthreads: usize;
     let nthreads_available: usize = available_parallelism().unwrap_or(NonZeroUsize::MIN).get();
-    if nthreads_requested as usize > nthreads_available || nthreads_requested == 0 {
-        nthreads = nthreads_available;
-    } else {
-        nthreads = nthreads_requested as usize;
-    }
+    let nthreads: usize =
+        if nthreads_requested as usize > nthreads_available || nthreads_requested == 0 {
+            nthreads_available
+        } else {
+            nthreads_requested as usize
+        };
+
     nthreads
 }
 

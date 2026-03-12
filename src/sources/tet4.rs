@@ -77,7 +77,7 @@ pub fn h_field_tet4(
 
     for face in 0..4 {
         for edge in 0..3 {
-             // normal on face 
+            // normal on face
 
             // Node numbers from the map
             let n0: usize = NODE_MAP[face][edge][0];
@@ -179,7 +179,7 @@ fn hfield_tetrahedron(
         s[2] += ni[2] * s_face;
     }
 
-    let inv_4pi = 1.0 / (4.0 * 3.141592654);
+    let inv_4pi = 1.0 / (4.0 * PI);
     jdensity.cross(&Vec3(s)) * inv_4pi
 }
 

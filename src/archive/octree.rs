@@ -62,7 +62,7 @@ impl BoundingBox {
     }
 
     /// TODO: fix this so there's no data copy
-    pub fn from_centroids_vec(centroids: &Vec<Vec3>) -> Self {
+    pub fn from_centroids_vec(centroids: &[Vec3]) -> Self {
         let n: usize = centroids.len();
         let mut x: Vec<f64> = vec![0.0; n];
         let mut y: Vec<f64> = vec![0.0; n];

@@ -3,6 +3,10 @@
 //! This is the Rust API documentation.
 //! Main documentation, including a theory manual and the Python API,
 //! is hosted [here](https://retkins.github.io/thor).
+#![allow(clippy::needless_range_loop)]
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::result_unit_err)]
+#![allow(clippy::len_without_is_empty)]
 
 use std::f64::consts::PI;
 

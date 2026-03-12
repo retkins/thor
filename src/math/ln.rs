@@ -5,7 +5,6 @@ const ONE_NINTH: f64 = 1.0 / 9.0;
 const ONE_ELEVENTH: f64 = 1.0 / 11.0;
 const ONE_THIRTEENTH: f64 = 1.0 / 13.0;
 const ONE_FIFTEENTH: f64 = 1.0 / 15.0;
-const LN_2: f64 = 0.6931471805599453;
 
 /// Fast, approximate natural logarithm of `x` with absolute error < 1e-8
 ///
@@ -65,7 +64,7 @@ pub fn ln(x: f64) -> f64 {
         1.0,
     );
     // ln(x) = ln(m) + e*ln(2)
-    (2.0 * v * poly) + (e * LN_2)
+    (2.0 * v * poly) + (e * core::f64::consts::LN_2)
 }
 
 #[cfg(test)]

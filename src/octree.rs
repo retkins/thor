@@ -152,7 +152,7 @@ fn update_centroid(
 /// - add guard on level (prevent infinite recursion if there's an error in the inputs)
 fn add_node<S: Sources>(
     sources: &S,
-    codes: &Vec<u64>,
+    codes: &[u64],
     nodes: &mut Vec<Node>,
     max_depth: u8,
     leaf_threshold: u32,
@@ -162,14 +162,13 @@ fn add_node<S: Sources>(
 ) -> u32 {
     // Recursion guard
     if level > 21 {
-        eprintln!(
+        unimplemented!(
             "DEEP: level={}, start={}, end={}, n={}",
             level,
             start,
             end,
             end - start
-        );
-        assert!(false);
+        )
     }
 
     let current_index: usize;

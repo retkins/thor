@@ -5,6 +5,7 @@
 * Add changelog
 * Robustify condition for using parallel implementation in python bindings to handle zero input
 * Format python and rust & clear commented blocks
+* Fix clippy lints
 * Add type stubs for python bindings & add py.typed marker to indicate type hints are present
 * Add placeholder file to prevent tests/fig/ folder from being deleted, causing test failures
 * Set python package version based on rust crate version
@@ -23,3 +24,6 @@
 * Unmask _h_demag_tet4 function
 * Add ruff and ty for linting and typechecking
 * Add ruff linter configuration in pyproject.toml
+* Derive PartialEq on Vec3 and Mat3 structs instead of manually implementing methods
+* Use slice `&[T]` instead of vec reference `&Vec<T>`
+* Use PI and LN_2 built-in constants instead of baked values

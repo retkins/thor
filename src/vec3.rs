@@ -1,5 +1,5 @@
 /// A 3-length vector
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Vec3(pub [f64; 3]);
 

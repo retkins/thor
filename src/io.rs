@@ -2,6 +2,7 @@ use crate::errors::ThorError;
 use std::{fs::read_to_string, process::Termination};
 
 /// CSV data stored in row-major format
+#[derive(Default)]
 pub struct CsvData {
     _nrows: usize,
     _ncols: usize,
