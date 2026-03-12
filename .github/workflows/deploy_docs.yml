@@ -35,8 +35,8 @@ jobs:
           python-version: 3.13
 
       - run: |
-          uv pip install . --group dev --extra mesh
-          mkdocs build
+          uv sync --extra mesh --group dev
+          uv run mkdocs build
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
