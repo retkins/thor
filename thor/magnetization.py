@@ -1,8 +1,8 @@
-""" Operations for magnetic materials
-"""
-from typing import Callable
+"""Operations for magnetic materials"""
 
-import numpy as np 
+from collections.abc import Callable
+
+import numpy as np
 from numpy.typing import NDArray
 from numpy import float64
 
@@ -10,24 +10,25 @@ from thor import LinearMaterial, MU0
 from thor.materials import Material
 from ._thor import _h_demag_tet4
 
+
 def mag_force(
     centroids: NDArray[float64],
     vol: NDArray[float64],
     material: LinearMaterial,
-    h_ext: Callable
+    h_ext: Callable,
 ) -> NDArray[float64]:
-    """ Compute the force acting on the elements of a mesh with a magnetic material 
-        under the influence of an external magnetic field. 
+    """Compute the force acting on the elements of a mesh with a magnetic material
+        under the influence of an external magnetic field.
 
     Limitations:
-    1. This does not (yet) consider the demagnetizing field 
+    1. This does not (yet) consider the demagnetizing field
     2. Materials are limited to linear (constant mu_r)
 
     Args:
         centroids: (N,3) centroid of each target element in 3d space
         vol: (N,) volume of each target element
         material: linear magnetic material
-        h_ext(centroids): function to evaluate the external field 
+        h_ext(centroids): function to evaluate the external field
 
     Returns:
         (N,3) force vector on each element
@@ -41,7 +42,7 @@ def mag_force(
     delta = 1e-4
 
     # grad_h[i,a,b] = dH_a/d_b
-    grad_h = np.zeros((n, 3, 3)) 
+    grad_h = np.zeros((n, 3, 3))
 
     # second order finite differencing
     for axis in range(3):
@@ -49,7 +50,7 @@ def mag_force(
         targets_minus = centroids.copy()
         targets_plus[:, axis] += delta
         targets_minus[:, axis] -= delta
-        
+
         # in the future, this should be:
         # h = h_ext + h_demag
         h_plus = h_ext(targets_plus)
@@ -57,32 +58,33 @@ def mag_force(
         grad_h[:, :, axis] = (h_plus - h_minus) / (2.0 * delta)
 
     # in absence of demag field, assume moments are proportional to mu_r
-    moments = material.chi(1) * vol[:,np.newaxis] * h_ext(centroids)
+    moments = material.chi(1) * vol[:, np.newaxis] * h_ext(centroids)
 
     # Force on each element
     forces = np.zeros((n, 3))
     for a in range(3):
         for b in range(3):
-            forces[:, a] += MU0 * moments[:, b] * grad_h[:, b, a]   
+            forces[:, a] += MU0 * moments[:, b] * grad_h[:, b, a]
 
     return forces
 
 
 def h_demag_tet4(
-    nodes: NDArray[float64], 
-    element_connectivity: NDArray[float64],  
-    material: Material, 
-    m_field: NDArray[float64],  
+    nodes: NDArray[float64],
+    element_connectivity: NDArray[float64],
+    material: Material,
+    m_field: NDArray[float64],
 ) -> NDArray[float64]:
-    """ Compute the demagnetization field H(M) on mesh element centroids given the current M-field
+    """Compute the demagnetization field H(M) on mesh element centroids given the
+    current M-field
 
     Args:
         nodes: (Nn, 3) nodal coordinates per element
-        element_connectivity: (Ne, 4) indices of each node per element; 
+        element_connectivity: (Ne, 4) indices of each node per element;
             these are indices of the array `nodes`, not of the solver's node numbers
         material: linear or nonlinear magnetic maaterial properties
         m_field: (Ne,3) current M-field at each element centroid
-        max_iterations: number of solver iterations before exit 
+        max_iterations: number of solver iterations before exit
         tol: maximum amount of change per individual component of M at each element
 
     Returns:
@@ -91,21 +93,21 @@ def h_demag_tet4(
 
     # Check that the M field is calculated at the element centroids
     try:
-        assert(element_connectivity.shape[0] == m_field.shape[0])
+        assert element_connectivity.shape[0] == m_field.shape[0]
     except AssertionError:
         print("Error. The M-field should be calculated at element centroids.")
 
     n_elements: int = element_connectivity.shape[0]
     hx = np.zeros(n_elements)
-    hy = np.zeros(n_elements) 
+    hy = np.zeros(n_elements)
     hz = np.zeros(n_elements)
 
     _h_demag_tet4(
-        np.ascontiguousarray(nodes.flatten()), 
-        np.ascontiguousarray(element_connectivity.flatten()), 
-        np.ascontiguousarray(m_field[:,0]),
-        np.ascontiguousarray(m_field[:,1]),
-        np.ascontiguousarray(m_field[:,2]),
+        np.ascontiguousarray(nodes.flatten()),
+        np.ascontiguousarray(element_connectivity.flatten()),
+        np.ascontiguousarray(m_field[:, 0]),
+        np.ascontiguousarray(m_field[:, 1]),
+        np.ascontiguousarray(m_field[:, 2]),
         np.ascontiguousarray(hx),
         np.ascontiguousarray(hy),
         np.ascontiguousarray(hz),
@@ -115,51 +117,52 @@ def h_demag_tet4(
 
 
 def demag_tet4(
-    nodes: NDArray[float64], 
-    element_connectivity: NDArray[float64],  
-    material: Material, 
-    h_external: NDArray[float64],  
-    max_iterations: int=50, 
-    tol: float=1e-6
+    nodes: NDArray[float64],
+    element_connectivity: NDArray[float64],
+    material: Material,
+    h_external: NDArray[float64],
+    max_iterations: int = 50,
+    tol: float = 1e-6,
 ) -> tuple[NDArray[float64], NDArray[float64]]:
-    """ Compute magnetization field M and the total H field at element centroids 
+    """Compute magnetization field M and the total H field at element centroids
 
-    Uses simple fixed-point iteration and therefore only converges for low-permeable materials.
+    Uses simple fixed-point iteration and therefore only converges for low-permeable
+    materials.
 
     Args:
-        nodes: (Nn, 3) nodal coordinates 
-        element_connectivity: (Ne, 4) indices of each node per element; 
+        nodes: (Nn, 3) nodal coordinates
+        element_connectivity: (Ne, 4) indices of each node per element;
             these are indices of the array `nodes`, not of the solver's node numbers
         material: linear or nonlinear magnetic maaterial properties
         h_external: (Ne,3) external field at each element centroid
-        max_iterations: number of solver iterations before exit 
+        max_iterations: number of solver iterations before exit
         tol: maximum amount of change per individual component of M at each element
 
-    Returns: 
-        (M, Htotal): each (Ne, 3), magnetization field M(Htotal) and total H field at element 
-            centroids. These can be summed to give B = mu0 * (Htotal + M)
+    Returns:
+        (M, Htotal): each (Ne, 3), magnetization field M(Htotal) and total H field at
+                     element centroids. These can be summed to give
+                     B = mu0 * (Htotal + M)
     """
 
-    # Check that the external field is calculated at the nodes 
+    # Check that the external field is calculated at the nodes
     try:
-        assert(element_connectivity.shape[0] == h_external.shape[0])
+        assert element_connectivity.shape[0] == h_external.shape[0]
     except AssertionError:
         print("Error. The external should be calculated at mesh nodes.")
 
     # We need the magnetization curve; sometimes users may have a B-H curve
     h_values, m_values = material.to_mh_curve()
 
-    n_elements: int = element_connectivity.shape[0] 
+    n_elements: int = element_connectivity.shape[0]
 
-    m_field = np.zeros((n_elements,3))
-    h_hat = np.zeros((n_elements,3))
+    m_field = np.zeros((n_elements, 3))
+    h_hat = np.zeros((n_elements, 3))
     h_total = np.zeros((n_elements, 3))
 
-    for i in range(max_iterations):
-
+    for _i in range(max_iterations):
         # Get the demag and total H field at the element centroids
         h_demag = h_demag_tet4(nodes, element_connectivity, material, m_field)
-        h_total = h_demag + h_external 
+        h_total = h_demag + h_external
 
         # We consider isotropic materials for the B-H curve iteration
         h_magnitude = np.linalg.norm(h_total, axis=1)
@@ -168,8 +171,8 @@ def demag_tet4(
         h_hat.fill(0.0)
         h_hat[mask] = h_total[mask, :] / h_magnitude[mask, np.newaxis]
         m_field_new = h_hat * m_magnitude[:, np.newaxis]
-        if np.max(np.abs(m_field_new - m_field)) < tol: 
-            break 
-        m_field = m_field_new 
+        if np.max(np.abs(m_field_new - m_field)) < tol:
+            break
+        m_field = m_field_new
 
     return (m_field, h_total)

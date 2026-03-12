@@ -21,3 +21,5 @@
   * Enables modern vector instructions, among other things
 * Use abi3-py310 for bindings, s.t. one binary is compatible with python >=3.10
 * Unmask _h_demag_tet4 function
+* Add ruff and ty for linting and typechecking
+* Add ruff linter configuration in pyproject.toml

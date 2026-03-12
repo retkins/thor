@@ -8,7 +8,6 @@ from numpy.typing import NDArray
 Float64Array: TypeAlias = NDArray[float64]
 Vector3: TypeAlias = tuple[float, float, float]
 
-
 def _bfield_direct(
     centx: Float64Array,
     centy: Float64Array,
@@ -25,8 +24,6 @@ def _bfield_direct(
     bz: Float64Array,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _bfield_octree(
     centx: Float64Array,
     centy: Float64Array,
@@ -45,8 +42,6 @@ def _bfield_octree(
     leaf_threshold: int,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _bfield_dualtree(
     centx: Float64Array,
     centy: Float64Array,
@@ -66,8 +61,6 @@ def _bfield_dualtree(
     leaf_threshold: int,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _bfield_hexahedron(
     nx: Float64Array,
     ny: Float64Array,
@@ -75,8 +68,6 @@ def _bfield_hexahedron(
     jdensity: Float64Array,
     target: Float64Array,
 ) -> Vector3: ...
-
-
 def _hfield_tetrahedrons(
     nodes_flat: Float64Array,
     centroids_flat: Float64Array,
@@ -92,8 +83,6 @@ def _hfield_tetrahedrons(
     leaf_threshold: int,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _hfield_dipole_tetrahedrons(
     nodes_flat: Float64Array,
     centroids_flat: Float64Array,
@@ -109,8 +98,6 @@ def _hfield_dipole_tetrahedrons(
     leaf_threshold: int,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _hfield_tetrahedrons_direct(
     nodes_flat: Float64Array,
     centroids_flat: Float64Array,
@@ -124,8 +111,6 @@ def _hfield_tetrahedrons_direct(
     hz: Float64Array,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _hfield_dipole(
     centx: Float64Array,
     centy: Float64Array,
@@ -144,8 +129,6 @@ def _hfield_dipole(
     leaf_threshold: int,
     nthreads_requested: int,
 ) -> None: ...
-
-
 def _h_demag_tet4(
     nodes_flat: Float64Array,
     element_connectivity_flat: Float64Array,

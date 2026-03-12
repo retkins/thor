@@ -4,7 +4,7 @@ dynamic = ["version"]
 authors = [{name = "Ryan Etkins", email = "retkins@pm.me"}]
 description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "numpy>=2.0.0",  # atan2 introduced here
 ]
@@ -42,3 +42,17 @@ module-name = "thor._thor"
 features = ["python", "parallel"]
 profile = "release"
 version = { source = "cargo" }
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+]
