@@ -20,3 +20,4 @@
 * Add .cargo/config.toml to use x86-64-v3 reference cpu for x86 builds
   * Enables modern vector instructions, among other things
 * Use abi3-py310 for bindings, s.t. one binary is compatible with python >=3.10
+* Unmask _h_demag_tet4 function

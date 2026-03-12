@@ -78,8 +78,10 @@ def make_helmholtz(size, jmag: None|float=None) -> tuple[NDArray[float64], NDArr
 
     datafile: str = "ring"
     package_root = Path("__file__").parent.absolute()
-    mesh_step(package_root / f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", size, size)
-    data = np.loadtxt(package_root / f"tests/data/{datafile}_mesh.csv", delimiter=',', skiprows=1)
+    step_path = str((package_root / f"tests/data/{datafile}.stp").resolve())
+    csv_path = str((package_root / f"tests/data/{datafile}_mesh.csv").resolve())
+    mesh_step(step_path, csv_path, size, size)
+    data = np.loadtxt(csv_path, delimiter=',', skiprows=1)
 
     nsources = data.shape[0]# Targets are now the source centroids for self fields
 

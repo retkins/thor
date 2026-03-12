@@ -8,7 +8,7 @@ from numpy import float64
 
 from thor import LinearMaterial, MU0
 from thor.materials import Material
-# from ._thor import _h_demag_tet4
+from ._thor import _h_demag_tet4
 
 def mag_force(
     centroids: NDArray[float64],
