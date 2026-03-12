@@ -6,7 +6,7 @@
 pub fn calculate_scale_factor(L: u32) -> f64 {
     // TODO: should this be `1u << L` or `(1u << L) - 1`
     let factor = (1u32 << L) - 1u32;
-    return factor as f64;
+    factor as f64
 }
 
 /// Normalize a points location in a grid to the range [0, 1] (inclusive)
@@ -46,12 +46,12 @@ pub fn interleave(quantized_pt: (u32, u32, u32)) -> u64 {
     let mut code: u64 = 0;
     let (x, y, z) = quantized_pt;
 
-    for i in 0..21 as u64 {
-        code |= ((x as u64 & (1u64 << i)) << 2u64 * i)
+    for i in 0..21_u64 {
+        code |= ((x as u64 & (1u64 << i)) << (2u64 * i))
             | ((y as u64 & (1u64 << i)) << (2u64 * i + 1u64))
             | ((z as u64 & (1u64 << i)) << (2u64 * i + 2u64));
     }
-    return code;
+    code
 }
 
 /// Encode a position into a Morton u64
@@ -64,7 +64,7 @@ pub fn encode(
     let normalized_pt: (f64, f64, f64) = normalize(point, side_length, min_corner);
     let quantized_pt = quantize(normalized_pt, scale);
     let code: u64 = interleave(quantized_pt);
-    return code;
+    code
 }
 
 #[cfg(test)]

@@ -68,7 +68,7 @@ pub fn h_field_tet4(
     targets: (&[f64], &[f64], &[f64]),
     f: &mut [Vec3],
     h: (&mut [f64], &mut [f64], &mut [f64]),
-) -> () {
+) {
     assert_eq!(f.len(), targets.0.len());
 
     // Allocate memory for the result of the sum before crossing with J
@@ -77,7 +77,7 @@ pub fn h_field_tet4(
 
     for face in 0..4 {
         for edge in 0..3 {
-            let ni: Vec3; // normal on face 
+             // normal on face 
 
             // Node numbers from the map
             let n0: usize = NODE_MAP[face][edge][0];
@@ -86,7 +86,7 @@ pub fn h_field_tet4(
 
             // Local coordinate system tensor; transform the target point into the local system
             let (xhat, yhat, zhat) = edge_csys_fast(&nodes[n0], &nodes[n1], &nodes[n2]);
-            ni = zhat;
+            let ni: Vec3 = zhat;
             let xpq2 = (nodes[n1] - nodes[n0]).mag(); // length of the edge
 
             // Compute the effect of this edge by transforming each target into the local reference frame
@@ -218,7 +218,7 @@ fn tet_surface_integral(nodes: &[Vec3; 4], target: &Vec3) -> Vec3 {
                 target[2] - nodes[n1][2],
             ];
             let p = transform(&target_local, &xhat, &yhat, &zhat);
-            let xppq2 = distance(&nodes[n1].to_slice(), &nodes[n0].to_slice()); // length of the edge, basically
+            let xppq2 = distance(nodes[n1].to_slice(), nodes[n0].to_slice()); // length of the edge, basically
 
             s_face +=
                 p[1] * (edge_integral(xppq2 - p[0], p[1], p[2]) - edge_integral(-p[0], p[1], p[2]));

@@ -51,10 +51,10 @@ impl BoundingBox {
         let zc: f64 = zb.0 + 0.5 * side_length;
 
         Some(Self {
-            xc: xc,
-            yc: yc,
-            zc: zc,
-            side_length: side_length,
+            xc,
+            yc,
+            zc,
+            side_length,
             xbounds: xb,
             ybounds: yb,
             zbounds: zb,
@@ -122,9 +122,7 @@ impl Sources {
         let n: usize = centroids.0.len();
 
         let _bbox: Option<BoundingBox> = BoundingBox::from_centroids(centroids);
-        if _bbox.is_none() {
-            return None;
-        }
+        _bbox?;
         let bbox = _bbox.unwrap();
 
         let (x, y, z) = centroids;
@@ -151,16 +149,16 @@ impl Sources {
             vjz.push(vol * jz[i]);
         }
 
-        return Some(Sources {
-            codes: codes,
-            xg: xg,
-            yg: yg,
-            zg: zg,
-            vjx: vjx,
-            vjy: vjy,
-            vjz: vjz,
+        Some(Sources {
+            codes,
+            xg,
+            yg,
+            zg,
+            vjx,
+            vjy,
+            vjz,
             bbox: Some(bbox),
-        });
+        })
     }
 
     /// Sort the octree by morton order
@@ -187,12 +185,12 @@ impl Sources {
     /// Get the centroid of a particular Source
     pub fn centroid(&self, idx: u32) -> [f64; 3] {
         let i = idx as usize;
-        return [self.xg[i], self.yg[i], self.zg[i]];
+        [self.xg[i], self.yg[i], self.zg[i]]
     }
 
     pub fn vj(&self, idx: u32) -> [f64; 3] {
         let i = idx as usize;
-        return [self.vjx[i], self.vjy[i], self.vjz[i]];
+        [self.vjx[i], self.vjy[i], self.vjz[i]]
     }
 }
 
@@ -231,24 +229,20 @@ impl SourceOctree {
         // TODO: length check
 
         let n_sources: usize = centroids.0.len();
-        let mut sources = match Sources::from_source_points(centroids, volumes, jdensity, max_depth)
-        {
-            Some(s) => s,
-            None => return None,
-        };
+        let mut sources = Sources::from_source_points(centroids, volumes, jdensity, max_depth)?;
         sources.morton_sort();
 
         // Memory usage will be significantly more than n_sources, as
         // every source point has a leaf node, but this is a good place to start
         let mut nodes: Vec<SourceNode> = Vec::with_capacity(n_sources);
 
-        let _ = build_tree(&sources, &mut nodes, max_depth, leaf_threshold);
+        build_tree(&sources, &mut nodes, max_depth, leaf_threshold);
 
         Some(Self {
-            max_depth: max_depth,
-            sources: sources,
-            nodes: nodes,
-            leaf_threshold: leaf_threshold,
+            max_depth,
+            sources,
+            nodes,
+            leaf_threshold,
         })
     }
 }
@@ -292,7 +286,7 @@ fn add_node(
         nodes.push(
             // Do not descend level
             SourceNode::Leaf {
-                level: level,
+                level,
                 source_range: (start as u32, end as u32),
                 centroid: [cx, cy, cz],
             },
@@ -306,8 +300,8 @@ fn add_node(
 
         // Initialize the branch node first, then recursive calls later fill it
         nodes.push(SourceNode::Branch {
-            level: level,
-            size: size,
+            level,
+            size,
             children: [0; 8],
             centroid: [0.0; 3],
             vj: [0.0; 3],
@@ -362,7 +356,7 @@ fn add_node(
                     vj,
                 } => {
                     update_centroid(&mut parent_centroid, parent_mag, &centroid, mag(&vj));
-                    for k in 0..3 as usize {
+                    for k in 0..3_usize {
                         parent_vj[k] += vj[k];
                     }
                 }
@@ -376,7 +370,7 @@ fn add_node(
                         let centroid = [sources.xg[i], sources.yg[i], sources.zg[i]];
                         let vj = [sources.vjx[i], sources.vjy[i], sources.vjz[i]];
                         update_centroid(&mut parent_centroid, parent_mag, &centroid, mag(&vj));
-                        for k in 0..3 as usize {
+                        for k in 0..3_usize {
                             parent_vj[k] += vj[k];
                         }
                         parent_mag = mag(&parent_vj);
@@ -398,7 +392,7 @@ fn add_node(
         }
     }
 
-    return current_index as u32;
+    current_index as u32
 }
 
 /// Update the parent centroid by weighting each of the axes
@@ -409,7 +403,7 @@ pub fn update_centroid(
     child_mag: f64,
 ) {
     let total_mag: f64 = parent_mag + child_mag;
-    for i in 0..3 as usize {
+    for i in 0..3_usize {
         parent_centroid[i] =
             (parent_centroid[i] * parent_mag + child_centroid[i] * child_mag) / total_mag;
     }
@@ -419,7 +413,7 @@ pub fn update_centroid(
 pub fn get_prefix(code: u64, max_level: u8, level: u8) -> u64 {
     let shift: u64 = 3u64 * (max_level - level) as u64;
     let prefix: u64 = code >> shift;
-    return prefix;
+    prefix
 }
 
 // Get the end index of a range that has the same parent node at the current level
@@ -440,7 +434,7 @@ pub fn get_range_in_same_node(
         }
     }
 
-    return n;
+    n
 }
 
 pub fn size_at_level(side_length: f64, level: u8) -> f64 {

@@ -47,15 +47,15 @@ impl Targets {
         }
 
         Self {
-            codes: codes,
-            x: x,
-            y: y,
-            z: z,
-            bx: bx,
-            by: by,
-            bz: bz,
+            codes,
+            x,
+            y,
+            z,
+            bx,
+            by,
+            bz,
             bbox: Some(bbox),
-            original_indices: original_indices,
+            original_indices,
         }
     }
 
@@ -81,7 +81,7 @@ impl Targets {
     /// Get the centroid of a particular Target
     pub fn centroid(&self, idx: u32) -> [f64; 3] {
         let i = idx as usize;
-        return [self.x[i], self.y[i], self.z[i]];
+        [self.x[i], self.y[i], self.z[i]]
     }
 }
 
@@ -148,7 +148,7 @@ impl TargetOctree {
             nodes.push(
                 // Do not descend level
                 TargetNode::Leaf {
-                    level: level,
+                    level,
                     target_range: (start as u32, end as u32),
                     centroid: [cx, cy, cz],
                 },
@@ -162,8 +162,8 @@ impl TargetOctree {
 
             // Initialize the branch node first, then recursive calls later fill it
             nodes.push(TargetNode::Branch {
-                level: level,
-                size: size,
+                level,
+                size,
                 children: [0; 8],
                 centroid: [0.0; 3],
                 n_targets: 0,
@@ -260,7 +260,7 @@ impl TargetOctree {
             }
         }
 
-        return current_index as u32;
+        current_index as u32
     }
 
     // Build the octree by making recursive calls to add_node()
@@ -269,7 +269,7 @@ impl TargetOctree {
         nodes: &mut Vec<TargetNode>,
         max_depth: u8,
         leaf_threshold: u32,
-    ) -> () {
+    ) {
         let start: usize = 0;
         let end: usize = targets.codes.len();
         let level: u8 = 0;
@@ -489,7 +489,7 @@ fn bfield_trees(
             if src_size / d < theta_source && tgt_size / d < theta_target {
                 //src_size.max(tgt_size) / d < theta
                 let b_contribution =
-                    bfield_leaf_branch(source_range, &&source_tree.sources, &tgt_centroid);
+                    bfield_leaf_branch(source_range, &source_tree.sources, &tgt_centroid);
                 b[0] += b_contribution[0];
                 b[1] += b_contribution[1];
                 b[2] += b_contribution[2];
@@ -601,12 +601,12 @@ fn bfield_point_point(centroid: &[f64; 3], vj: &[f64; 3], pt: &[f64; 3]) -> [f64
     let rmag = mag(&r);
     let mut jxr = [0.0; 3];
     if rmag > 1e-4 {
-        cross(&vj, &r, &mut jxr);
+        cross(vj, &r, &mut jxr);
         jxr[0] *= MU0_4PI / rmag.powi(3);
         jxr[1] *= MU0_4PI / rmag.powi(3);
         jxr[2] *= MU0_4PI / rmag.powi(3);
     }
-    return jxr;
+    jxr
 }
 
 // Compute the interaction of a source branch to a target leaf

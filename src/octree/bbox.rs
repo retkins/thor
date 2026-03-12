@@ -49,10 +49,10 @@ impl BoundingBox {
         let zc: f64 = zb.0 + 0.5 * side_length;
 
         Some(Self {
-            xc: xc,
-            yc: yc,
-            zc: zc,
-            side_length: side_length,
+            xc,
+            yc,
+            zc,
+            side_length,
             xbounds: xb,
             ybounds: yb,
             zbounds: zb,

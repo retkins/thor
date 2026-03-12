@@ -49,7 +49,7 @@ pub fn bfield_leaf(
         b[2] += constant * jxrpz;
     }
 
-    return b;
+    b
 }
 
 // Direct calculation of leaf contributions for only a single source in the leaf
@@ -60,13 +60,13 @@ fn bfield_leaf_single(centroid: &[f64; 3], vj: &[f64; 3], target: &[f64; 3]) -> 
     let mut b = [0.0; 3];
     if rmag > 1e-4 {
         let invrmag3 = (1.0 / rmag).powi(3);
-        cross(&vj, &r, &mut b);
+        cross(vj, &r, &mut b);
         for i in 0..b.len() {
             b[i] *= MU0_4PI * invrmag3;
         }
-        return b;
+        b
     } else {
-        return b;
+        b
     }
 }
 
@@ -109,7 +109,7 @@ pub fn bfield_node(
                 b[0] += _b[0] * MU0_4PI * invr3;
                 b[1] += _b[1] * MU0_4PI * invr3;
                 b[2] += _b[2] * MU0_4PI * invr3;
-                return b;
+                b
             } else {
                 for child in children {
                     if child > 0 {
@@ -119,7 +119,7 @@ pub fn bfield_node(
                         b[2] += _b[2];
                     }
                 }
-                return b;
+                b
             }
         }
         // Leaves require direct calculation of contribution from discrete sources
@@ -183,9 +183,9 @@ pub fn bfield_octree(
     // Build the source octree
     let max_depth: u8 = 21;
     let tree = SourceOctree::from_source_points(
-        (&centx, &centy, &centz),
+        (centx, centy, centz),
         vol,
-        (&jx, &jy, &jz),
+        (jx, jy, jz),
         max_depth,
         leaf_threshold,
     )

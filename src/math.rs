@@ -21,7 +21,7 @@ pub fn min_and_max(arr: &[f64]) -> Option<(f64, f64)> {
     let mut min: f64 = 0.0;
     let mut max: f64 = 0.0;
 
-    if arr.len() < 1 {
+    if arr.is_empty() {
         return None;
     }
 
@@ -141,5 +141,5 @@ pub fn running_average(
             / new_quantity as f64;
     }
 
-    return new_quantity;
+    new_quantity
 }

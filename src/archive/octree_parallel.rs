@@ -15,7 +15,7 @@ fn bfield_node_chunk(
     // TODO: length checks
     for i in 0..n {
         let centroid = [x[i], y[i], z[i]];
-        let b = bfield_node(&tree, 0, &centroid, theta);
+        let b = bfield_node(tree, 0, &centroid, theta);
         bx[i] += b[0];
         by[i] += b[1];
         bz[i] += b[2];
@@ -67,9 +67,9 @@ pub fn bfield_octree_parallel(
     // Build the source octree
     let max_depth: u8 = 21;
     let tree = SourceOctree::from_source_points(
-        (&centx, &centy, &centz),
+        (centx, centy, centz),
         vol,
-        (&jx, &jy, &jz),
+        (jx, jy, jz),
         max_depth,
         leaf_threshold,
     )

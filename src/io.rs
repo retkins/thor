@@ -43,9 +43,9 @@ impl CsvData {
                     print!(", ");
                 }
             }
-            print!("\n");
+            println!();
         }
-        println!("");
+        println!();
     }
 }
 

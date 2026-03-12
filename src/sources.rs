@@ -96,7 +96,7 @@ pub fn dipole(
     moment.1 *= 0.5;
     moment.2 *= 0.5;
 
-    return moment;
+    moment
 }
 
 #[cfg(test)]

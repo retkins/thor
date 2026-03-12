@@ -12,7 +12,7 @@ pub fn get_nthreads(nthreads_requested: u32) -> usize {
     } else {
         nthreads = nthreads_requested as usize;
     }
-    return nthreads;
+    nthreads
 }
 
 /// Calculate magnetic flux density using direct biot-savart law integration
