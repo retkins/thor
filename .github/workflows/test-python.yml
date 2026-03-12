@@ -70,6 +70,14 @@ jobs:
 
     - name: Test
       run: |
-        brew install gmsh
+        if [ "$RUNNER_OS" = "Linux" ]; then
+          sudo apt update
+          sudo apt install -y gmsh
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          brew install gmsh
+        else
+          echo "Unsupported runner OS: $RUNNER_OS" >&2
+          exit 1
+        fi
         uv sync --locked --no-editable --extra mesh --group dev
         uv run --no-sync pytest .
