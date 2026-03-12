@@ -43,6 +43,9 @@ module-name = "thor._thor"
 features = ["python", "parallel"]
 profile = "release"
 version = { source = "cargo" }
+include = [
+  { path = "all", format = ["sdist", "wheel"] },
+]
 
 [tool.ruff.lint]
 select = [
