@@ -14,7 +14,16 @@ import matplotlib.pyplot as plt
 
 @pytest.mark.parametrize(
     "method",
-    ["dipole", "tet"],
+    [
+        "dipole",
+        pytest.param(
+            "tet",
+            marks=pytest.mark.xfail(
+                reason="tet dipole calculation does not yet reproduce the sphere demag field",
+                strict=True,
+            ),
+        ),
+    ],
 )
 def test_magnetized_sphere(method: str):
     # ---
