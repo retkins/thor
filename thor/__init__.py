@@ -18,8 +18,6 @@ from . import test_utils
 from .magnetization import mag_force
 # import .test_utils as test_utils
 
-from numpy import pi 
-
 
 __all__ = [
     "MU0",
