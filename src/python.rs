@@ -335,7 +335,7 @@ fn _h_demag_tet4(
 }
 
 #[pymodule]
-fn _thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
+fn thor<'py>(_py: Python, m: Bound<'py, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(_bfield_direct, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_octree, m.clone())?)?;
     m.add_function(wrap_pyfunction!(_bfield_dualtree, m.clone())?)?;
