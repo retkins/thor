@@ -56,10 +56,10 @@ jobs:
       matrix:
         platform:
           # - runner: windows-latest
-          # - runner: ubuntu-latest
+          - runner: ubuntu-latest  # Tests wheel install on linux
         #   - runner: ubuntu-24.04-arm  # aarch64
           - runner: macos-15-intel  # x86_64
-        #   - runner: macos-15  # aarch64
+          - runner: macos-15  # aarch64
     steps:
     - uses: actions/checkout@v6
 
