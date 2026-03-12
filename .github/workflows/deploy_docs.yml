@@ -28,12 +28,16 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          python-version: 3.x 
-      - run: pip install mkdocs mkdocs-terminal mkdocstrings mkdocstrings-python
-      - run: mkdocs build
+          python-version: 3.13
+
+      - run: |
+          uv pip install . --group dev --extra mesh
+          mkdocs build
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

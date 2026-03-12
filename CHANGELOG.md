@@ -5,12 +5,18 @@
 * Add changelog
 * Robustify condition for using parallel implementation in python bindings to handle zero input
 * Format & clear commented blocks
-* Add type stubs for python bindings
+* Add type stubs for python bindings & add py.typed marker to indicate type hints are present
 * Add placeholder file to prevent tests/fig/ folder from being deleted, causing test failures
 * Set python package version based on rust crate version
 * Parametrize magnetization tests over field method
   * Dipole passing, tet failing for now
-* Add rust lint/test workflow
+* Add rust and python lint/test workflows
 * Add dev dep group
+* Add doc deps to dev group
+* Set minimum numpy dep version to the lowest compatible version
+* Use uv install for doc deps
 * Suppress interactive plots when running tests
 * Use pathlib for test_utils paths
+* Add .cargo/config.toml to use x86-64-v3 reference cpu for x86 builds
+  * Enables modern vector instructions, among other things
+* Use abi3-py310 for bindings, s.t. one binary is compatible with python >=3.10

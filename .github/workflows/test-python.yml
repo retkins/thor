@@ -1,0 +1,48 @@
+name: test-python
+on:
+  pull_request:
+    branches: [ "*" ]
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  test_python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [x86_64]
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+
+        # This makes sure that we test with the minimum supported versions
+        # of python packages to confirm that the lower bounds on deps are real.
+        sync-args: [--locked]
+        include:
+         - target: x86_64
+           python-version: "3.10.0"
+           sync-args: --resolution=lowest-direct
+      
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install
+      run: uv sync --extra mesh --group dev ${{ matrix.sync-args }}
+
+    - name: Format
+      run: |
+        uv run --no-sync ruff check ./thor
+        uv run --no-sync ruff format ./thor --check
+
+    - name: Static typing
+      run: uv run --no-sync ty check ./thor
+
+    - name: Test
+      run: uv run --no-sync pytest .
