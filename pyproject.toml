@@ -16,7 +16,7 @@ dependencies = [
 dev = [
     # Test
     "pytest==9.0.2",
-    "ty==0.0.21",
+    "ty==0.0.22",
     "ruff==0.15.5",
     "matplotlib>=3.10",
     # Docs

@@ -29,3 +29,4 @@
 * Use PI and LN_2 built-in constants instead of baked values
 * Only deploy docs when running actions on main branch
 * Move python package to `src/thor/` for canonical "src-layout" package format
+* Rename `test_utils` module to `testing` to avoid being picked up by pytest
