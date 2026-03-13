@@ -80,4 +80,4 @@ jobs:
           exit 1
         fi
         uv sync --locked --no-editable --extra mesh --group dev
-        uv run --no-sync "python -m pytest ."
+        uv run --no-sync python -m pytest .
