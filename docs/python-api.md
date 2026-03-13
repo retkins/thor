@@ -1,3 +1,3 @@
 # Python API
 ::: thor
-::: thor.test_utils
+::: thor.testing
