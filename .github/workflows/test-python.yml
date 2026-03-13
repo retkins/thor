@@ -80,4 +80,5 @@ jobs:
           exit 1
         fi
         uv sync --locked --no-editable --extra mesh --group dev
+        uv run --no-sync python -c "import thor; print(thor.__file__)"
         uv run --no-sync pytest .
