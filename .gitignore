@@ -5,6 +5,8 @@ target
 *.csv
 *.so
 __pycache__
-.cargo
 *.msh
 site/
+
+*.svg
+*.png

@@ -1,16 +1,32 @@
 [project]
 name = "thor"
-version = "0.1.0"
+dynamic = ["version"]
 authors = [{name = "Ryan Etkins", email = "retkins@pm.me"}]
 description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
-    "matplotlib>=3.10",
-    "numpy>=2.4.1",
-    "pytest>=9.0.2",
+    "numpy>=2.0.0",  # atan2 introduced here
 ]
 
+# Optional deps not exposed to pypi install interface.
+# These are pinned to prevent spurious errors caused by changes
+# in resolved test deps as opposed to changes in this repo.
+[dependency-groups]
+dev = [
+    # Test
+    "pytest==9.0.2",
+    "ty==0.0.22",
+    "ruff==0.15.5",
+    "matplotlib>=3.10",
+    # Docs
+    "mkdocs==1.6.1",
+    "mkdocs-terminal==4.8.0",
+    "mkdocstrings==1.0.3",
+    "mkdocstrings-python==2.0.3",
+]
+
+# Optional deps accessible from pypi
 [project.optional-dependencies]
 mesh = [
     "gmsh>=4.15"
@@ -21,6 +37,26 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [tool.maturin]
-python-source = "."  
-module-name = "thor._thor" 
+python-source = "src"
+python-packages = ["thor"]
+module-name = "thor.thor"
 features = ["python", "parallel"]
+profile = "release"
+version = { source = "cargo" }
+include = [
+  { path = "all", format = ["sdist", "wheel"] },
+]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+]

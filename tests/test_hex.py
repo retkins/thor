@@ -1,47 +1,49 @@
 from thor import bfield_hexahedron, bfield_direct
-import numpy as np 
+import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 
-nodes = np.array(
-    [
-        [0.5, -0.5, -0.5], 
-        [0.5, 0.5, -0.5], 
-        [-0.5, 0.5, -0.5], 
-        [-0.5, -0.5, -0.5], 
-        [0.5, -0.5, 0.5], 
-        [0.5, 0.5, 0.5], 
-        [-0.5, 0.5, 0.5], 
-        [-0.5, -0.5, 0.5]
-    ]
-)
-jdensity = np.array([0.0, -1e6, 0.0])
 
-n = 100
-d = np.linspace(0.5, 4, n)
-targets = np.zeros((n,3))
-targets[:,0] = d / np.sqrt(2)
-targets[:,1] = d / np.sqrt(2)
+def test_hex():
+    nodes = np.array(
+        [
+            [0.5, -0.5, -0.5],
+            [0.5, 0.5, -0.5],
+            [-0.5, 0.5, -0.5],
+            [-0.5, -0.5, -0.5],
+            [0.5, -0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [-0.5, 0.5, 0.5],
+            [-0.5, -0.5, 0.5],
+        ]
+    )
+    jdensity = np.array([0.0, -1e6, 0.0])
 
-_b = np.zeros((n,3))
+    n = 100
+    d = np.linspace(0.5, 4, n)
+    targets = np.zeros((n, 3))
+    targets[:, 0] = d / np.sqrt(2)
+    targets[:, 1] = d / np.sqrt(2)
 
-centroids = np.array([[0.0, 0.0, 0.0]])
-vol = np.array([1.0])
-jdensities = np.array([jdensity])
+    _b = np.zeros((n, 3))
 
-_bpoint = bfield_direct(centroids, vol, jdensities, targets)
+    centroids = np.array([[0.0, 0.0, 0.0]])
+    vol = np.array([1.0])
+    jdensities = np.array([jdensity])
 
-for i in range(0, n): 
-    _b[i,:] = bfield_hexahedron(nodes, jdensity, targets[i,:])
+    _bpoint = bfield_direct(centroids, vol, jdensities, targets)
 
-b = norm(_b, axis=1)
-bpoint = norm(_bpoint, axis=1)
+    for i in range(0, n):
+        _b[i, :] = bfield_hexahedron(nodes, jdensity, targets[i, :])
 
-plt.plot(1.0/targets[:,0], bpoint/b, label='hex')
-# plt.plot(targets[:,0], bpoint, label='point')
-# plt.legend()
-plt.xlabel('theta = element size / distance from element centroid')
-plt.ylabel('Ratio of field (point/hex)')
-plt.title("line along diagonal, (d, d, 0)/sqrt(2)")
+    b = norm(_b, axis=1)
+    bpoint = norm(_bpoint, axis=1)
 
-plt.show()
+    plt.plot(1.0 / targets[:, 0], bpoint / b, label="hex")
+    # plt.plot(targets[:,0], bpoint, label='point')
+    # plt.legend()
+    plt.xlabel("theta = element size / distance from element centroid")
+    plt.ylabel("Ratio of field (point/hex)")
+    plt.title("line along diagonal, (d, d, 0)/sqrt(2)")
+
+    plt.show()

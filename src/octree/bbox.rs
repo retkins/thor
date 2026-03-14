@@ -1,4 +1,3 @@
-
 use crate::math::min_and_max;
 use crate::vec3::Vec3;
 
@@ -13,7 +12,6 @@ pub struct BoundingBox {
     ybounds: (f64, f64),
     zbounds: (f64, f64),
 }
-
 
 // Get the maximum side length of a bounding box cube that encloses all x,y,z bounds
 fn side_length_from_bounds(xbounds: (f64, f64), ybounds: (f64, f64), zbounds: (f64, f64)) -> f64 {
@@ -31,7 +29,6 @@ fn side_length_from_bounds(xbounds: (f64, f64), ybounds: (f64, f64), zbounds: (f
         false => zrange,
     }
 }
-
 
 impl BoundingBox {
     pub fn from_centroids(centroids: (&[f64], &[f64], &[f64])) -> Option<Self> {
@@ -52,10 +49,10 @@ impl BoundingBox {
         let zc: f64 = zb.0 + 0.5 * side_length;
 
         Some(Self {
-            xc: xc,
-            yc: yc,
-            zc: zc,
-            side_length: side_length,
+            xc,
+            yc,
+            zc,
+            side_length,
             xbounds: xb,
             ybounds: yb,
             zbounds: zb,
@@ -63,8 +60,8 @@ impl BoundingBox {
     }
 
     /// TODO: fix this so there's no data copy
-    pub fn from_centroids_vec(centroids: &Vec<Vec3>) -> Self {
-        let n: usize = centroids.len(); 
+    pub fn from_centroids_vec(centroids: &[Vec3]) -> Self {
+        let n: usize = centroids.len();
         let mut x: Vec<f64> = vec![0.0; n];
         let mut y: Vec<f64> = vec![0.0; n];
         let mut z: Vec<f64> = vec![0.0; n];
