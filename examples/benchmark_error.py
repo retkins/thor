@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from thor.testing import make_helmholtz
@@ -6,13 +7,16 @@ import thor
 import numpy as np
 import matplotlib.pyplot as plt
 
-here = Path("__file__").parent
+here = Path("__file__").parent.absolute()
+testing = os.getenv("THOR_TESTING") == "1"
 
 # Benchmark error
-nthetas = 10
-theta_vals = np.linspace(0.1, 1.0, nthetas)
+nthetas = 4 if testing else 10
+theta_vals = (
+    np.linspace(0.2, 1.0, nthetas) if testing else np.linspace(0.1, 1.0, nthetas)
+)
 errs = np.zeros(nthetas)
-centroids, vol, jdensity = make_helmholtz(6.0)
+centroids, vol, jdensity = make_helmholtz(12.0 if testing else 6.0)
 bdirect = thor.bfield_direct(centroids, vol, jdensity, centroids)
 for i, theta in enumerate(theta_vals):
     boctree = thor.bfield_octree(
@@ -31,4 +35,4 @@ ax.set_ylabel("B-Field Error Over Mesh")
 ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title("Thor Benchmarks: Helmholtz Coil Problem\nAcceptance Criteria vs. Error")
-fig.savefig(here / "../tests/benchmarks_error.png")
+fig.savefig(here / "tests/fig/benchmarks_error.png")

@@ -33,3 +33,4 @@
 * Update tests to use test functions so that they don't run on import
 * Add `test_examples`
 * Move examples and python benchmarks to `examples/`
+* Use `zip(..., strict=True)` in examples

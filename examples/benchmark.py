@@ -1,5 +1,6 @@
 """Use the helmholtz coil problem as a benchmarking example"""
 
+import os
 from pathlib import Path
 
 import thor
@@ -8,12 +9,15 @@ import matplotlib.pyplot as plt
 from time import perf_counter
 
 
-here = Path("__file__").parent
+here = Path("__file__").parent.absolute()
+testing = os.getenv("THOR_TESTING") == "1"
 
-nbenches: int = 10
+nbenches: int = 3 if testing else 10
 theta: float = 0.5
 
-mesh_sizes = np.linspace(33.0, 1.5, nbenches)
+mesh_sizes = (
+    np.linspace(33.0, 15.0, nbenches) if testing else np.linspace(33.0, 1.5, nbenches)
+)
 direct_times = []
 direct_interactions = []
 est_direct_times = []
@@ -56,7 +60,8 @@ for i in range(0, nbenches):
     speedup = all_direct_times[i] / octree_times[i]
 
     print(
-        f"{n:.0f} | {interactions[i]:.3e} | {all_direct_times[i]:.3f} | {octree_times[i]:.3f} | {speedup:.3f}x"
+        f"{n:.0f} | {interactions[i]:.3e} | {all_direct_times[i]:.3f} |"
+        f" {octree_times[i]:.3f} | {speedup:.3f}x"
     )
 
 # Plot solution times
@@ -70,14 +75,19 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
-fig.savefig(here / "../tests/benchmarks.png")
+fig.savefig(here / "tests/fig/benchmarks.png")
 
 # Plot interactions per second
-direct_throughput = [i / (t * 1e9) for (i, t) in zip(direct_interactions, direct_times)]
-est_direct_throughput = [
-    i / (t * 1e9) for (i, t) in zip(est_direct_interactions, est_direct_times)
+direct_throughput = [
+    i / (t * 1e9) for (i, t) in zip(direct_interactions, direct_times, strict=True)
 ]
-octree_throughput = [i / (t * 1e9) for (i, t) in zip(interactions, octree_times)]
+est_direct_throughput = [
+    i / (t * 1e9)
+    for (i, t) in zip(est_direct_interactions, est_direct_times, strict=True)
+]
+octree_throughput = [
+    i / (t * 1e9) for (i, t) in zip(interactions, octree_times, strict=True)
+]
 
 fig, ax = plt.subplots()
 ax.plot(direct_interactions, direct_throughput, "r", label="direct")
@@ -89,4 +99,4 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
-fig.savefig(here / "../tests/benchmarks_throughput.png")
+fig.savefig(here / "tests/fig/benchmarks_throughput.png")

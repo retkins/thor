@@ -1,9 +1,13 @@
+import os
+
 import thor
 import numpy as np
 from time import perf_counter
 from matplotlib import pyplot as plt
 
-size = 1.0
+testing = os.getenv("THOR_TESTING") == "1"
+
+size = 10.0 if testing else 1.0
 theta = 0.5
 nthreads = 0
 centroids, vol, jdensity = thor.testing.make_helmholtz(size)

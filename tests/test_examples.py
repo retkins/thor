@@ -17,8 +17,15 @@ EXAMPLES = [
 
 @pytest.mark.parametrize("fp", EXAMPLES)
 def test_example(fp: pathlib.Path):
+    previous = os.environ.get("THOR_TESTING")
+    os.environ["THOR_TESTING"] = "1"
     try:
         runpy.run_path(str(fp), run_name="__main__")
     except:
         print(f"Failed to run example {fp}")
         raise
+    finally:
+        if previous is None:
+            os.environ.pop("THOR_TESTING", None)
+        else:
+            os.environ["THOR_TESTING"] = previous
