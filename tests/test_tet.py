@@ -164,5 +164,5 @@ def test_tet():
     ax.set_ylabel("Field Along Solenoid Axis (Bz) [T]")
     ax.set_title("Thor - Solenoid Test - Pt vs Tet Sources")
     plt.legend()
-    plt.savefig("tests/fig/solenoid_tet_test.png")
+    plt.savefig("tests/fig/solenoid_tet_test.svg")
     # print(boctree_tet_axis)

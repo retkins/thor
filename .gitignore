@@ -8,4 +8,5 @@ __pycache__
 *.msh
 site/
 
-tests/fig/*.png
+*.svg
+*.png

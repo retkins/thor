@@ -34,3 +34,4 @@
 * Add `test_examples`
 * Move examples and python benchmarks to `examples/`
 * Use `zip(..., strict=True)` in examples
+* Save SVG instead of PNG images for vector graphics scalability

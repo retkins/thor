@@ -175,7 +175,7 @@ def test_helmholtz():
     ax.set_xlabel("Distance Along Coil Centerr (Z-axis) [m]")
     ax.set_ylabel("Field Along Axis (Bz) [T]")
     ax.set_title("Thor - Helmholtz Coil Test")
-    fig.savefig("tests/fig/helmholtz_test.png")
+    fig.savefig("tests/fig/helmholtz_test.svg")
 
     axis_error = (
         2
@@ -188,12 +188,12 @@ def test_helmholtz():
     ax2.set_xlabel("z position")
     ax2.set_ylabel("SMAPE")
     ax2.legend("lowerright")
-    fig2.savefig("tests/fig/error.png")
+    fig2.savefig("tests/fig/error.svg")
 
     fig3 = plt.figure()
     ax3 = fig3.add_subplot()
     ax3.plot((bmag_octree - bmag_direct) / bmag_direct)
-    fig3.savefig("tests/fig/error_mesh.png")
+    fig3.savefig("tests/fig/error_mesh.svg")
 
     def test_helmholtz():
         assert err_mesh < 1e-2

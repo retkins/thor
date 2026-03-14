@@ -75,7 +75,7 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
-fig.savefig(here / "tests/fig/benchmarks.png")
+fig.savefig(here / "tests/fig/benchmarks.svg")
 
 # Plot interactions per second
 direct_throughput = [
@@ -99,4 +99,4 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
-fig.savefig(here / "tests/fig/benchmarks_throughput.png")
+fig.savefig(here / "tests/fig/benchmarks_throughput.svg")
