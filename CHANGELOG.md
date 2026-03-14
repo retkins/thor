@@ -30,3 +30,6 @@
 * Only deploy docs when running actions on main branch
 * Move python package to `src/thor/` for canonical "src-layout" package format
 * Rename `test_utils` module to `testing` to avoid being picked up by pytest
+* Update tests to use test functions so that they don't run on import
+* Add `test_examples`
+* Move examples and python benchmarks to `examples/`
