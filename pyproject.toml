@@ -6,9 +6,7 @@ description = "Lightning-fast magnetic fields calculations"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "matplotlib>=3.10",
     "numpy>=2.0.0",     # atan2 introduced here
-
 ]
 
 # Optional deps not exposed to pypi install interface 

@@ -33,11 +33,11 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           python-version: 3.13
+          
       - run: |
           uv sync --extra mesh --group dev
           uv run mkdocs build
 
-      - run: mkdocs build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
