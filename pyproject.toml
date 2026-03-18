@@ -1,6 +1,6 @@
 [project]
 name = "thor"
-version = "0.1.0"
+dynamic = ["version"]
 authors = [{name = "Ryan Etkins", email = "retkins@pm.me"}]
 description = "Approximate Biot-Savart Law integration in near-linear time"
 readme = "README.md"
@@ -24,3 +24,5 @@ build-backend = "maturin"
 python-source = "."  
 module-name = "thor._thor" 
 features = ["python", "parallel"]
+profile = "release"
+version = {source = "cargo"}
