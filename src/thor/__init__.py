@@ -16,9 +16,6 @@ from .materials import MU0, FreeSpace, LinearMaterial, NonlinearMaterial, BHCurv
 from . import mesh
 from . import test_utils
 from .magnetization import mag_force
-# import .test_utils as test_utils
-
-from numpy import pi 
 
 
 __all__ = [

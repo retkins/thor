@@ -72,7 +72,7 @@ def fixed_point(h_total: NDArray[float64], n_iterations: int):
     for iteration in range(n_iterations):
         # Magnetization from current total field
         m_field = mat.chi(1) * h_total
-        moments = m_field * vol[:, np.newaxis]          # m = M*V
+        # moments = m_field * vol[:, np.newaxis]          # m = M*V
 
         # Demagnetizing field from magnetization
         # h_demag = thor.hfield_dipole(centroids, vol, moments, centroids, theta=theta)

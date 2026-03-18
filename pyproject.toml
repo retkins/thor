@@ -47,6 +47,9 @@ include = [
   { path = "all", format = ["sdist", "wheel"] },
 ]
 
+[tool.ruff]
+line-length = 150
+
 [tool.ruff.lint]
 select = [
     # pycodestyle

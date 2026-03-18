@@ -11,3 +11,4 @@
 * Added `.git-blame-ignore-revs` file
 * Added github actions workflows for testing python and rust, updated deploy_docs to use uv
 * Converted project to src-layout per <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>
+* Fix `ruff` and `ty` suggestions; set `ruff` line-length to 150 for now

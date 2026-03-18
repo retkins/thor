@@ -34,7 +34,8 @@ for (i, mesh_size) in enumerate(mesh_sizes):
         est_direct_interactions = [n*n]
         i_est = i
     else:
-        m = (direct_times[i_est] - direct_times[0]) / (interactions[i_est] - interactions[0])
+        m = (direct_times[i_est] - direct_times[0]) / \
+            (interactions[i_est] - interactions[0])
         b = direct_times[i_est] - m*interactions[i_est]
         est_direct_interactions.append(n*n)
         est_direct_times.append(m*n*n + b)
@@ -51,7 +52,10 @@ for i in range(0, nbenches):
     n = np.sqrt(interactions[i])
     speedup = all_direct_times[i]/octree_times[i]
 
-    print(f"{n:.0f} | {interactions[i]:.3e} | {all_direct_times[i]:.3f} | {octree_times[i]:.3f} | {speedup:.3f}x")
+    print(
+        f"{n:.0f} | {interactions[i]:.3e} | {all_direct_times[i]:.3f}" + \
+        "| {octree_times[i]:.3f} | {speedup:.3f}x"
+    )
 
 # Plot solution times
 fig, ax = plt.subplots()
@@ -67,9 +71,12 @@ ax.legend()
 fig.savefig("tests/benchmarks.png")
 
 # Plot interactions per second
-direct_throughput = [i/(t*1e9) for (i, t) in zip(direct_interactions, direct_times)]
-est_direct_throughput = [i/(t*1e9)  for (i, t) in zip(est_direct_interactions, est_direct_times)]
-octree_throughput = [i/(t*1e9)  for (i, t) in zip(interactions, octree_times)]
+direct_throughput = \
+    [i/(t*1e9) for (i, t) in zip(direct_interactions, direct_times, strict=True)]
+est_direct_throughput = \
+    [i/(t*1e9) for (i,t) in zip(est_direct_interactions, est_direct_times, strict=True)]
+octree_throughput = \
+    [i/(t*1e9)  for (i, t) in zip(interactions, octree_times, strict=True)]
 
 fig, ax = plt.subplots()
 ax.plot(direct_interactions, direct_throughput, 'r', label='direct')

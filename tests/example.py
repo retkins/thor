@@ -1,7 +1,5 @@
 import thor 
-import numpy as np 
 from time import perf_counter
-from matplotlib import pyplot as plt 
 
 size = 1.0
 theta = 0.5 
@@ -18,7 +16,9 @@ print(f"n = {n:.3e} ({n*n:.3e} interactions)")
 
 
 start = perf_counter() 
-b = thor.bfield_octree(centroids, vol, jdensity, centroids, theta=theta, nthreads=nthreads)
+b = thor.bfield_octree(
+    centroids, vol, jdensity, centroids, theta=theta, nthreads=nthreads
+)
 end = perf_counter() 
 elapsed = end - start 
 

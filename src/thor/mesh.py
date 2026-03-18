@@ -42,7 +42,12 @@ def mesh_step(infile: str, outfile: str, min_size: float, max_size: float):
         print(f"Error - gmsh is not installed. Could not mesh file `{infile}`")
 
 
-def mesh_step_tets(step_file: str, min_size: float, max_size: float, scale: float=1e-3) -> tuple[NDArray[float64], NDArray[float64], NDArray[float64]]:
+def mesh_step_tets(
+    step_file: str, 
+    min_size: float, 
+    max_size: float, 
+    scale: float=1e-3
+ ) -> tuple[NDArray[float64], NDArray[float64], NDArray[float64]]:
     """
     Mesh a step file with gmsh and return tet element data. This is meant to 
     be used with the tet element source functionality.
@@ -150,7 +155,7 @@ def process_elements(infile: str, outfile: str, scale: float=1e-3):
         with open(outfile, "w") as f:
             f.write("x,y,z,volume\n")
             
-            for elem_type, elem_tags, elem_nodes in zip(element_types, element_tags, node_tags):
+            for elem_type, elem_tags, elem_nodes in zip(element_types, element_tags, node_tags, strict=True):
 
                 elem_name, dim, order, num_nodes, local_coords, num_primary_nodes = gmsh.model.mesh.getElementProperties(elem_type)
                 
@@ -160,7 +165,7 @@ def process_elements(infile: str, outfile: str, scale: float=1e-3):
                 print(f"Processing {len(elem_tags)} {elem_name} elements...")
                 
                 # Process each element
-                for elem_tag, nodes in zip(elem_tags, elem_nodes):
+                for nodes in elem_nodes:
                     # Get coordinates of all nodes in this element
                     coords = []
                     for node in nodes:

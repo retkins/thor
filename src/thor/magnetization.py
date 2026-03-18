@@ -1,6 +1,6 @@
 """ Operations for magnetic materials
 """
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np 
 from numpy.typing import NDArray
@@ -8,7 +8,7 @@ from numpy import float64
 
 from thor import LinearMaterial, MU0
 from thor.materials import Material
-# from ._thor import _h_demag_tet4
+from ._thor import _h_demag_tet4
 
 def mag_force(
     centroids: NDArray[float64],
@@ -155,7 +155,7 @@ def demag_tet4(
     h_hat = np.zeros((n_elements,3))
     h_total = np.zeros((n_elements, 3))
 
-    for i in range(max_iterations):
+    for _ in range(max_iterations):
 
         # Get the demag and total H field at the element centroids
         h_demag = h_demag_tet4(nodes, element_connectivity, material, m_field)

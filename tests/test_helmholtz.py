@@ -39,13 +39,18 @@ axis_halfdistance = 0.3
 if remesh or datafile+"_mesh.csv" not in os.listdir("tests/data"):
     min_size: float = mesh_size
     max_size: float = mesh_size 
-    thor.mesh.mesh_step(f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", min_size, max_size)
+    thor.mesh.mesh_step(
+        f"tests/data/{datafile}.stp", 
+        f"tests/data/{datafile}_mesh.csv", 
+        min_size, 
+        max_size
+    )
 data = np.loadtxt(f"tests/data/{datafile}_mesh.csv", delimiter=',', skiprows=1)
 
 nsources = data.shape[0]# Targets are now the source centroids for self fields
 
 # The current mesh is centered on the xy plane and is only one circular ring
-# We need to split the single ring into two rings and assign current densities to the elements
+# We need to split the single ring into twoand assign current densities to the elements
 jmag: float = 100.0e3 / (0.02*0.02)       # 100 A each 
 centroids_upper = data[:,0:3]
 centroids_upper[:,2] += 0.1       # shift upper coil up
@@ -65,7 +70,15 @@ targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:,2] = np.linspace(-axis_halfdistance, axis_halfdistance, ntargets_axis)
 
 bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta,leaf_threshold=leaf_threshold)
+boctree_axis = thor.bfield_octree(
+    centroids, 
+    vol, 
+    jdensity, 
+    targets_axis, 
+    nthreads=nthreads, 
+    theta=theta,
+    leaf_threshold=leaf_threshold
+)
 
 # Targets are now the source centroids for self fields
 targets = centroids
@@ -84,7 +97,15 @@ end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta,leaf_threshold=leaf_threshold)
+boctree = thor.bfield_octree(
+    centroids, 
+    vol, 
+    jdensity, 
+    targets, 
+    nthreads=nthreads, 
+    theta=theta,
+    leaf_threshold=leaf_threshold
+)
 end = perf_counter() 
 octree_elapsed = end - start 
 
