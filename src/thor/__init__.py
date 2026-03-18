@@ -14,8 +14,8 @@ from .biotsavart import (
 )
 from .materials import MU0, FreeSpace, LinearMaterial, NonlinearMaterial, BHCurve
 from . import mesh
-from . import test_utils
 from .magnetization import mag_force
+from . import testing
 
 
 __all__ = [
@@ -26,7 +26,7 @@ __all__ = [
     "BHCurve",
     "bfield_direct", 
     "bfield_octree", 
-    "test_utils", 
+    "testing", 
     "mesh", 
     "bfield_dualtree", 
     "bfield_hexahedron",

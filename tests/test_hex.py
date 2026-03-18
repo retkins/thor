@@ -43,5 +43,3 @@ plt.plot(1.0/targets[:,0], bpoint/b, label='hex')
 plt.xlabel('theta = element size / distance from element centroid')
 plt.ylabel('Ratio of field (point/hex)')
 plt.title("line along diagonal, (d, d, 0)/sqrt(2)")
-
-plt.show()

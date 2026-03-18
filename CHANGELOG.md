@@ -12,3 +12,6 @@
 * Added github actions workflows for testing python and rust, updated deploy_docs to use uv
 * Converted project to src-layout per <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>
 * Fix `ruff` and `ty` suggestions; set `ruff` line-length to 150 for now
+* Update test file path read/write to use pathlib
+* Remove interactive test plots, add py.typed marker, use x86-64-v3 reference cpu
+* Open python version, rename `test_utils` so it doesn't get picked up by pytest

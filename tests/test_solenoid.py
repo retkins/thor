@@ -93,13 +93,13 @@ print(f"Error at center: {100*err:.3f} %")
 
 bmag_direct_axis = np.linalg.norm(bdirect_axis, axis=1) 
 bmag_octree_axis = np.linalg.norm(boctree_axis, axis=1)
-err_axis = thor.test_utils.smape(bmag_direct_axis, bmag_octree_axis)
+err_axis = thor.testing.smape(bmag_direct_axis, bmag_octree_axis)
 print(f"Mean error along solenoid axis (|z| < radius): {err_axis*100:.2}%")
 
 # Errors on mesh
 bmag_direct = np.linalg.norm(bdirect, axis=1) 
 bmag_octree = np.linalg.norm(boctree, axis=1) 
-err_mesh = thor.test_utils.smape(bmag_direct, bmag_octree)
+err_mesh = thor.testing.smape(bmag_direct, bmag_octree)
 print(f"Mean fields error within the mesh: {err_mesh*100:.2}%")
 
 print("Times: ")

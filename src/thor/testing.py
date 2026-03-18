@@ -1,6 +1,7 @@
 """ Utility functions for tests
 """
 
+from pathlib import Path
 import numpy as np 
 from numpy import float64 
 from numpy.typing import NDArray
@@ -73,13 +74,21 @@ def smape(baseline: NDArray[float64], measurement: NDArray[float64]) -> float:
 
 def make_helmholtz(size, jmag: None|float=None) -> tuple[NDArray[float64], NDArray[float64], NDArray[float64]]:
     """ Make the helmholtz coil test problem
-
-    TODO: make this function work from any directory
     """
 
     datafile: str = "ring"
-    mesh_step(f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", size, size)
-    data = np.loadtxt(f"tests/data/{datafile}_mesh.csv", delimiter=',', skiprows=1)
+    package_root: Path = Path("__file__").parent.parent.absolute()      # tests is 2 levels up
+    mesh_step(
+        package_root / f"tests/data/{datafile}.stp", 
+        package_root / f"tests/data/{datafile}_mesh.csv", 
+        size, 
+        size
+    )
+    data = np.loadtxt(
+        package_root / f"tests/data/{datafile}_mesh.csv", 
+        delimiter=',', 
+        skiprows=1
+    )
 
     nsources = data.shape[0]# Targets are now the source centroids for self fields
 
