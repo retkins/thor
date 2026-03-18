@@ -21,7 +21,7 @@ class BHCurve:
     def lookup(self, h: float) -> float:
         """Linearly interpolate from the B-H curve"""
 
-        return interp(h, self.h_values, self.b_values)
+        return float(interp(h, self.h_values, self.b_values))
 
 
 class Material:
