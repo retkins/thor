@@ -179,8 +179,8 @@ fn hfield_tetrahedron(
         s[2] += ni[2] * s_face;
     }
 
-    let inv_4pi = 1.0 / (4.0 * 3.141592654);
-    jdensity.cross(&Vec3(s)) * inv_4pi
+
+    jdensity.cross(&Vec3(s)) * INV_4PI
 }
 
 fn tet_surface_integral(nodes: &[Vec3; 4], target: &Vec3) -> Vec3 {

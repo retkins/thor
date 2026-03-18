@@ -5,7 +5,7 @@ const ONE_NINTH: f64 = 1.0 / 9.0;
 const ONE_ELEVENTH: f64 = 1.0 / 11.0;
 const ONE_THIRTEENTH: f64 = 1.0 / 13.0;
 const ONE_FIFTEENTH: f64 = 1.0 / 15.0;
-const LN_2: f64 = 0.6931471805599453;
+use std::f64::consts::LN_2;
 
 /// Fast, approximate natural logarithm of `x` with absolute error < 1e-8
 ///
