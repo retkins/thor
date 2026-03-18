@@ -1,9 +1,8 @@
-""" Use the helmholtz coil problem as a benchmarking example
-""" 
+"""Use the helmholtz coil problem as a benchmarking example"""
 
-import thor 
-import numpy as np 
-import matplotlib.pyplot as plt 
+import thor
+import numpy as np
+import matplotlib.pyplot as plt
 from time import perf_counter
 
 nbenches: int = 10
@@ -18,75 +17,65 @@ i_est = 0
 octree_times = np.zeros(nbenches)
 interactions = np.zeros(nbenches)
 
-for (i, mesh_size) in enumerate(mesh_sizes):
-
+for i, mesh_size in enumerate(mesh_sizes):
     centroids, vol, jdensity = thor.testing.make_helmholtz(mesh_size)
-    n = centroids.shape[0] 
-    interactions[i] = n*n
+    n = centroids.shape[0]
+    interactions[i] = n * n
 
     if n < 50000:
         start = perf_counter()
         bdirect = thor.bfield_direct(centroids, vol, jdensity, centroids)
-        end = perf_counter() 
+        end = perf_counter()
         direct_times.append(end - start)
-        est_direct_times = [end - start ]
-        direct_interactions.append(n*n)
-        est_direct_interactions = [n*n]
+        est_direct_times = [end - start]
+        direct_interactions.append(n * n)
+        est_direct_interactions = [n * n]
         i_est = i
     else:
-        m = (direct_times[i_est] - direct_times[0]) / \
-            (interactions[i_est] - interactions[0])
-        b = direct_times[i_est] - m*interactions[i_est]
-        est_direct_interactions.append(n*n)
-        est_direct_times.append(m*n*n + b)
-    
+        m = (direct_times[i_est] - direct_times[0]) / (interactions[i_est] - interactions[0])
+        b = direct_times[i_est] - m * interactions[i_est]
+        est_direct_interactions.append(n * n)
+        est_direct_times.append(m * n * n + b)
 
     start = perf_counter()
     boctree = thor.bfield_octree(centroids, vol, jdensity, centroids, theta=theta)
-    end = perf_counter() 
-    octree_times[i] = end - start 
+    end = perf_counter()
+    octree_times[i] = end - start
 
 all_direct_times = direct_times + est_direct_times[1:]
 print("Sources/Targets | Interactions | Direct Time | Octree Time | Speedup ")
 for i in range(0, nbenches):
     n = np.sqrt(interactions[i])
-    speedup = all_direct_times[i]/octree_times[i]
+    speedup = all_direct_times[i] / octree_times[i]
 
-    print(
-        f"{n:.0f} | {interactions[i]:.3e} | {all_direct_times[i]:.3f}" + \
-        "| {octree_times[i]:.3f} | {speedup:.3f}x"
-    )
+    print(f"{n:.0f} | {interactions[i]:.3e} | {all_direct_times[i]:.3f}" + "| {octree_times[i]:.3f} | {speedup:.3f}x")
 
 # Plot solution times
 fig, ax = plt.subplots()
-ax.plot(direct_interactions, direct_times, 'r', label='direct')
-ax.plot(interactions, octree_times, 'k', label='octree')
-ax.plot(est_direct_interactions, est_direct_times, 'r--', label='direct trend')
+ax.plot(direct_interactions, direct_times, "r", label="direct")
+ax.plot(interactions, octree_times, "k", label="octree")
+ax.plot(est_direct_interactions, est_direct_times, "r--", label="direct trend")
 ax.set_xlabel("Interactions ($N^2$)")
 ax.set_ylabel("Solution time [s]")
-ax.set_xscale('log')
-ax.set_yscale('log')
+ax.set_xscale("log")
+ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
 fig.savefig("tests/benchmarks.png")
 
 # Plot interactions per second
-direct_throughput = \
-    [i/(t*1e9) for (i, t) in zip(direct_interactions, direct_times, strict=True)]
-est_direct_throughput = \
-    [i/(t*1e9) for (i,t) in zip(est_direct_interactions, est_direct_times, strict=True)]
-octree_throughput = \
-    [i/(t*1e9)  for (i, t) in zip(interactions, octree_times, strict=True)]
+direct_throughput = [i / (t * 1e9) for (i, t) in zip(direct_interactions, direct_times, strict=True)]
+est_direct_throughput = [i / (t * 1e9) for (i, t) in zip(est_direct_interactions, est_direct_times, strict=True)]
+octree_throughput = [i / (t * 1e9) for (i, t) in zip(interactions, octree_times, strict=True)]
 
 fig, ax = plt.subplots()
-ax.plot(direct_interactions, direct_throughput, 'r', label='direct')
-ax.plot(est_direct_interactions, est_direct_throughput, 'r--', label='direct (trend)')
-ax.plot(interactions, octree_throughput, 'k', label='octree')
+ax.plot(direct_interactions, direct_throughput, "r", label="direct")
+ax.plot(est_direct_interactions, est_direct_throughput, "r--", label="direct (trend)")
+ax.plot(interactions, octree_throughput, "k", label="octree")
 ax.set_xlabel("Interactions ($N^2$)")
 ax.set_ylabel("Throughput ($1e9$ interactions/sec)")
-ax.set_xscale('log')
-ax.set_yscale('log')
+ax.set_xscale("log")
+ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
 fig.savefig("tests/benchmarks_throughput.png")
-

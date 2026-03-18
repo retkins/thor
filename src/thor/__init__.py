@@ -1,16 +1,14 @@
-""" Python bindings for thor
-"""
-
+"""Python bindings for thor"""
 
 from .biotsavart import (
-    bfield_direct, 
-    bfield_octree, 
-    bfield_dualtree, 
-    bfield_hexahedron, 
-    bfield_tetrahedrons, 
-    bfield_tetrahedrons_direct, 
-    hfield_dipole, 
-    hfield_dipole_tetrahedrons
+    bfield_direct,
+    bfield_octree,
+    bfield_dualtree,
+    bfield_hexahedron,
+    bfield_tetrahedrons,
+    bfield_tetrahedrons_direct,
+    hfield_dipole,
+    hfield_dipole_tetrahedrons,
 )
 from .materials import MU0, FreeSpace, LinearMaterial, NonlinearMaterial, BHCurve
 from . import mesh
@@ -20,19 +18,19 @@ from . import testing
 
 __all__ = [
     "MU0",
-    "FreeSpace", 
-    "LinearMaterial", 
+    "FreeSpace",
+    "LinearMaterial",
     "NonlinearMaterial",
     "BHCurve",
-    "bfield_direct", 
-    "bfield_octree", 
-    "testing", 
-    "mesh", 
-    "bfield_dualtree", 
+    "bfield_direct",
+    "bfield_octree",
+    "testing",
+    "mesh",
+    "bfield_dualtree",
     "bfield_hexahedron",
     "bfield_tetrahedrons",
     "bfield_tetrahedrons_direct",
     "hfield_dipole",
     "hfield_dipole_tetrahedrons",
-    "mag_force"
+    "mag_force",
 ]

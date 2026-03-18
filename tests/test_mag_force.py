@@ -1,8 +1,6 @@
-""" Compute force on magnetic material (uniform sphere)
-"""
+"""Compute force on magnetic material (uniform sphere)"""
 
-
-import numpy as np 
+import numpy as np
 import thor
 
 min_size: float = 15
@@ -16,12 +14,14 @@ nodes, centroids, vol = thor.mesh.mesh_step_tets("tests/data/sphere.stp", min_si
 z_min = np.min(centroids[:, 2])
 z_max = np.max(centroids[:, 2])
 h0 = b_ext / thor.MU0
-dhdz = h0/(z_max - z_min)
+dhdz = h0 / (z_max - z_min)
+
 
 def h_ext(targets):
     h = np.zeros(targets.shape)
-    h[:, 2] =  h0/2.0 + h0 * (targets[:, 2] - z_min) / (z_max - z_min)
+    h[:, 2] = h0 / 2.0 + h0 * (targets[:, 2] - z_min) / (z_max - z_min)
     return h
+
 
 forces = thor.mag_force(centroids, vol, material, h_ext)
 
@@ -32,7 +32,8 @@ err = (f_expected - fmag) / fmag
 print("Thor - magnetized material test\n---\n")
 print(f"total force:    {fmag:.0f} N")
 print(f"expected force: {f_expected:.0f} N")
-print(f"error: {100*err:.3f} %")
+print(f"error: {100 * err:.3f} %")
+
 
 def test_mag_force():
-    assert(np.abs(err) < 0.01)
+    assert np.abs(err) < 0.01
