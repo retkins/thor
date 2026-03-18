@@ -49,18 +49,18 @@ impl TetSources {
 
         let bbox = BoundingBox::from_centroids_vec(&centroids);
         Self {
-            nodes: nodes,
-            centroids: centroids,
-            volumes: volumes,
-            jdensity: jdensity,
-            bbox: bbox,
+            nodes,
+            centroids,
+            volumes,
+            jdensity,
+            bbox,
         }
     }
 }
 
 impl Sources for TetSources {
     fn len(&self) -> usize {
-        return self.volumes.len();
+        self.volumes.len()
     }
 
     fn centroid(&self, i: usize) -> Vec3 {

@@ -19,7 +19,7 @@ pub fn size_at_level(side_length: f64, level: u8) -> f64 {
 pub fn get_prefix(code: u64, max_level: u8, level: u8) -> u64 {
     let shift: u64 = 3u64 * (max_level - level) as u64;
     let prefix: u64 = code >> shift;
-    return prefix;
+    prefix
 }
 
 // Get the end index of a range that has the same parent node at the current level
@@ -40,7 +40,7 @@ pub fn get_range_in_same_node(
         }
     }
 
-    return n;
+    n
 }
 
 pub trait Sources {
@@ -67,7 +67,7 @@ impl<S: Sources> Sources for DipoleSources<S> {
     fn moment(&self, i: usize) -> Vec3 {
         self.0.moment(i)
     }
-    fn sort(&mut self, indices: &[usize]) -> () {
+    fn sort(&mut self, indices: &[usize]) {
         self.0.sort(indices)
     }
     fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>) {
@@ -90,7 +90,7 @@ impl<S: Sources> Sources for CurrentSources<S> {
     fn moment(&self, i: usize) -> Vec3 {
         self.0.moment(i)
     }
-    fn sort(&mut self, indices: &[usize]) -> () {
+    fn sort(&mut self, indices: &[usize]) {
         self.0.sort(indices)
     }
     fn encode(&mut self, max_depth: u8) -> (&BoundingBox, Vec<u64>) {
@@ -137,7 +137,7 @@ fn update_centroid(
     child_mag: f64,
 ) {
     let total_mag: f64 = parent_mag + child_mag;
-    for i in 0..3 as usize {
+    for i in 0..3_usize {
         parent_centroid[i] =
             (parent_centroid[i] * parent_mag + child_centroid[i] * child_mag) / total_mag;
     }
@@ -169,7 +169,7 @@ fn add_node<S: Sources>(
             end,
             end - start
         );
-        assert!(false);
+        panic!();
     }
 
     let current_index: usize;
@@ -186,9 +186,9 @@ fn add_node<S: Sources>(
         nodes.push(
             // Do not descend level
             Node::Leaf {
-                level: level,
+                level,
                 source_range: (start as u32, end as u32),
-                centroid: centroid,
+                centroid,
             },
         );
         current_index = nodes.len() - 1;
@@ -200,8 +200,8 @@ fn add_node<S: Sources>(
 
         // Initialize the branch node first, then recursive calls later fill it
         nodes.push(Node::Branch {
-            level: level,
-            size: size,
+            level,
+            size,
             children: [0; 8],
             centroid: Vec3([0.0; 3]),
             moment: Vec3([0.0; 3]),
@@ -217,7 +217,7 @@ fn add_node<S: Sources>(
         while cursor < end {
             // Descend to next level here, hence `level+1`
             // index to sources array
-            let child_end = get_range_in_same_node(&codes, level + 1, max_depth, cursor);
+            let child_end = get_range_in_same_node(codes, level + 1, max_depth, cursor);
 
             // index in nodes array
             let child_idx = add_node(
@@ -294,7 +294,7 @@ fn add_node<S: Sources>(
         }
     }
 
-    return current_index as u32;
+    current_index as u32
 }
 
 pub struct Octree<S> {
@@ -307,7 +307,7 @@ pub struct Octree<S> {
 impl<S: Sources> Octree<S> {
     pub fn build_from_sources(mut s: S, max_depth: u8, leaf_threshold: u32) -> Self {
         let (bbox, mut codes) = s.encode(max_depth);
-        let bbox = bbox.clone();
+        let bbox = *bbox;
 
         // sort the sources by morton code
         let mut indices: Vec<usize> = (0..codes.len()).collect();
@@ -335,9 +335,9 @@ impl<S: Sources> Octree<S> {
         );
 
         Self {
-            nodes: nodes,
-            codes: codes,
-            bbox: bbox,
+            nodes,
+            codes,
+            bbox,
             sources: s,
         }
     }
@@ -441,6 +441,6 @@ impl<S: GradHFieldSolver> Octree<S> {
         &self,
         targets: (&[f64], &[f64], &[f64]),
         gradh: (&mut [f64], &mut [f64], &mut [f64]),
-    ) -> () {
+    ) {
     }
 }

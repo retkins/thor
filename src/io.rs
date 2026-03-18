@@ -43,15 +43,21 @@ impl CsvData {
                     print!(", ");
                 }
             }
-            print!("\n");
+            println!();
         }
-        println!("");
+        println!();
     }
 }
 
 impl Termination for CsvData {
     fn report(self) -> std::process::ExitCode {
         std::process::ExitCode::SUCCESS
+    }
+}
+
+impl Default for CsvData {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

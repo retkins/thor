@@ -10,7 +10,7 @@ pub struct Mat3(pub [Vec3; 3]);
 impl Mat3 {
     /// Construct a matrix using vectors that represent the rows
     pub fn from_rows(row0: &Vec3, row1: &Vec3, row2: &Vec3) -> Self {
-        Mat3([row0.clone(), row1.clone(), row2.clone()])
+        Mat3([*row0, *row1, *row2])
     }
 
     /// Construct a matrix using vectors that represent the columns
@@ -65,9 +65,9 @@ impl Mat3 {
 
             let mut m: Mat3 = Self::from_rows(&c1.cross(&c2), &c2.cross(&c0), &c0.cross(&c1));
             m *= 1.0 / det;
-            return Some(m);
+            Some(m)
         } else {
-            return None;
+            None
         }
     }
 
@@ -123,11 +123,11 @@ impl std::cmp::PartialEq<Mat3> for Mat3 {
                 }
             }
         }
-        return true;
+        true
     }
-    fn ne(&self, other: &Mat3) -> bool {
-        return !self.eq(other);
-    }
+    // fn ne(&self, other: &Mat3) -> bool {
+    //     !self.eq(other)
+    // }
 }
 
 #[cfg(test)]

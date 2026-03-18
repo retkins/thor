@@ -51,7 +51,7 @@ pub fn edge_csys(x: &[f64; 3], y: &[f64; 3], z: &[f64; 3]) -> ([f64; 3], [f64; 3
     // other in-plane direction, not necessarily aligned with an edge
     let mut yp_hat = [0.0; 3];
     cross(&xp_hat, &zp_hat, &mut yp_hat);
-    return (xp_hat, yp_hat, zp_hat);
+    (xp_hat, yp_hat, zp_hat)
 }
 
 use crate::vec3::Vec3;

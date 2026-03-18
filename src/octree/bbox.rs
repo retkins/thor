@@ -49,10 +49,10 @@ impl BoundingBox {
         let zc: f64 = zb.0 + 0.5 * side_length;
 
         Some(Self {
-            xc: xc,
-            yc: yc,
-            zc: zc,
-            side_length: side_length,
+            xc,
+            yc,
+            zc,
+            side_length,
             xbounds: xb,
             ybounds: yb,
             zbounds: zb,
@@ -60,7 +60,7 @@ impl BoundingBox {
     }
 
     /// TODO: fix this so there's no data copy
-    pub fn from_centroids_vec(centroids: &Vec<Vec3>) -> Self {
+    pub fn from_centroids_vec(centroids: &[Vec3]) -> Self {
         let n: usize = centroids.len();
         let mut x: Vec<f64> = vec![0.0; n];
         let mut y: Vec<f64> = vec![0.0; n];

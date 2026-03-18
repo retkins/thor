@@ -1,6 +1,7 @@
 use crate::archive::{biotsavart::bfield_node, octree::SourceOctree};
 
 // Compute the magnetic field using the octree on a chunk of the inputs
+#[allow(dead_code)]
 fn bfield_node_chunk(
     tree: &SourceOctree,
     x: &[f64],
@@ -15,7 +16,7 @@ fn bfield_node_chunk(
     // TODO: length checks
     for i in 0..n {
         let centroid = [x[i], y[i], z[i]];
-        let b = bfield_node(&tree, 0, &centroid, theta);
+        let b = bfield_node(tree, 0, &centroid, theta);
         bx[i] += b[0];
         by[i] += b[1];
         bz[i] += b[2];

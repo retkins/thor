@@ -46,13 +46,13 @@ impl PointSources {
         let bbox = BoundingBox::from_centroids((&xg, &yg, &zg)).unwrap();
 
         Self {
-            xg: xg,
-            yg: yg,
-            zg: zg,
-            r: r,
-            vjx: vjx,
-            vjy: vjy,
-            vjz: vjz,
+            xg,
+            yg,
+            zg,
+            r,
+            vjx,
+            vjy,
+            vjz,
             bbox,
         }
     }
@@ -82,13 +82,13 @@ impl PointSources {
         let bbox = BoundingBox::from_centroids((&xg, &yg, &zg)).unwrap();
 
         Self {
-            xg: xg,
-            yg: yg,
-            zg: zg,
-            r: r,
-            vjx: vjx,
-            vjy: vjy,
-            vjz: vjz,
+            xg,
+            yg,
+            zg,
+            r,
+            vjx,
+            vjy,
+            vjz,
             bbox,
         }
     }
@@ -109,13 +109,13 @@ impl Sources for PointSources {
 
     fn sort(&mut self, indices: &[usize]) {
         let mut scratch = vec![0.0; self.len()];
-        sort_by_indices(&mut self.xg, &mut scratch, &indices);
-        sort_by_indices(&mut self.yg, &mut scratch, &indices);
-        sort_by_indices(&mut self.zg, &mut scratch, &indices);
-        sort_by_indices(&mut self.r, &mut scratch, &indices);
-        sort_by_indices(&mut self.vjx, &mut scratch, &indices);
-        sort_by_indices(&mut self.vjy, &mut scratch, &indices);
-        sort_by_indices(&mut self.vjz, &mut scratch, &indices);
+        sort_by_indices(&mut self.xg, &mut scratch, indices);
+        sort_by_indices(&mut self.yg, &mut scratch, indices);
+        sort_by_indices(&mut self.zg, &mut scratch, indices);
+        sort_by_indices(&mut self.r, &mut scratch, indices);
+        sort_by_indices(&mut self.vjx, &mut scratch, indices);
+        sort_by_indices(&mut self.vjy, &mut scratch, indices);
+        sort_by_indices(&mut self.vjz, &mut scratch, indices);
     }
 
     fn bbox(&self) -> &BoundingBox {
