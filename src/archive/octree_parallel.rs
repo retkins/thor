@@ -68,9 +68,9 @@ pub fn bfield_octree_parallel(
     // Build the source octree
     let max_depth: u8 = 21;
     let tree = SourceOctree::from_source_points(
-        (&centx, &centy, &centz),
+        (centx, centy, centz),
         vol,
-        (&jx, &jy, &jz),
+        (jx, jy, jz),
         max_depth,
         leaf_threshold,
     )

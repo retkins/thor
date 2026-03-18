@@ -4,7 +4,7 @@ from time import perf_counter
 size = 1.0
 theta = 0.5 
 nthreads = 0
-centroids, vol, jdensity = thor.test_utils.make_helmholtz(size)
+centroids, vol, jdensity = thor.testing.make_helmholtz(size)
 
 # centroids = np.vstack((centroids, centroids))
 # vol = np.hstack((vol, vol))

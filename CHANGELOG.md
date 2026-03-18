@@ -15,3 +15,4 @@
 * Update test file path read/write to use pathlib
 * Remove interactive test plots, add py.typed marker, use x86-64-v3 reference cpu
 * Open python version, rename `test_utils` so it doesn't get picked up by pytest
+* Set magnetized sphere test to expected fail, fix clippy/ty lints

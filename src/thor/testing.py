@@ -79,8 +79,8 @@ def make_helmholtz(size, jmag: None|float=None) -> tuple[NDArray[float64], NDArr
     datafile: str = "ring"
     package_root: Path = Path("__file__").parent.parent.absolute()      # tests is 2 levels up
     mesh_step(
-        package_root / f"tests/data/{datafile}.stp", 
-        package_root / f"tests/data/{datafile}_mesh.csv", 
+        str(package_root / f"tests/data/{datafile}.stp"), 
+        str(package_root / f"tests/data/{datafile}_mesh.csv"), 
         size, 
         size
     )
