@@ -10,3 +10,4 @@
 * Added `_thor.pyi` for typing functions in Rust dll
 * Added `.git-blame-ignore-revs` file
 * Added github actions workflows for testing python and rust, updated deploy_docs to use uv
+* Converted project to src-layout per <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>
