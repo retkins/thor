@@ -8,3 +8,5 @@
 * Python project version is now dynamic to match rust project
 * Added placeholder for `tests/fig/` to avoid errors in running tests
 * Added `_thor.pyi` for typing functions in Rust dll
+* Added `.git-blame-ignore-revs` file
+* Added github actions workflows for testing python and rust, updated deploy_docs to use uv
