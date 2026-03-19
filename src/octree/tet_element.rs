@@ -1,7 +1,10 @@
 use crate::{
-    math::sort_by_indices, morton, octree::BoundingBox, octree::{
-        CurrentSources, HFieldSolver, Sources, DipoleSources
-    }, sources::{h_point, h_point_dipole, hmag_tet4, h_field_tet4}, vec3::Vec3
+    math::sort_by_indices,
+    morton,
+    octree::BoundingBox,
+    octree::{CurrentSources, DipoleSources, HFieldSolver, Sources},
+    sources::{h_field_tet4, h_point, h_point_dipole, hmag_tet4},
+    vec3::Vec3,
 };
 
 pub struct TetSources {

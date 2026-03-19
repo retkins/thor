@@ -5,11 +5,11 @@ use std::cmp::max;
 use numpy::{PyReadonlyArray1, PyReadwriteArray1};
 use pyo3::prelude::*;
 
+use crate::biotsavart;
+use crate::biotsavart::hmag_direct_tet;
 use crate::biotsavart_parallel::hmag_direct_tet_parallel;
 use crate::sources::bfield_hexahedron;
-use crate::biotsavart::hmag_direct_tet;
 use crate::vec3::Vec3;
-use crate::biotsavart;
 
 #[pyfunction]
 fn _bfield_direct(
@@ -366,17 +366,16 @@ fn _hfield_dipole(
 
 #[pyfunction]
 fn _h_demag_tet4(
-    nodes_flat: PyReadonlyArray1<f64>, 
-    element_connectivity_flat: PyReadonlyArray1<u32>, 
-    mx: PyReadonlyArray1<f64>, 
-    my: PyReadonlyArray1<f64>, 
-    mz: PyReadonlyArray1<f64>, 
+    nodes_flat: PyReadonlyArray1<f64>,
+    element_connectivity_flat: PyReadonlyArray1<u32>,
+    mx: PyReadonlyArray1<f64>,
+    my: PyReadonlyArray1<f64>,
+    mz: PyReadonlyArray1<f64>,
     mut hx: PyReadwriteArray1<f64>,
-    mut hy: PyReadwriteArray1<f64>, 
-    mut hz: PyReadwriteArray1<f64>,  
-    nthreads_requested: u32
+    mut hy: PyReadwriteArray1<f64>,
+    mut hz: PyReadwriteArray1<f64>,
+    nthreads_requested: u32,
 ) -> PyResult<()> {
-
     let nodes_raw = nodes_flat.as_slice()?;
     let conn_raw = element_connectivity_flat.as_slice()?;
     let mx_slice = mx.as_slice()?;
@@ -390,15 +389,19 @@ fn _h_demag_tet4(
     let n_nodes = nodes_raw.len() / 3;
     let mut nodes: Vec<Vec3> = Vec::with_capacity(n_nodes);
     for i in 0..n_nodes {
-        nodes.push(Vec3([nodes_raw[3*i], nodes_raw[3*i+1], nodes_raw[3*i+2]]));
+        nodes.push(Vec3([
+            nodes_raw[3 * i],
+            nodes_raw[3 * i + 1],
+            nodes_raw[3 * i + 2],
+        ]));
     }
 
     // Reshape flat connectivity into &[[u32; 4]]: [n0,n1,n2,n3,...] -> [[u32;4], ...]
     let n_elements = conn_raw.len() / 4;
-    let mut elements: Vec<[u32; 4]> = vec![[0; 4];n_elements];
+    let mut elements: Vec<[u32; 4]> = vec![[0; 4]; n_elements];
     for i in 0..n_elements {
         for j in 0..4 {
-            elements[i][j] = conn_raw[i*4 + j];
+            elements[i][j] = conn_raw[i * 4 + j];
         }
     }
 
@@ -413,9 +416,9 @@ fn _h_demag_tet4(
     let mut ny: Vec<f64> = Vec::with_capacity(n_nodes);
     let mut nz: Vec<f64> = Vec::with_capacity(n_nodes);
     for i in 0..n_nodes {
-        nx.push(nodes_raw[3*i]);
-        ny.push(nodes_raw[3*i+1]);
-        nz.push(nodes_raw[3*i+2]);
+        nx.push(nodes_raw[3 * i]);
+        ny.push(nodes_raw[3 * i + 1]);
+        nz.push(nodes_raw[3 * i + 2]);
     }
 
     // Source and target are the same mesh
@@ -428,10 +431,10 @@ fn _h_demag_tet4(
         hx_slice,
         hy_slice,
         hz_slice,
-        nthreads_requested
+        nthreads_requested,
     );
 
-    Ok(()) 
+    Ok(())
 }
 
 #[pymodule]

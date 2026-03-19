@@ -5,7 +5,6 @@ use std::thread::available_parallelism;
 use crate::biotsavart::{bfield_direct, hfield_direct_tet, hmag_direct_tet};
 use crate::vec3::Vec3;
 
-
 pub fn get_nthreads(nthreads_requested: u32) -> usize {
     let nthreads_available: usize = available_parallelism().unwrap_or(NonZeroUsize::MIN).get();
     let nthreads: usize =
@@ -102,19 +101,17 @@ pub fn hfield_direct_tet_parallel(
     Ok(())
 }
 
-
 pub fn hmag_direct_tet_parallel(
-    source_nodes: (&[f64], &[f64], &[f64]), 
-    source_element_connectivity: &[[u32; 4]], 
-    source_mvectors: &[Vec3], 
-    target_nodes: (&[f64], &[f64], &[f64]), 
-    target_element_connectivity: &[[u32; 4]],  
+    source_nodes: (&[f64], &[f64], &[f64]),
+    source_element_connectivity: &[[u32; 4]],
+    source_mvectors: &[Vec3],
+    target_nodes: (&[f64], &[f64], &[f64]),
+    target_element_connectivity: &[[u32; 4]],
     hx: &mut [f64],
     hy: &mut [f64],
     hz: &mut [f64],
-    nthreads_requested: u32
-) -> Result<(),()>{
-
+    nthreads_requested: u32,
+) -> Result<(), ()> {
     // TODO: length checks
     let n: usize = target_nodes.0.len();
     let nthreads: usize = get_nthreads(nthreads_requested);
@@ -130,15 +127,15 @@ pub fn hmag_direct_tet_parallel(
         .into_par_iter()
         .try_for_each(|(_tec, _hx, _hy, _hz)| {
             hmag_direct_tet(
-                source_nodes, 
-                source_element_connectivity, 
-                source_mvectors, 
-                target_nodes, 
-                &_tec,  
+                source_nodes,
+                source_element_connectivity,
+                source_mvectors,
+                target_nodes,
+                &_tec,
                 _hx,
                 _hy,
                 _hz,
-            ) 
+            )
         })?;
     Ok(())
 }
