@@ -5,10 +5,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 
-nbenches: int = 10
+nbenches: int = 1
 theta: float = 0.5
 
-mesh_sizes = np.linspace(33.0, 1.5, nbenches)
+mesh_sizes = np.linspace(33.0, 33, nbenches)
 direct_times = []
 direct_interactions = []
 est_direct_times = []
@@ -61,7 +61,7 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
-fig.savefig("tests/benchmarks.png")
+fig.savefig("tests/fig/benchmarks.png")
 
 # Plot interactions per second
 direct_throughput = [i / (t * 1e9) for (i, t) in zip(direct_interactions, direct_times, strict=True)]
@@ -78,4 +78,4 @@ ax.set_xscale("log")
 ax.set_yscale("log")
 ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
-fig.savefig("tests/benchmarks_throughput.png")
+fig.savefig("tests/fig/benchmarks_throughput.png")

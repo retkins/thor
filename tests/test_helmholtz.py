@@ -143,7 +143,7 @@ ax.plot(targets_axis[:, 2], boctree_axis[:, 2], "rs", label="Octree")
 ax.set_xlabel("Distance Along Coil Centerr (Z-axis) [m]")
 ax.set_ylabel("Field Along Axis (Bz) [T]")
 ax.set_title("Thor - Helmholtz Coil Test")
-fig.savefig("tests/fig/helmholtz_test.png")
+fig.savefig("tests/fig/helmholtz_test.svg")
 
 axis_error = 2 * np.abs(bdirect_axis - boctree_axis) / (np.abs(bdirect_axis) + np.abs(boctree_axis))
 fig2 = plt.figure()
@@ -152,12 +152,12 @@ ax2.plot(targets_axis[:, 2], axis_error)
 ax2.set_xlabel("z position")
 ax2.set_ylabel("SMAPE")
 ax2.legend("lowerright")
-fig2.savefig("tests/fig/error.png")
+fig2.savefig("tests/fig/error.svg")
 
 fig3 = plt.figure()
 ax3 = fig3.add_subplot()
 ax3.plot((bmag_octree - bmag_direct) / bmag_direct)
-fig3.savefig("tests/fig/error_mesh.png")
+fig3.savefig("tests/fig/error_mesh.svg")
 
 
 def test_helmholtz():

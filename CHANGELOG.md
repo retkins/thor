@@ -17,3 +17,6 @@
 * Open python version, rename `test_utils` so it doesn't get picked up by pytest
 * Set magnetized sphere test to expected fail, fix clippy/ty lints
 * Fix ruff format checks
+* Changed png to svg output for plots 
+* Moved examples to `/examples` and added a `test_examples.py`
+* Reduced some of the test mesh parameters to run tests faster 

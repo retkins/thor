@@ -122,7 +122,7 @@ def test_magnetized_sphere():
     ax = fig.add_subplot(projection="3d")
     s = ax.scatter(centroids[:, 0], centroids[:, 1], centroids[:, 2], c=b_z, cmap="viridis_r")
     fig.colorbar(s)
-    fig.savefig("tests/fig/mag_sphere.png")
+    fig.savefig("tests/fig/mag_sphere.svg")
 
     # Points within half an element size of the centerplane
     tol = max_size / 2 * 1e-3  # convert mm to meters
@@ -133,4 +133,4 @@ def test_magnetized_sphere():
     plt.colorbar(sc, label="B_z [T]")
     ax.set_aspect("equal")
     ax.set_title("B_z on z-centerplane")
-    plt.savefig("tests/fig/sphere_slice.png")
+    plt.savefig("tests/fig/sphere_slice.svg")

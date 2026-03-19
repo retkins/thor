@@ -115,7 +115,7 @@ ax.plot(targets[:, 2], boctree[:, 2], "rs", label="Octree")
 ax.set_xlabel("Distance from Solenoid Center (Z-axis) [m]")
 ax.set_ylabel("Field Along Solenoid Axis (Bz) [T]")
 ax.set_title("Thor - Solenoid Test")
-plt.savefig("tests/fig/solenoid_test.png")
+plt.savefig("tests/fig/solenoid_test.svg")
 
 
 def test_solenoid():
