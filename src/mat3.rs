@@ -3,7 +3,7 @@
 use crate::vec3::Vec3;
 
 /// A row-major 3x3 matrix
-#[derive(Clone, Copy, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 #[repr(transparent)]
 pub struct Mat3(pub [Vec3; 3]);
 
@@ -112,22 +112,6 @@ impl std::ops::MulAssign<f64> for Mat3 {
         self[1] *= rhs;
         self[2] *= rhs;
     }
-}
-
-impl std::cmp::PartialEq<Mat3> for Mat3 {
-    fn eq(&self, other: &Mat3) -> bool {
-        for i in 0..3 {
-            for j in 0..3 {
-                if self[i][j] != other[i][j] {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-    // fn ne(&self, other: &Mat3) -> bool {
-    //     !self.eq(other)
-    // }
 }
 
 #[cfg(test)]
