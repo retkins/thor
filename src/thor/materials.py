@@ -59,8 +59,8 @@ class LinearMaterial(Material):
         return self._mu_r
 
     def to_mh_curve(self) -> tuple[NDArray[float64], NDArray[float64]]:
-        h_values = array([1.0, 1e10])
-        m_values = array([self.mu_r(h) for h in h_values])
+        h_values = array([0.0, 1e10])
+        m_values = array([(self._mu_r - 1.0) * h for h in h_values])
         return (h_values, m_values)
 
 

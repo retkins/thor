@@ -138,4 +138,5 @@ def _h_demag_tet4(
     hx: Float64Array,
     hy: Float64Array,
     hz: Float64Array,
+    nthreads_requested: int,
 ) -> None: ...

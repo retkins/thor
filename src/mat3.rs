@@ -81,7 +81,7 @@ impl Mat3 {
     /// This will be needed for gradient calculations on the finite element mesh
     pub fn inverse_transpose(&self) -> Mat3 {
         let det = self.det();
-        debug_assert!(det > 1e-8);
+        debug_assert!(det.abs() > 1e-8);
         let c0 = self.col(0);
         let c1 = self.col(1);
         let c2 = self.col(2);

@@ -65,10 +65,11 @@ def mag_force(centroids: NDArray[float64], vol: NDArray[float64], material: Line
 
 
 def h_demag_tet4(
-    nodes: NDArray[float64],
-    element_connectivity: NDArray[float64],
-    material: Material,
-    m_field: NDArray[float64],
+    nodes: NDArray[float64], 
+    element_connectivity: NDArray[float64],  
+    material: Material, 
+    m_field: NDArray[float64],  
+    nthreads_requested: int=0
 ) -> NDArray[float64]:
     """Compute the demagnetization field H(M) on mesh element centroids given the current M-field
 
@@ -97,26 +98,28 @@ def h_demag_tet4(
     hz = np.zeros(n_elements)
 
     _h_demag_tet4(
-        np.ascontiguousarray(nodes.flatten()),
-        np.ascontiguousarray(element_connectivity.flatten()),
-        np.ascontiguousarray(m_field[:, 0]),
-        np.ascontiguousarray(m_field[:, 1]),
-        np.ascontiguousarray(m_field[:, 2]),
+        np.ascontiguousarray(nodes.flatten()), 
+        np.ascontiguousarray(element_connectivity.flatten().astype(np.uint32)), 
+        np.ascontiguousarray(m_field[:,0]),
+        np.ascontiguousarray(m_field[:,1]),
+        np.ascontiguousarray(m_field[:,2]),
         np.ascontiguousarray(hx),
         np.ascontiguousarray(hy),
         np.ascontiguousarray(hz),
+        nthreads_requested
     )
 
     return np.hstack((hx[:, np.newaxis], hy[:, np.newaxis], hz[:, np.newaxis]))
 
 
 def demag_tet4(
-    nodes: NDArray[float64],
-    element_connectivity: NDArray[float64],
-    material: Material,
-    h_external: NDArray[float64],
-    max_iterations: int = 50,
-    tol: float = 1e-6,
+    nodes: NDArray[float64], 
+    element_connectivity: NDArray[float64],  
+    material: Material, 
+    h_external: NDArray[float64],  
+    max_iterations: int=50, 
+    tol: float=1e-6, 
+    nthreads_requested: int=0
 ) -> tuple[NDArray[float64], NDArray[float64]]:
     """Compute magnetization field M and the total H field at element centroids
 
@@ -151,10 +154,10 @@ def demag_tet4(
     h_hat = np.zeros((n_elements, 3))
     h_total = np.zeros((n_elements, 3))
 
-    for _ in range(max_iterations):
+    for i in range(max_iterations):
         # Get the demag and total H field at the element centroids
-        h_demag = h_demag_tet4(nodes, element_connectivity, material, m_field)
-        h_total = h_demag + h_external
+        h_demag = h_demag_tet4(nodes, element_connectivity, material, m_field, nthreads_requested=nthreads_requested)
+        h_total = h_demag + h_external 
 
         # We consider isotropic materials for the B-H curve iteration
         h_magnitude = np.linalg.norm(h_total, axis=1)
@@ -163,8 +166,11 @@ def demag_tet4(
         h_hat.fill(0.0)
         h_hat[mask] = h_total[mask, :] / h_magnitude[mask, np.newaxis]
         m_field_new = h_hat * m_magnitude[:, np.newaxis]
-        if np.max(np.abs(m_field_new - m_field)) < tol:
-            break
-        m_field = m_field_new
+        max_err: float = np.max(np.abs(m_field_new - m_field))
+        if  max_err < tol: 
+            break 
+        else:
+            print(f"Iteration: {i} | max err = {max_err:.3e} | continuing")
+        m_field = m_field_new 
 
     return (m_field, h_total)

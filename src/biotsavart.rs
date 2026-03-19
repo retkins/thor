@@ -164,6 +164,47 @@ pub fn hfield_direct_tet(
     Ok(())
 }
 
+
+use crate::math::gradient::jmatrices;
+use crate::sources::tet4::hmag_tet4;
+
+pub fn hmag_direct_tet(
+    source_nodes: (&[f64], &[f64], &[f64]), 
+    source_element_connectivity: &[[u32; 4]], 
+    source_mvectors: &[Vec3], 
+    target_nodes: (&[f64], &[f64], &[f64]), 
+    target_element_connectivity: &[[u32; 4]],  
+    hx: &mut [f64],
+    hy: &mut [f64],
+    hz: &mut [f64],
+) -> Result<(),()>{
+
+    let n_sources = source_element_connectivity.len(); 
+    let n_target_nodes = target_nodes.0.len();
+
+    // Compute j_invt at each target element 
+    let mut node_vecs = vec![Vec3::default(); n_target_nodes];
+    for i in 0..n_target_nodes {
+        node_vecs[i] = Vec3([target_nodes.0[i], target_nodes.1[i], target_nodes.2[i]]);
+    }
+    let j_invt = jmatrices(&node_vecs, &target_element_connectivity);
+
+    let mut f = vec![Vec3::default(); n_target_nodes]; 
+
+    for i in 0..n_sources {
+        let n_idx = source_element_connectivity[i]; 
+        let _source_nodes = [
+            Vec3([source_nodes.0[n_idx[0] as usize], source_nodes.1[n_idx[0] as usize], source_nodes.2[n_idx[0] as usize]]),
+            Vec3([source_nodes.0[n_idx[1] as usize], source_nodes.1[n_idx[1] as usize], source_nodes.2[n_idx[1] as usize]]),
+            Vec3([source_nodes.0[n_idx[2] as usize], source_nodes.1[n_idx[2] as usize], source_nodes.2[n_idx[2] as usize]]),
+            Vec3([source_nodes.0[n_idx[3] as usize], source_nodes.1[n_idx[3] as usize], source_nodes.2[n_idx[3] as usize]]),
+        ];
+        hmag_tet4(&_source_nodes, &source_mvectors[i], &j_invt, target_nodes, target_element_connectivity, &mut f, (hx, hy, hz));
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
 

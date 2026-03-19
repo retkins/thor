@@ -1,8 +1,10 @@
 pub mod atan2;
 pub mod ln;
+pub mod gradient;
 
 pub use atan2::{atan, atan_approx, atan2};
 pub use ln::ln;
+pub use gradient::gradient;
 
 /// In place cross-product  
 /// $$ \vec{a} \times \vec{b} = \vec{c} $$

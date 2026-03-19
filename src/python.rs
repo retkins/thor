@@ -5,8 +5,11 @@ use std::cmp::max;
 use numpy::{PyReadonlyArray1, PyReadwriteArray1};
 use pyo3::prelude::*;
 
-use crate::biotsavart;
+use crate::biotsavart_parallel::hmag_direct_tet_parallel;
 use crate::sources::bfield_hexahedron;
+use crate::biotsavart::hmag_direct_tet;
+use crate::vec3::Vec3;
+use crate::biotsavart;
 
 #[pyfunction]
 fn _bfield_direct(
@@ -363,16 +366,72 @@ fn _hfield_dipole(
 
 #[pyfunction]
 fn _h_demag_tet4(
-    nodes_flat: PyReadonlyArray1<f64>,
-    element_connectivity_flat: PyReadonlyArray1<f64>,
-    mx: PyReadonlyArray1<f64>,
-    my: PyReadonlyArray1<f64>,
-    mz: PyReadonlyArray1<f64>,
+    nodes_flat: PyReadonlyArray1<f64>, 
+    element_connectivity_flat: PyReadonlyArray1<u32>, 
+    mx: PyReadonlyArray1<f64>, 
+    my: PyReadonlyArray1<f64>, 
+    mz: PyReadonlyArray1<f64>, 
     mut hx: PyReadwriteArray1<f64>,
-    mut hy: PyReadwriteArray1<f64>,
-    mut hz: PyReadwriteArray1<f64>,
+    mut hy: PyReadwriteArray1<f64>, 
+    mut hz: PyReadwriteArray1<f64>,  
+    nthreads_requested: u32
 ) -> PyResult<()> {
-    Ok(())
+
+    let nodes_raw = nodes_flat.as_slice()?;
+    let conn_raw = element_connectivity_flat.as_slice()?;
+    let mx_slice = mx.as_slice()?;
+    let my_slice = my.as_slice()?;
+    let mz_slice = mz.as_slice()?;
+    let hx_slice = hx.as_slice_mut()?;
+    let hy_slice = hy.as_slice_mut()?;
+    let hz_slice = hz.as_slice_mut()?;
+
+    // Reshape flat nodes into Vec<Vec3>: [x0,y0,z0,x1,y1,z1,...] -> [Vec3, Vec3, ...]
+    let n_nodes = nodes_raw.len() / 3;
+    let mut nodes: Vec<Vec3> = Vec::with_capacity(n_nodes);
+    for i in 0..n_nodes {
+        nodes.push(Vec3([nodes_raw[3*i], nodes_raw[3*i+1], nodes_raw[3*i+2]]));
+    }
+
+    // Reshape flat connectivity into &[[u32; 4]]: [n0,n1,n2,n3,...] -> [[u32;4], ...]
+    let n_elements = conn_raw.len() / 4;
+    let mut elements: Vec<[u32; 4]> = vec![[0; 4];n_elements];
+    for i in 0..n_elements {
+        for j in 0..4 {
+            elements[i][j] = conn_raw[i*4 + j];
+        }
+    }
+
+    // Build M vectors per element
+    let mut mvectors: Vec<Vec3> = Vec::with_capacity(n_elements);
+    for i in 0..n_elements {
+        mvectors.push(Vec3([mx_slice[i], my_slice[i], mz_slice[i]]));
+    }
+
+    // Build SoA node arrays for target nodes
+    let mut nx: Vec<f64> = Vec::with_capacity(n_nodes);
+    let mut ny: Vec<f64> = Vec::with_capacity(n_nodes);
+    let mut nz: Vec<f64> = Vec::with_capacity(n_nodes);
+    for i in 0..n_nodes {
+        nx.push(nodes_raw[3*i]);
+        ny.push(nodes_raw[3*i+1]);
+        nz.push(nodes_raw[3*i+2]);
+    }
+
+    // Source and target are the same mesh
+    hmag_direct_tet_parallel(
+        (&nx, &ny, &nz),
+        &elements,
+        &mvectors,
+        (&nx, &ny, &nz),
+        &elements,
+        hx_slice,
+        hy_slice,
+        hz_slice,
+        nthreads_requested
+    );
+
+    Ok(()) 
 }
 
 #[pymodule]
