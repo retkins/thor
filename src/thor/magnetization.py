@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from numpy import float64
+from numpy import float64, int64
 
 from thor import LinearMaterial, MU0
 from thor.materials import Material
@@ -65,7 +65,7 @@ def mag_force(centroids: NDArray[float64], vol: NDArray[float64], material: Line
 
 
 def h_demag_tet4(
-    nodes: NDArray[float64], element_connectivity: NDArray[float64], material: Material, m_field: NDArray[float64], nthreads_requested: int = 0
+    nodes: NDArray[float64], element_connectivity: NDArray[int64], material: Material, m_field: NDArray[float64], nthreads_requested: int = 0
 ) -> NDArray[float64]:
     """Compute the demagnetization field H(M) on mesh element centroids given the current M-field
 
@@ -110,7 +110,7 @@ def h_demag_tet4(
 
 def demag_tet4(
     nodes: NDArray[float64],
-    element_connectivity: NDArray[float64],
+    element_connectivity: NDArray[int64],
     material: Material,
     h_external: NDArray[float64],
     max_iterations: int = 50,

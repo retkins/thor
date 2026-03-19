@@ -2,7 +2,7 @@
 
 import numpy as np
 from numpy.typing import NDArray
-from numpy import float64
+from numpy import float64, int64
 
 
 def plot_mesh(x, y, z):
@@ -19,10 +19,12 @@ def plot_mesh(x, y, z):
         print("Error - matplotlib is not installed. Could not plot mesh.")
 
 
-def mesh_step(infile: str, outfile: str, min_size: float, max_size: float):
+def mesh_step(infile: str, outfile: str, min_size: float, max_size: float, process: bool = True) -> tuple[NDArray[float64], NDArray[int64]]:
     """Mesh a step file using gmsh"""
 
     mshfile = infile.split(".")[0] + ".msh"
+    nodes: NDArray[float64]
+    connectivity: NDArray[int64]
 
     try:
         import gmsh
@@ -34,12 +36,35 @@ def mesh_step(infile: str, outfile: str, min_size: float, max_size: float):
         gmsh.option.setNumber("Mesh.CharacteristicLengthMax", max_size)
         gmsh.model.mesh.generate(3)  # mesh 3d elements
         gmsh.write(mshfile)
-        gmsh.finalize()
+
         print(f"Wrote gmsh mesh to `{mshfile}")
-        process_elements(mshfile, outfile)
+
+        # Get all nodes: returns (tags, coords, parametricCoords)
+        node_tags, coords, _ = gmsh.model.mesh.getNodes()
+
+        # coords is flat [x0,y0,z0,x1,y1,z1,...], reshape to (Nn, 3)
+        nodes = np.array(coords).reshape(-1, 3)
+
+        # Build compact renumbering: gmsh tags can be sparse/non-sequential
+        tag_to_compact = {tag: i for i, tag in enumerate(node_tags)}
+
+        # Get tet elements (type 4 = 4-node tetrahedra)
+        elem_tags, elem_node_tags = gmsh.model.mesh.getElementsByType(4)
+
+        # elem_node_tags is flat [n0,n1,n2,n3, n0,n1,n2,n3, ...], reshape to (Ne, 4)
+        raw_connectivity = np.array(elem_node_tags).reshape(-1, 4)
+
+        # Renumber to compact 0-based indices
+        connectivity = np.array([[tag_to_compact[tag] for tag in elem] for elem in raw_connectivity], dtype=np.uint32)
+        gmsh.finalize()
+        if process:
+            process_elements(mshfile, outfile)
+
+        return nodes, connectivity
 
     except ImportError:
         print(f"Error - gmsh is not installed. Could not mesh file `{infile}`")
+        return nodes, connectivity
 
 
 def mesh_step_tets(
