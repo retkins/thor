@@ -1,0 +1,23 @@
+# Changelog
+
+## 0.1.0 
+
+* Added changelog 
+* Ran `rustfmt` and `clippy` and fixed all issues 
+* Using `std::f64::consts::{LN_2, PI}` instead of approximate values (2 places fixed)
+* Python project version is now dynamic to match rust project
+* Added placeholder for `tests/fig/` to avoid errors in running tests
+* Added `_thor.pyi` for typing functions in Rust dll
+* Added `.git-blame-ignore-revs` file
+* Added github actions workflows for testing python and rust, updated deploy_docs to use uv
+* Converted project to src-layout per <https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/>
+* Fix `ruff` and `ty` suggestions; set `ruff` line-length to 150 for now
+* Update test file path read/write to use pathlib
+* Remove interactive test plots, add py.typed marker, use x86-64-v3 reference cpu
+* Open python version, rename `test_utils` so it doesn't get picked up by pytest
+* Set magnetized sphere test to expected fail, fix clippy/ty lints
+* Fix ruff format checks
+* Changed png to svg output for plots 
+* Moved examples to `/examples` and added a `test_examples.py`
+* Reduced some of the test mesh parameters to run tests faster 
+* Derive PartialEq for Vec3 and Mat3, bump numpy and pyo3 crate versions, set abi3-py310 for bindings
