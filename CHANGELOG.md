@@ -21,3 +21,4 @@
 * Moved examples to `/examples` and added a `test_examples.py`
 * Reduced some of the test mesh parameters to run tests faster 
 * Derive PartialEq for Vec3 and Mat3, bump numpy and pyo3 crate versions, set abi3-py310 for bindings
+* Added magnetization calc for tetrahedral elements and linear magnetic materials + test
