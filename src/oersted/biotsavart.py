@@ -4,7 +4,7 @@ from numpy import float64, ascontiguousarray, zeros, hstack, newaxis, array, pi
 from numpy.typing import NDArray
 
 # Create bindings for calculation engine written in Rust
-from ._thor import (
+from ._oersted import (
     _bfield_direct,
     _bfield_octree,
     _bfield_dualtree,

@@ -6,9 +6,9 @@ import numpy as np
 from numpy.typing import NDArray
 from numpy import float64, int64
 
-from thor import LinearMaterial, MU0
-from thor.materials import Material
-from ._thor import _h_demag_tet4
+from oersted import LinearMaterial, MU0
+from oersted.materials import Material
+from ._oersted import _h_demag_tet4
 
 
 def mag_force(centroids: NDArray[float64], vol: NDArray[float64], material: LinearMaterial, h_ext: Callable) -> NDArray[float64]:

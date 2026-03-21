@@ -2,7 +2,7 @@
 //!
 //! This is the Rust API documentation.
 //! Main documentation, including a theory manual and the Python API,
-//! is hosted [here](https://retkins.github.io/thor).
+//! is hosted [here](https://retkins.github.io/oersted).
 #![allow(clippy::needless_range_loop)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::result_unit_err)]
@@ -30,7 +30,7 @@ pub mod analytical;
 /// Basic read/write file operations
 pub mod io;
 
-/// Error types for `thor`
+/// Error types for `oersted`
 pub mod errors;
 
 /// Low-level math and array operations

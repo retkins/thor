@@ -1,4 +1,4 @@
-# `thor`
+# `oersted`
 
 Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algorithm
 
@@ -6,16 +6,16 @@ Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algo
 
 ## Installation
 
-`thor` is meant to be installed from source from Python projects managed with `uv`:
+`oersted` is meant to be installed from source from Python projects managed with `uv`:
 ```bash
-uv add git+https://github.com/retkins/thor
+uv add git+https://github.com/retkins/oersted
 ```
 
 See [Development Notes](#development-notes) below.
 
 ### Example
 ```python
-import thor 
+import oersted 
 
 # Assume the following NumPy arrays are already defined: 
 # centroids: Nx3 element centroid locations
@@ -26,7 +26,7 @@ import thor
 theta = 0.25        # B-H accuracy parameter
 
 # Compute the magnetic flux density at each target
-b = thor.bfield_octree(
+b = oersted.bfield_octree(
     centroids, vol, jdensity, targets, theta=theta
 )
 ```
@@ -74,7 +74,7 @@ TODO.
 
 ## Development Notes
 
-`thor` is written in Rust, with Python bindings. It can be used either directly as a dependency to a Rust project or (most commonly) through Python scripts. The program is currently only available as source (no wheels or binaries), so the following tools are required: 
+`oersted` is written in Rust, with Python bindings. It can be used either directly as a dependency to a Rust project or (most commonly) through Python scripts. The program is currently only available as source (no wheels or binaries), so the following tools are required: 
 
 - `cargo` and `rustc`: for managing and compiling the Rust backend
 - `uv`: for managing the Python project

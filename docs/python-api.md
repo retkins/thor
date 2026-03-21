@@ -1,3 +1,3 @@
 # Python API
-::: thor
-::: thor.testing
+::: oersted
+::: oersted.testing

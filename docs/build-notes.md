@@ -8,7 +8,7 @@ Should look like this:
 rustdocflags = [
     "--html-in-header", 
     # This must be an abs path:
-    "PATH_TO_PROJECT/thor/src/docs-header.html", 
+    "PATH_TO_PROJECT/oersted/src/docs-header.html", 
 ]
 rustflags = [
     "-C", "target-cpu=native"

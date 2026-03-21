@@ -12,7 +12,7 @@ Note: there's some sort of units mismatch with gmsh
 
 import numpy as np
 import matplotlib.pyplot as plt
-import thor
+import oersted
 from time import perf_counter
 import os
 
@@ -34,7 +34,7 @@ nthreads: int = 1
 if remesh or datafile + "_mesh.csv" not in os.listdir("tests/data"):
     min_size: float = mesh_size
     max_size: float = mesh_size
-    thor.mesh.mesh_step(f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", min_size, max_size)
+    oersted.mesh.mesh_step(f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", min_size, max_size)
 data = np.loadtxt(f"tests/data/{datafile}_mesh.csv", delimiter=",", skiprows=1)
 
 #
@@ -59,8 +59,8 @@ jdensity[:, 1] = jmag * np.cos(phi)
 targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:, 2] = np.linspace(-0.125, 0.125, ntargets_axis)
 
-bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta)
+bdirect_axis = oersted.bfield_direct(centroids, vol, jdensity, targets_axis)
+boctree_axis = oersted.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta)
 
 #
 # Solve for self-fields
@@ -70,16 +70,16 @@ targets = centroids
 ntargets = targets.shape[0]
 
 start = perf_counter()
-bdirect = boctree = thor.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
+bdirect = boctree = oersted.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
 end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta)
+boctree = oersted.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta)
 end = perf_counter()
 octree_elapsed = end - start
 
-print("Thor: Solenoid Test\n---")
+print("oersted: Solenoid Test\n---")
 print(f"theta = {theta:.3}")
 print(f"Problem size: {nsources} x {ntargets} ({nsources * ntargets:.3e} interactions)")
 
@@ -93,13 +93,13 @@ print(f"Error at center: {100 * err:.3f} %")
 
 bmag_direct_axis = np.linalg.norm(bdirect_axis, axis=1)
 bmag_octree_axis = np.linalg.norm(boctree_axis, axis=1)
-err_axis = thor.testing.smape(bmag_direct_axis, bmag_octree_axis)
+err_axis = oersted.testing.smape(bmag_direct_axis, bmag_octree_axis)
 print(f"Mean error along solenoid axis (|z| < radius): {err_axis * 100:.2}%")
 
 # Errors on mesh
 bmag_direct = np.linalg.norm(bdirect, axis=1)
 bmag_octree = np.linalg.norm(boctree, axis=1)
-err_mesh = thor.testing.smape(bmag_direct, bmag_octree)
+err_mesh = oersted.testing.smape(bmag_direct, bmag_octree)
 print(f"Mean fields error within the mesh: {err_mesh * 100:.2}%")
 
 print("Times: ")
@@ -114,7 +114,7 @@ ax.plot(targets[:, 2], bdirect[:, 2], label="Direct")
 ax.plot(targets[:, 2], boctree[:, 2], "rs", label="Octree")
 ax.set_xlabel("Distance from Solenoid Center (Z-axis) [m]")
 ax.set_ylabel("Field Along Solenoid Axis (Bz) [T]")
-ax.set_title("Thor - Solenoid Test")
+ax.set_title("oersted - Solenoid Test")
 plt.savefig("tests/fig/solenoid_test.svg")
 
 
