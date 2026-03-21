@@ -25,3 +25,4 @@
 * Updated magnetization test with more robust analytical solution
 * Updated step mesh function to output node coordinates and element connectivity matrix
 * Renamed project to `oersted`
+* Add github actions workflows for python and rust releases
