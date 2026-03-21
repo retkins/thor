@@ -1,5 +1,5 @@
 import numpy as np
-import thor
+import oersted
 import time
 
 # Test parameters
@@ -11,33 +11,33 @@ b_ext_mag: float = 1.0  # T
 mu_r: float = 1.5
 
 # Mesh the sphere
-nodes, connectivity = thor.mesh.mesh_step(infile, outfile, min_size, max_size)
+nodes, connectivity = oersted.mesh.mesh_step(infile, outfile, min_size, max_size)
 
 # Create material properties and calculate uniform background fiel
-mat = thor.materials.LinearMaterial(mu_r)
+mat = oersted.materials.LinearMaterial(mu_r)
 h_external = np.zeros((connectivity.shape[0], 3))
-h_ext_mag: float = b_ext_mag / thor.MU0
-h_external[:, 2] = b_ext_mag / thor.MU0
+h_ext_mag: float = b_ext_mag / oersted.MU0
+h_external[:, 2] = b_ext_mag / oersted.MU0
 
 # Compute demag parameters: magnetization and internal H field
 start = time.perf_counter()
-M, Htotal = thor.magnetization.demag_tet4(nodes, connectivity, mat, h_external, nthreads_requested=6)
+M, Htotal = oersted.magnetization.demag_tet4(nodes, connectivity, mat, h_external, nthreads_requested=6)
 elapsed = time.perf_counter() - start
 
 # Postprocessing
 h_z_mean = np.average(Htotal[:, 2])
 Mnorm = np.linalg.norm(M, axis=1)
 Hnorm = np.linalg.norm(Htotal, axis=1)
-Btotal = thor.MU0 * (M + Htotal)
+Btotal = oersted.MU0 * (M + Htotal)
 Mavg = np.linalg.norm(np.average(M, axis=0))
 Bavg = np.linalg.norm(np.average(Btotal, axis=0))
 
 # Analytical solution
 N: float = 1.0 / 3.0  # demag factor for sphere
-H_ext: float = b_ext_mag / thor.MU0
+H_ext: float = b_ext_mag / oersted.MU0
 M_analytical = 3 * (mu_r - 1) / (mu_r + 2) * H_ext
 H_analytical: float = H_ext - N * M_analytical
-B_analytical = thor.MU0 * (H_ext + (1.0 - N) * M_analytical)
+B_analytical = oersted.MU0 * (H_ext + (1.0 - N) * M_analytical)
 
 # Compute errors
 M_error = (M_analytical - Mavg) / M_analytical

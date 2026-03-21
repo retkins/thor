@@ -18,7 +18,7 @@ Note: there's some sort of units mismatch with gmsh
 
 import numpy as np
 import matplotlib.pyplot as plt
-import thor
+import oersted
 from time import perf_counter
 import os
 
@@ -39,7 +39,7 @@ axis_halfdistance = 0.3
 if remesh or datafile + "_mesh.csv" not in os.listdir("tests/data"):
     min_size: float = mesh_size
     max_size: float = mesh_size
-    thor.mesh.mesh_step(f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", min_size, max_size)
+    oersted.mesh.mesh_step(f"tests/data/{datafile}.stp", f"tests/data/{datafile}_mesh.csv", min_size, max_size)
 data = np.loadtxt(f"tests/data/{datafile}_mesh.csv", delimiter=",", skiprows=1)
 
 nsources = data.shape[0]  # Targets are now the source centroids for self fields
@@ -64,14 +64,14 @@ jdensity[:, 1] = jmag * np.cos(phi)
 targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:, 2] = np.linspace(-axis_halfdistance, axis_halfdistance, ntargets_axis)
 
-bdirect_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-boctree_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta, leaf_threshold=leaf_threshold)
+bdirect_axis = oersted.bfield_direct(centroids, vol, jdensity, targets_axis)
+boctree_axis = oersted.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta, leaf_threshold=leaf_threshold)
 
 # Targets are now the source centroids for self fields
 targets = centroids
 ntargets = nsources
 
-print("Thor: Helmholtz Coil Test\n---")
+print("oersted: Helmholtz Coil Test\n---")
 print(f"theta = {theta:.3}")
 print(f"Problem size: {nsources} x {ntargets} ({nsources * ntargets:.3e} interactions)")
 print(f"Using nthreads = {nthreads}")
@@ -79,12 +79,12 @@ print("")
 
 # Compute magnetic fields
 start = perf_counter()
-bdirect = thor.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
+bdirect = oersted.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
 end = perf_counter()
 direct_elapsed = end - start
 
 start = perf_counter()
-boctree = thor.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta, leaf_threshold=leaf_threshold)
+boctree = oersted.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta, leaf_threshold=leaf_threshold)
 end = perf_counter()
 octree_elapsed = end - start
 
@@ -122,13 +122,13 @@ print(f"Error at center: {100 * err:.3f} %")
 
 bmag_direct_axis = np.linalg.norm(bdirect_axis, axis=1)
 bmag_octree_axis = np.linalg.norm(boctree_axis, axis=1)
-err_axis = thor.testing.smape(bmag_direct_axis, bmag_octree_axis)
+err_axis = oersted.testing.smape(bmag_direct_axis, bmag_octree_axis)
 print(f"Mean error along coil axis (|z| < radius): {err_axis * 100:.2f}%")
 
 bmag_direct = np.linalg.norm(bdirect, axis=1)
 bmag_octree = np.linalg.norm(boctree, axis=1)
 
-err_mesh = thor.testing.smape(bmag_direct, bmag_octree)
+err_mesh = oersted.testing.smape(bmag_direct, bmag_octree)
 print(f"Mean fields error within the mesh: {err_mesh * 100:.2f}%")
 
 print("Times: ")
@@ -142,7 +142,7 @@ ax.plot(targets_axis[:, 2], bdirect_axis[:, 2], label="Direct")
 ax.plot(targets_axis[:, 2], boctree_axis[:, 2], "rs", label="Octree")
 ax.set_xlabel("Distance Along Coil Centerr (Z-axis) [m]")
 ax.set_ylabel("Field Along Axis (Bz) [T]")
-ax.set_title("Thor - Helmholtz Coil Test")
+ax.set_title("oersted - Helmholtz Coil Test")
 fig.savefig("tests/fig/helmholtz_test.svg")
 
 axis_error = 2 * np.abs(bdirect_axis - boctree_axis) / (np.abs(bdirect_axis) + np.abs(boctree_axis))

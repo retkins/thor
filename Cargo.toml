@@ -1,13 +1,13 @@
 [package]
-name = "thor"
+name = "oersted"
 version = "0.1.0"
 edition = "2024"
 authors = ["Ryan Etkins <retkins@pm.me>"]
 description = "Lightning-fast magnetic fields calculations"
 license = "MIT OR Apache-2.0"
 license-files = ["LICENSE-MIT", "LICENSE-APACHE"]
-repository = "https://github.com/retkins/thor/"
-homepage = "https://retkins.github.io/thor/"
+repository = "https://github.com/retkins/oersted/"
+homepage = "https://retkins.github.io/oersted/"
 
 [dependencies]
 numpy = {version = "0.28.0", optional=true}
@@ -21,7 +21,7 @@ python = ["numpy", "pyo3"]
 parallel = ["rayon"]
 
 [lib]
-name = "thor" 
+name = "oersted" 
 crate-type = ["cdylib"]
 
 [profile.release]

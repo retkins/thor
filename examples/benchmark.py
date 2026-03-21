@@ -1,6 +1,6 @@
 """Use the helmholtz coil problem as a benchmarking example"""
 
-import thor
+import oersted
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -18,13 +18,13 @@ octree_times = np.zeros(nbenches)
 interactions = np.zeros(nbenches)
 
 for i, mesh_size in enumerate(mesh_sizes):
-    centroids, vol, jdensity = thor.testing.make_helmholtz(mesh_size)
+    centroids, vol, jdensity = oersted.testing.make_helmholtz(mesh_size)
     n = centroids.shape[0]
     interactions[i] = n * n
 
     if n < 50000:
         start = perf_counter()
-        bdirect = thor.bfield_direct(centroids, vol, jdensity, centroids)
+        bdirect = oersted.bfield_direct(centroids, vol, jdensity, centroids)
         end = perf_counter()
         direct_times.append(end - start)
         est_direct_times = [end - start]
@@ -38,7 +38,7 @@ for i, mesh_size in enumerate(mesh_sizes):
         est_direct_times.append(m * n * n + b)
 
     start = perf_counter()
-    boctree = thor.bfield_octree(centroids, vol, jdensity, centroids, theta=theta)
+    boctree = oersted.bfield_octree(centroids, vol, jdensity, centroids, theta=theta)
     end = perf_counter()
     octree_times[i] = end - start
 
@@ -59,7 +59,7 @@ ax.set_xlabel("Interactions ($N^2$)")
 ax.set_ylabel("Solution time [s]")
 ax.set_xscale("log")
 ax.set_yscale("log")
-ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
+ax.set_title(f"Oersted Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
 fig.savefig("tests/fig/benchmarks.png")
 
@@ -76,6 +76,6 @@ ax.set_xlabel("Interactions ($N^2$)")
 ax.set_ylabel("Throughput ($1e9$ interactions/sec)")
 ax.set_xscale("log")
 ax.set_yscale("log")
-ax.set_title(f"Thor Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
+ax.set_title(f"Oersted Benchmarks: Helmholtz Coil Problem\n$\\theta={theta:.2}$")
 ax.legend()
 fig.savefig("tests/fig/benchmarks_throughput.png")

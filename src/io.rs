@@ -1,4 +1,4 @@
-use crate::errors::ThorError;
+use crate::errors::OerstedError;
 use std::{fs::read_to_string, process::Termination};
 
 /// CSV data stored in row-major format
@@ -62,8 +62,8 @@ impl Default for CsvData {
 }
 
 /// Read a csv file and return it as a matrix
-pub fn read_csv(filename: &str, delimiter: char, skiprows: usize) -> Result<CsvData, ThorError> {
-    let file_data: String = read_to_string(filename).map_err(|_| ThorError::FileOpenError)?;
+pub fn read_csv(filename: &str, delimiter: char, skiprows: usize) -> Result<CsvData, OerstedError> {
+    let file_data: String = read_to_string(filename).map_err(|_| OerstedError::FileOpenError)?;
 
     let mut data: CsvData = CsvData::new();
     let mut nrows: usize = 0; // number of rows of data
@@ -95,11 +95,11 @@ pub fn read_csv(filename: &str, delimiter: char, skiprows: usize) -> Result<CsvD
             let val: f64 = word
                 .trim()
                 .parse::<f64>()
-                .map_err(|_| ThorError::FloatParseError)?;
+                .map_err(|_| OerstedError::FloatParseError)?;
             data._data.push(val);
         }
         if data.ncols() != ncols {
-            return Err(ThorError::ColNumberChange);
+            return Err(OerstedError::ColNumberChange);
         }
         line_number += 1;
         nrows += 1;
@@ -114,12 +114,12 @@ pub fn read_csv(filename: &str, delimiter: char, skiprows: usize) -> Result<CsvD
 // mod tests {
 
 //     use super::*;
-//     use crate::errors::ThorError;
+//     use crate::errors::oerstedError;
 
 //     /// Test loading a file containing standard delimiters and some
 //     /// extra whitespace
 //     #[test]
-//     fn test_read_csv() -> Result<CsvData, ThorError>{
+//     fn test_read_csv() -> Result<CsvData, oerstedError>{
 //         let filename: String = "tests/data/test_read.csv".to_owned();
 //         let skiprows: usize = 1;
 //         let delimiter: char = ',';

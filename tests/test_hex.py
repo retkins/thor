@@ -1,4 +1,4 @@
-from thor import bfield_hexahedron, bfield_direct
+from oersted import bfield_hexahedron, bfield_direct
 import numpy as np
 from numpy.linalg import norm
 import matplotlib.pyplot as plt

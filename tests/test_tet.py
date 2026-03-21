@@ -1,6 +1,6 @@
 """ """
 
-import thor
+import oersted
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -14,10 +14,10 @@ nthreads: int = 0
 ntargets_axis: int = 100
 
 # load mesh
-nodes, centroids, vol = thor.mesh.mesh_step_tets("tests/data/solenoid.stp", min_size, max_size)
+nodes, centroids, vol = oersted.mesh.mesh_step_tets("tests/data/solenoid.stp", min_size, max_size)
 n = len(vol)
 
-print("Thor: Solenoid Test for tetrahedron sources in octree \n---")
+print("Oersted: Solenoid Test for tetrahedron sources in octree \n---")
 print(f"\tn = {n}")
 print(f"\ttheta (pt) =  {theta_pt:.3f}")
 print(f"\ttheta (tet) = {theta_tet:.3f}")
@@ -39,10 +39,10 @@ targets_axis = np.zeros((ntargets_axis, 3))
 targets_axis[:, 2] = np.linspace(-0.125, 0.125, ntargets_axis)
 # targets_axis[:,0] = np.linspace(0, 0.10, ntargets_axis)
 
-bdirect_pt_axis = thor.bfield_direct(centroids, vol, jdensity, targets_axis)
-bdirect_tet_axis = thor.bfield_tetrahedrons_direct(nodes, centroids, vol, jdensity, targets_axis, nthreads=nthreads)
-boctree_tet_axis = thor.bfield_tetrahedrons(nodes, centroids, vol, jdensity, targets_axis, theta=theta_tet, nthreads=nthreads)
-boctree_pt_axis = thor.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta_pt)
+bdirect_pt_axis = oersted.bfield_direct(centroids, vol, jdensity, targets_axis)
+bdirect_tet_axis = oersted.bfield_tetrahedrons_direct(nodes, centroids, vol, jdensity, targets_axis, nthreads=nthreads)
+boctree_tet_axis = oersted.bfield_tetrahedrons(nodes, centroids, vol, jdensity, targets_axis, theta=theta_tet, nthreads=nthreads)
+boctree_pt_axis = oersted.bfield_octree(centroids, vol, jdensity, targets_axis, nthreads=nthreads, theta=theta_pt)
 
 # Errors along axis
 print("Bfield at solenoid center: ")
@@ -58,9 +58,9 @@ bmag_direct_pt_axis = np.linalg.norm(bdirect_pt_axis, axis=1)
 bmag_direct_tet_axis = np.linalg.norm(bdirect_tet_axis, axis=1)
 bmag_octree_pt_axis = np.linalg.norm(boctree_pt_axis, axis=1)
 bmag_octree_tet_axis = np.linalg.norm(boctree_tet_axis, axis=1)
-err_direct_pt_axis = thor.testing.smape(bmag_direct_tet_axis, bmag_direct_pt_axis)
-err_octree_pt_axis = thor.testing.smape(bmag_direct_tet_axis, bmag_octree_pt_axis)
-err_octree_tet_axis = thor.testing.smape(bmag_direct_tet_axis, bmag_octree_tet_axis)
+err_direct_pt_axis = oersted.testing.smape(bmag_direct_tet_axis, bmag_direct_pt_axis)
+err_octree_pt_axis = oersted.testing.smape(bmag_direct_tet_axis, bmag_octree_pt_axis)
+err_octree_tet_axis = oersted.testing.smape(bmag_direct_tet_axis, bmag_octree_tet_axis)
 print("Mean error along solenoid axis (|z| < radius): ")
 print(f"\tdirect (pt):  {err_direct_pt_axis * 100:.2}%")
 print(f"\toctree (pt):  {err_octree_pt_axis * 100:.2}%")
@@ -75,22 +75,22 @@ ntargets = targets.shape[0]
 nsources = n
 
 start = perf_counter()
-bdirect_pt = boctree = thor.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
+bdirect_pt = boctree = oersted.bfield_direct(centroids, vol, jdensity, targets, nthreads=nthreads)
 end = perf_counter()
 direct_pt_elapsed = end - start
 
 start = perf_counter()
-bdirect_tet = thor.bfield_tetrahedrons_direct(nodes, centroids, vol, jdensity, targets, nthreads=nthreads)
+bdirect_tet = oersted.bfield_tetrahedrons_direct(nodes, centroids, vol, jdensity, targets, nthreads=nthreads)
 end = perf_counter()
 direct_tet_elapsed = end - start
 
 start = perf_counter()
-boctree_pt = thor.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta_pt)
+boctree_pt = oersted.bfield_octree(centroids, vol, jdensity, targets, nthreads=nthreads, theta=theta_pt)
 end = perf_counter()
 octree_pt_elapsed = end - start
 
 start = perf_counter()
-boctree_tet = thor.bfield_tetrahedrons(nodes, centroids, vol, jdensity, targets, theta=theta_tet, nthreads=nthreads)
+boctree_tet = oersted.bfield_tetrahedrons(nodes, centroids, vol, jdensity, targets, theta=theta_tet, nthreads=nthreads)
 end = perf_counter()
 octree_tet_elapsed = end - start
 
@@ -99,9 +99,9 @@ bmag_direct_pt = np.linalg.norm(bdirect_pt, axis=1)
 bmag_direct_tet = np.linalg.norm(bdirect_tet, axis=1)
 bmag_octree_pt = np.linalg.norm(boctree_pt, axis=1)
 bmag_octree_tet = np.linalg.norm(boctree_tet, axis=1)
-err_mesh_pt = thor.testing.smape(bmag_direct_tet, bmag_octree_pt)
-err_mesh_pt_direct = thor.testing.smape(bmag_direct_tet, bmag_direct_pt)
-err_mesh_tet = thor.testing.smape(bmag_direct_tet, bmag_octree_tet)
+err_mesh_pt = oersted.testing.smape(bmag_direct_tet, bmag_octree_pt)
+err_mesh_pt_direct = oersted.testing.smape(bmag_direct_tet, bmag_direct_pt)
+err_mesh_tet = oersted.testing.smape(bmag_direct_tet, bmag_octree_tet)
 print(f"Mean fields error within the mesh (pt/direct sources):  {err_mesh_pt_direct * 100:.2}%")
 print(f"Mean fields error within the mesh (pt/octree sources):  {err_mesh_pt * 100:.2}%")
 print(f"Mean fields error within the mesh (tet/octree sources): {err_mesh_tet * 100:.2}%")
@@ -126,7 +126,7 @@ ax.plot(targets_axis[:, 2], boctree_tet_axis[:, 2], "g^", label="Octree (tet)")
 
 ax.set_xlabel("Distance from Solenoid Center (Z-axis) [m]")
 ax.set_ylabel("Field Along Solenoid Axis (Bz) [T]")
-ax.set_title("Thor - Solenoid Test - Pt vs Tet Sources")
+ax.set_title("Oersted - Solenoid Test - Pt vs Tet Sources")
 plt.legend()
 plt.savefig("tests/fig/solenoid_tet_test.svg")
 # print(boctree_tet_axis)

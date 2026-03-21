@@ -164,7 +164,7 @@ def tet_volume(p0, p1, p2, p3):
 
 
 def process_elements(infile: str, outfile: str, scale: float = 1e-3):
-    """Convert gmsh .msh file into format readable by `thor`
+    """Convert gmsh .msh file into format readable by `oersted`
     and calculate the volume of each element
     """
 

@@ -1,0 +1,34 @@
+name: release-rust
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  test_rust:
+    uses: ./.github/workflows/test-rust.yml
+
+  test_python:
+    uses: ./.github/workflows/test-python.yml
+
+  release-rust:
+    if: github.ref == 'refs/heads/main'
+    name: Release Rust
+    runs-on: ubuntu-latest
+    needs: [test_rust, test_python]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish

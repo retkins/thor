@@ -3,7 +3,7 @@
 Sphere is of radius r=50mm
 """
 
-import thor
+import oersted
 import numpy as np
 from time import perf_counter
 
@@ -11,7 +11,7 @@ min_size: float = 5.0
 max_size: float = 5.0
 
 start = perf_counter()
-nodes, centroids, volumes = thor.mesh.mesh_step_tets("tests/data/sphere.stp", min_size, max_size)
+nodes, centroids, volumes = oersted.mesh.mesh_step_tets("tests/data/sphere.stp", min_size, max_size)
 end = perf_counter()
 n = len(volumes)
 

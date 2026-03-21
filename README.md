@@ -1,8 +1,8 @@
-# `thor`
+# `oersted`
 
 Approximate Biot-Savart Law integration to calculate magnetic fields in near-linear time using octrees and the Barnes Hut algorithm.
 
-[Documentation](https://retkins.github.io/thor)
+[Documentation](https://retkins.github.io/oersted)
 
 ![Timing Results](docs/figs/benchmarks.png)
 

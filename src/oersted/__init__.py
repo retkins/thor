@@ -1,4 +1,4 @@
-"""Python bindings for thor"""
+"""Python bindings for oersted"""
 
 from .biotsavart import (
     bfield_direct,

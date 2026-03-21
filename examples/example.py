@@ -1,22 +1,22 @@
-import thor
+import oersted
 from time import perf_counter
 
 size = 15.0
 theta = 0.5
 nthreads = 0
-centroids, vol, jdensity = thor.testing.make_helmholtz(size)
+centroids, vol, jdensity = oersted.testing.make_helmholtz(size)
 
 # centroids = np.vstack((centroids, centroids))
 # vol = np.hstack((vol, vol))
 # jdensity = np.vstack((jdensity, jdensity))
 
-print("Thor Example - Helmholtz Problem")
+print("oersted Example - Helmholtz Problem")
 n = centroids.shape[0]
 print(f"n = {n:.3e} ({n * n:.3e} interactions)")
 
 
 start = perf_counter()
-b = thor.bfield_octree(centroids, vol, jdensity, centroids, theta=theta, nthreads=nthreads)
+b = oersted.bfield_octree(centroids, vol, jdensity, centroids, theta=theta, nthreads=nthreads)
 end = perf_counter()
 elapsed = end - start
 

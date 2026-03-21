@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from numpy import pi, array
 from numpy.typing import NDArray
 from numpy import float64, interp
-import thor
+import oersted
 
 """ Magnetic permeability of free space
 """
@@ -77,7 +77,7 @@ class NonlinearMaterial(Material):
         b: float = self.curve.lookup(h)
 
         if h != 0.0:
-            return (b / thor.MU0) / h - 1.0
+            return (b / oersted.MU0) / h - 1.0
         else:
             return 1.0
 

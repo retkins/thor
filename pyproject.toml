@@ -1,5 +1,5 @@
 [project]
-name = "thor"
+name = "oersted"
 dynamic = ["version"]
 authors = [{name = "Ryan Etkins", email = "retkins@pm.me"}]
 description = "Lightning-fast magnetic fields calculations"
@@ -36,8 +36,8 @@ build-backend = "maturin"
 
 [tool.maturin]
 python-source = "src"
-python-packages = ["thor"]
-module-name = "thor._thor"
+python-packages = ["oersted"]
+module-name = "oersted._oersted"
 features = ["python", "parallel"]
 profile = "release"
 version = { source = "cargo" }
