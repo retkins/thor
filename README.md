@@ -2,9 +2,35 @@
 
 Approximate Biot-Savart Law integration to calculate magnetic fields in near-linear time using octrees and the Barnes Hut algorithm.
 
-[Documentation](https://retkins.github.io/oersted)
+[Documentation](https://retkins.github.io/oersted) | [Rust API](https://docs.rs/oersted/0.1.0/oersted/)
 
-![Timing Results](docs/figs/benchmarks.png)
+![Timing Results](docs/figs/benchmarks.svg)
+
+## Installation
+
+`oersted` can be installed via pypi:
+```bash
+pip install oersted
+```
+
+
+### Example
+```python
+import oersted 
+
+# Assume the following NumPy arrays are already defined: 
+# centroids: Nx3 element centroid locations
+# vol: N-length, volume of each element 
+# jdensity: Nx3 elemental current-density vectors 
+# targets: Nx3 target point locations in 3D space 
+
+theta = 0.25        # B-H accuracy parameter
+
+# Compute the magnetic flux density at each target
+b = oersted.bfield_octree(
+    centroids, vol, jdensity, targets, theta=theta
+)
+```
 
 ## Background
 
@@ -25,27 +51,6 @@ The intended problem for this code is a finite element mesh of a *solenoidal* co
 
 Problem sizes typically solved on a workstation computer (i.e. finite element meshes of <10M elements) are considered for testing of this code. 
 
-## Benchmarks and Error Estimation
-
-*All benchmarks are performed on a 2021 M1 Pro with 16GB RAM and 6 performance CPU cores. By today's (Jan 2026) standards this is an average consumer laptop.*
-
-Benchmarks are performed against an optimized (SIMD-accelerated) direct summation algorithm. Error is measured relative to the direct summation algorithm. Both benchmarking and error estimation are performed using the **self-fields** Helmholtz coil problem (see `tests/test_helmholtz.py` for a full description) and computed using 6 CPU cores.
-
-### Benchmarks
-
-While the throughput of the direct summation algorithm is limited by memory bandwidth to roughly 2.5B interactions/sec, the throughput of the Barnes-Hut/octree algorithm continues to increase for large problem sizes, reaching approximately 400B effective interactions/sec for a problem size of ~2T interactions (1.4M source/target elements): 
-![Throughput](docs/figs/benchmarks_throughput.png)
-
-Solution time for 1.4M source/target elements was <5 sec, which is 135x faster than the direct summation algorithm!
-
-### Error Estimation
-
-The mean relative error across every element of the source/target mesh is considered for the error metrics. Even when using a rather aggressive node acceptance criteria of 0.5, the mean relative error across the mesh remains <0.5%:
-
-![Mesh Error](docs/figs/benchmarks_error.png)
-
-### Description of the Algorithm
-TODO.
 
 ## License
 [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE), at your option.
