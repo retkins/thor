@@ -1,7 +1,9 @@
 pub mod atan2;
+pub mod gradient;
 pub mod ln;
 
 pub use atan2::{atan, atan_approx, atan2};
+pub use gradient::gradient;
 pub use ln::ln;
 
 /// In place cross-product  

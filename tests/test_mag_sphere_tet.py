@@ -1,0 +1,72 @@
+import numpy as np
+import thor
+import time
+
+# Test parameters
+infile: str = "tests/data/sphere.stp"
+outfile: str = "tests/data/sphere.data"
+min_size: float = 10.0  # mm
+max_size: float = 15.0  # mm
+b_ext_mag: float = 1.0  # T
+mu_r: float = 1.5
+
+# Mesh the sphere
+nodes, connectivity = thor.mesh.mesh_step(infile, outfile, min_size, max_size)
+
+# Create material properties and calculate uniform background fiel
+mat = thor.materials.LinearMaterial(mu_r)
+h_external = np.zeros((connectivity.shape[0], 3))
+h_ext_mag: float = b_ext_mag / thor.MU0
+h_external[:, 2] = b_ext_mag / thor.MU0
+
+# Compute demag parameters: magnetization and internal H field
+start = time.perf_counter()
+M, Htotal = thor.magnetization.demag_tet4(nodes, connectivity, mat, h_external, nthreads_requested=6)
+elapsed = time.perf_counter() - start
+
+# Postprocessing
+h_z_mean = np.average(Htotal[:, 2])
+Mnorm = np.linalg.norm(M, axis=1)
+Hnorm = np.linalg.norm(Htotal, axis=1)
+Btotal = thor.MU0 * (M + Htotal)
+Mavg = np.linalg.norm(np.average(M, axis=0))
+Bavg = np.linalg.norm(np.average(Btotal, axis=0))
+
+# Analytical solution
+N: float = 1.0 / 3.0  # demag factor for sphere
+H_ext: float = b_ext_mag / thor.MU0
+M_analytical = 3 * (mu_r - 1) / (mu_r + 2) * H_ext
+H_analytical: float = H_ext - N * M_analytical
+B_analytical = thor.MU0 * (H_ext + (1.0 - N) * M_analytical)
+
+# Compute errors
+M_error = (M_analytical - Mavg) / M_analytical
+B_error = (B_analytical - Bavg) / B_analytical
+
+print("\n\nDemag tet test - magnetized sphere\n---\n")
+print(f"{nodes.shape[0]} nodes, {connectivity.shape[0]} elements")
+print(f"Background field: {b_ext_mag:.3f} T")
+print(f"Relative permeability: {mu_r:.3f}")
+print("")
+print("Analytical solution:")
+print(f"\tM = {M_analytical:.3e} A/m")
+print(f"\tB = {B_analytical:.3f} T")
+print(f"Total solver time: {elapsed:.3f} sec")
+print(f"Avg/min/max M: {np.average(Mnorm)} / {np.min(Mnorm):.3e} / {np.max(Mnorm):.3e}")
+print(f"Avg/min/max H: {np.average(Hnorm)} / {np.min(Hnorm):.3e} / {np.max(Hnorm):.3e}")
+print(f"Bavg = {Bavg:.3f} T")
+print(f"M error: {M_error:.2f}%")
+print(f"B error: {B_error:.2f}%")
+
+
+def test_magnetized_sphere():
+    err = float(np.abs(h_z_mean - H_analytical) / H_analytical)
+    print(f"Error = {err * 100:.3f} %")
+    assert err < 0.01
+    assert M_error < 0.01
+    assert B_error < 0.01
+
+
+if __name__ == "__main__":
+    test_magnetized_sphere()
+    print("Test passed!")
