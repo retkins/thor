@@ -2,13 +2,13 @@
 
 Lightning-fast magnetic field calculations using octrees and the Barnes-Hut algorithm
 
-![throughput](figs/benchmarks.png)
+![throughput](figs/benchmarks.svg)
 
 ## Installation
 
-`oersted` is meant to be installed from source from Python projects managed with `uv`:
+`oersted` can be installed via pypi:
 ```bash
-uv add git+https://github.com/retkins/oersted
+pip install oersted
 ```
 
 See [Development Notes](#development-notes) below.
@@ -52,22 +52,22 @@ Problem sizes typically solved on a workstation computer (i.e. finite element me
 
 ## Benchmarks and Error Estimation
 
-*All benchmarks are performed on a 2021 M1 Pro with 16GB RAM and 6 performance CPU cores. By today's (Jan 2026) standards this is an average consumer laptop.*
+*All benchmarks are performed on a Linux workstation with an AMD Ryzen 9 9950X (16-core consumer CPU)*
 
 Benchmarks are performed against an optimized (SIMD-accelerated) direct summation algorithm. Error is measured relative to the direct summation algorithm. Both benchmarking and error estimation are performed using the **self-fields** Helmholtz coil problem (see `tests/test_helmholtz.py` for a full description) and computed using 6 CPU cores.
 
 ### Benchmarks
 
-While the throughput of the direct summation algorithm is limited by memory bandwidth to roughly 2.5B interactions/sec, the throughput of the Barnes-Hut/octree algorithm continues to increase for large problem sizes, reaching approximately 400B effective interactions/sec for a problem size of ~2T interactions (1.4M source/target elements): 
-![Throughput](figs/benchmarks_throughput.png)
+While the throughput of the direct summation algorithm is limited by memory bandwidth to roughly 15B interactions/sec, the throughput of the Barnes-Hut/octree algorithm continues to increase for large problem sizes, reaching nearly 1T effective interactions/sec for a problem size of ~2T interactions (1.4M source/target elements):   
+![Throughput](figs/benchmarks_throughput.svg)
 
-Solution time for 1.4M source/target elements was <5 sec, which is 135x faster than the direct summation algorithm!
+Solution time for 1.4M source/target elements was ~2 sec, which is 40x faster than the direct summation algorithm!
 
 ### Error Estimation
 
-The mean relative error across every element of the source/target mesh is considered for the error metrics. Even when using a rather aggressive node acceptance criteria of 0.5, the mean relative error across the mesh remains <0.5%:
+The mean relative error across every element of the source/target mesh is considered for the error metrics. Even when using a rather aggressive node acceptance criteria of 0.5, the mean relative error across the mesh remains <1%:
 
-![Mesh Error](figs/benchmarks_error.png)
+![Mesh Error](figs/benchmarks_error.svg)
 
 ## Description of the Algorithm
 TODO.
@@ -88,4 +88,4 @@ This code was designed to use a minimum of dependencies. The basic algorithms ha
 - `pyo3` and `numpy`: for generating Python bindings and efficiently passing arrays between Rust and Python
 
 ## License
-GPL. Closed-source forks and distributions are not permitted.
+MIT or Apache 2.0, at your option.

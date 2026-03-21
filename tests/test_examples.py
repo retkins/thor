@@ -14,7 +14,9 @@ EXAMPLES = [EXAMPLES_DIR / x for x in os.listdir(EXAMPLES_DIR) if (os.path.isfil
 @pytest.mark.parametrize("fp", EXAMPLES)
 def test_example(fp: pathlib.Path):
     try:
-        runpy.run_path(str(fp), run_name="__main__")
+        mod = runpy.run_path(str(fp), run_name="__test__")
+        if "main" in mod:
+            mod["main"]()
     except:
         print(f"Failed to run example {fp}")
         raise

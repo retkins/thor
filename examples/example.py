@@ -10,7 +10,7 @@ centroids, vol, jdensity = oersted.testing.make_helmholtz(size)
 # vol = np.hstack((vol, vol))
 # jdensity = np.vstack((jdensity, jdensity))
 
-print("oersted Example - Helmholtz Problem")
+print("Oersted Example - Helmholtz Problem")
 n = centroids.shape[0]
 print(f"n = {n:.3e} ({n * n:.3e} interactions)")
 
